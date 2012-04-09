@@ -40,13 +40,16 @@ static int head;
 static int left;
 static int count;
 static int bpp;                 /* set by main(). */
+static int page_rows = PDFROWS; /* actual width of current page in pixels */
+static int page_cols = PDFCOLS; /* actual height of current page in pixels */
 
 static void draw(void)
 {
 	int i;
-	for (i = head; i < MIN(head + fb_rows(), PDFROWS); i++)
+	for (i = head; i < MIN(head + fb_rows(), page_rows); i++)
 		fb_set(i - head, 0,
-                       ((void *)pbuf) + (i * PDFCOLS + left) * bpp, fb_cols());
+                       ((void *)pbuf) + (i * PDFCOLS + left) * bpp,
+                       fb_cols());
 }
 
 static int showpage(int p, int h)
@@ -55,6 +58,7 @@ static int showpage(int p, int h)
 		return 0;
 	memset(pbuf, 0x00, sizeof(pbuf));
 	doc_draw(doc, pbuf, p, PDFROWS, PDFCOLS, zoom, rotate);
+        doc_geometry(doc, &page_rows, &page_cols);
 	num = p;
 	head = h;
         depth_conv(pbuf, sizeof(pbuf) / sizeof(fbval_t));
@@ -121,8 +125,8 @@ static void mainloop(void)
 	signal(SIGCONT, sigcont);
 	showpage(num, 0);
 	while ((c = readkey()) != -1) {
-		int maxhead = PDFROWS - fb_rows();
-		int maxleft = PDFCOLS - fb_cols();
+		int maxhead = page_rows - fb_rows();
+		int maxleft = page_cols - fb_cols();
 		switch (c) {
 		case CTRLKEY('f'):
 		case 'J':
