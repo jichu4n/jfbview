@@ -175,9 +175,15 @@ static void mainloop(void)
 		switch (c) {
 		case 'j':
 			head += step * getcount(1);
+                        if (((PDFROWS - head) << 1) < fb_rows()) {
+                          showpage(num + 1, 0);
+                        }
 			break;
 		case 'k':
 			head -= step * getcount(1);
+                        if (head < 0) {
+                          showpage(num - 1, PDFROWS - fb_rows());
+                        }
 			break;
 		case 'l':
 			left += hstep * getcount(1);
