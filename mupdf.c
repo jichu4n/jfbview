@@ -20,6 +20,7 @@ int doc_draw(struct doc *doc, fbval_t *bitmap, int p, int rows, int cols, int zo
 	fz_display_list *list;
 	pdf_page *page;
 	int x, y;
+        int bpp = FBM_BPP(fb_mode());
 
 	if (pdf_load_page(&page, doc->xref, p - 1))
 		return 1;
@@ -47,7 +48,9 @@ int doc_draw(struct doc *doc, fbval_t *bitmap, int p, int rows, int cols, int zo
 	for (y = 0; y < doc->rows; y++) {
 		for (x = 0; x < doc->cols; x++) {
 			unsigned char *s = pix->samples + y * pix->w * 4 + x * 4;
-			bitmap[y * cols + x] = FB_VAL(s[0], s[1], s[2]);
+                        fbval_t *d = (fbval_t *)(((void *)bitmap) +
+                                                 (y * cols + x) * bpp);
+			*d = FB_VAL(s[0], s[1], s[2]);
 
 		}
 	}
