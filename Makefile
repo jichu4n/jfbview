@@ -3,7 +3,7 @@ CC = cc
 CFLAGS = -Wall -O2 -I$(PREFIX)/include
 LDFLAGS = -L$(PREFIX)/lib
 
-all: fbpdf fbdjvu
+all: fbpdf
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 clean:
