@@ -56,7 +56,7 @@ Differences between JFBPDF and upstream FBPDF:
 
   * Page geometry detection: JFBPDF will detect the width and height of PDF
     pages, whereas FBPDF assumes a fixed maximum size and thus behaves
-    strangely under many circumstances.
+    strangely when scrolling.
 
   * Zooming features:
       - Support for progressive zooming with '+', '=' and '-' keys
