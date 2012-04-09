@@ -166,6 +166,12 @@ static void mainloop(void)
 		case 'e':
 			reload();
 			break;
+                case 's':
+                        doc_draw(doc, pbuf, num, PDFROWS, PDFCOLS, 10, rotate);
+                        doc_geometry(doc, &page_rows, &page_cols);
+                        zoom = fb_cols() * 10 / page_cols;
+                        showpage(num, 0);
+                        break;
 		case '`':
 		case '\'':
 			c2 = readkey();
