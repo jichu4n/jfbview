@@ -40,6 +40,7 @@ static int head;
 static int left;
 static int count;
 static int bpp;                 /* set by main(). */
+static int zoom_step = 1;       /* multiples of 10% to zoom in or out */
 
 static void draw(void)
 {
@@ -138,6 +139,15 @@ static void mainloop(void)
 		case 'z':
 			zoom = getcount(15);
 			showpage(num, 0);
+			break;
+		case '=':
+		case '+':
+			zoom += zoom_step * getcount(1);
+			showpage(num, head);
+			break;
+		case '-':
+			zoom -= zoom_step * getcount(1);
+			showpage(num, head);
 			break;
 		case 'r':
 			rotate = getcount(0);
