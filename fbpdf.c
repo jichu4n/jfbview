@@ -14,6 +14,7 @@
 #include <pty.h>
 #include "draw.h"
 #include "doc.h"
+#include "depth_conv.h"
 
 #define MIN(a, b)	((a) < (b) ? (a) : (b))
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
@@ -54,6 +55,7 @@ static int showpage(int p, int h)
 	doc_draw(doc, pbuf, p, PDFROWS, PDFCOLS, zoom, rotate);
 	num = p;
 	head = h;
+        depth_conv(pbuf, PDFROWS, PDFCOLS);
 	draw();
 	return 0;
 }
@@ -244,10 +246,11 @@ int main(int argc, char *argv[])
 	printinfo();
 	if (fb_init())
 		return 1;
-	if (FBM_BPP(fb_mode()) != sizeof(fbval_t))
-		fprintf(stderr, "fbpdf: fbval_t doesn't match fb depth\n");
-	else
+	if (depth_supported(FBM_BPP(fb_mode())))
 		mainloop();
+	else
+		fprintf(stderr, "fbpdf: fb depth %d is not supported\n",
+                                FBM_BPP(fb_mode()));
 	fb_free();
 	write(STDIN_FILENO, show, strlen(show));
 	printf("\n");
