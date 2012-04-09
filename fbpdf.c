@@ -41,13 +41,16 @@ static int left;
 static int count;
 static int bpp;                 /* set by main(). */
 static int zoom_step = 1;       /* multiples of 10% to zoom in or out */
+static int page_rows = PDFROWS; /* actual width of current page in pixels */
+static int page_cols = PDFCOLS; /* actual height of current page in pixels */
 
 static void draw(void)
 {
 	int i;
-	for (i = head; i < MIN(head + fb_rows(), PDFROWS); i++)
+	for (i = head; i < MIN(head + fb_rows(), page_rows); i++)
 		fb_set(i - head, 0,
-                       ((void *)pbuf) + (i * PDFCOLS + left) * bpp, fb_cols());
+                       ((void *)pbuf) + (i * PDFCOLS + left) * bpp,
+                       fb_cols());
 }
 
 static int showpage(int p, int h)
@@ -56,6 +59,7 @@ static int showpage(int p, int h)
 		return 0;
 	memset(pbuf, 0x00, sizeof(pbuf));
 	doc_draw(doc, pbuf, p, PDFROWS, PDFCOLS, zoom, rotate);
+        doc_geometry(doc, &page_rows, &page_cols);
 	num = p;
 	head = h;
         depth_conv(pbuf, sizeof(pbuf) / sizeof(fbval_t));
@@ -122,8 +126,8 @@ static void mainloop(void)
 	signal(SIGCONT, sigcont);
 	showpage(num, 0);
 	while ((c = readkey()) != -1) {
-		int maxhead = PDFROWS - fb_rows();
-		int maxleft = PDFCOLS - fb_cols();
+		int maxhead = page_rows - fb_rows();
+		int maxleft = page_cols - fb_cols();
 		switch (c) {
 		case CTRLKEY('f'):
 		case 'J':
@@ -185,9 +189,16 @@ static void mainloop(void)
 		switch (c) {
 		case 'j':
 			head += step * getcount(1);
+                        if (head > maxhead) {
+                          showpage(num + 1, 0);
+                        }
 			break;
 		case 'k':
 			head -= step * getcount(1);
+                        if (head < 0) {
+                          showpage(num - 1, 0);
+                          head = page_rows - fb_rows();
+                        }
 			break;
 		case 'l':
 			left += hstep * getcount(1);
@@ -218,6 +229,8 @@ static void mainloop(void)
 			/* no need to redraw */
 			continue;
 		}
+		maxhead = page_rows - fb_rows();
+		maxleft = page_cols - fb_cols();
 		head = MAX(0, MIN(maxhead, head));
 		left = MAX(0, MIN(maxleft, left));
 		draw();
