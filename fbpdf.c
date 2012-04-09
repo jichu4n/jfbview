@@ -39,12 +39,14 @@ static int rotate;
 static int head;
 static int left;
 static int count;
+static int bpp;                 /* set by main(). */
 
 static void draw(void)
 {
 	int i;
 	for (i = head; i < MIN(head + fb_rows(), PDFROWS); i++)
-		fb_set(i - head, 0, pbuf + i * PDFCOLS + left, fb_cols());
+		fb_set(i - head, 0,
+                       ((void *)pbuf) + (i * PDFCOLS + left) * bpp, fb_cols());
 }
 
 static int showpage(int p, int h)
@@ -55,7 +57,7 @@ static int showpage(int p, int h)
 	doc_draw(doc, pbuf, p, PDFROWS, PDFCOLS, zoom, rotate);
 	num = p;
 	head = h;
-        depth_conv(pbuf, PDFROWS, PDFCOLS);
+        depth_conv(pbuf, sizeof(pbuf) / sizeof(fbval_t));
 	draw();
 	return 0;
 }
@@ -246,11 +248,11 @@ int main(int argc, char *argv[])
 	printinfo();
 	if (fb_init())
 		return 1;
-	if (depth_supported(FBM_BPP(fb_mode())))
+        bpp = FBM_BPP(fb_mode());
+	if (depth_supported(bpp))
 		mainloop();
 	else
-		fprintf(stderr, "fbpdf: fb depth %d is not supported\n",
-                                FBM_BPP(fb_mode()));
+		fprintf(stderr, "fbpdf: fb depth %d is not supported\n", bpp);
 	fb_free();
 	write(STDIN_FILENO, show, strlen(show));
 	printf("\n");

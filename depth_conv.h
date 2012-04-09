@@ -9,8 +9,8 @@
 /* Returns whether the current fb depth is supported. */
 extern int depth_supported(int bpp);
 
-/* Converts a framebuffer with a bpp of 32 to the depth of the current fb
- * device. Each row still begins at the same location, but will be compressed
- * accordingly. */
-extern void *depth_conv(void *mem, int rows, int cols);
+/* Converts an array of 32bpp pixels to the depth of the current fb device. The
+ * new array is stored consecutively starting at the same memory location.
+ * Returns the new array at mem. */
+extern void *depth_conv(void *mem, int len);
 

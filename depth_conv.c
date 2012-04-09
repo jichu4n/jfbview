@@ -50,13 +50,9 @@ static depth_conv_function depth_conv_functions[] = {
   &depth_conv_32
 };
 
-void *depth_conv(void *mem, int rows, int cols) {
+void *depth_conv(void *mem, int len) {
   depth_conv_function f =
       depth_conv_functions[FBM_BPP(fb_mode())];
-  unsigned int i;
-  for (i = 0; i < rows; ++i) {
-    (*f)(mem + ((i * cols) << 2), cols);
-  }
-  return mem;
+  return (*f)(mem, len);
 }
 
