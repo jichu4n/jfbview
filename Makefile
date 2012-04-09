@@ -3,14 +3,14 @@ CC = cc
 CFLAGS = -Wall -O2 -I$(PREFIX)/include
 LDFLAGS = -L$(PREFIX)/lib
 
-all: fbpdf
+all: jfbpdf
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 clean:
 	-rm -f *.o fbpdf fbdjvu fbpdf2
 
 # pdf support using mupdf
-fbpdf: fbpdf.o mupdf.o draw.o depth_conv.o
+jfbpdf: fbpdf.o mupdf.o draw.o depth_conv.o
 	$(CC) -o $@ $^ $(LDFLAGS) -lmupdf -lfitz -lfreetype \
 			-ljbig2dec -ljpeg -lz -lopenjpeg -lm
 # djvu support
