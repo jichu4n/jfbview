@@ -206,6 +206,7 @@ static void mainloop(void)
                                    rotate);
                           doc_geometry(doc, &page_rows, &page_cols);
                           head = page_rows - fb_rows();
+                          showpage(num - 1, head);
                         }
 			break;
 		case 'l':
