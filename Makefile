@@ -7,7 +7,7 @@ all: jfbpdf
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 clean:
-	-rm -f *.o fbpdf fbdjvu fbpdf2
+	-rm -f *.o jfbpdf fbdjvu fbpdf2
 
 # pdf support using mupdf
 jfbpdf: fbpdf.o mupdf.o draw.o
