@@ -261,6 +261,7 @@ int main(int argc, char *argv[])
 	char *hide = "\x1b[?25l";
 	char *show = "\x1b[?25h";
 	char *clear = "\x1b[2J";
+	char *repos = "\x1b[H";
 	int i = 1;
 	if (argc < 2) {
 		printf(usage);
@@ -290,8 +291,9 @@ int main(int argc, char *argv[])
         bpp = FBM_BPP(fb_mode());
         mainloop();
 	fb_free();
+	write(STDOUT_FILENO, clear, strlen(clear));
+	write(STDOUT_FILENO, repos, strlen(clear));
 	write(STDIN_FILENO, show, strlen(show));
-	printf("\n");
 	doc_close(doc);
 	return 0;
 }
