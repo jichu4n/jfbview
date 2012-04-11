@@ -2,6 +2,7 @@
  * fbpdf - a small framebuffer pdf viewer using mupdf
  *
  * Copyright (C) 2009-2011 Ali Gholami Rudi
+ * Copyright (C) 2012 Chuan Ji <jichuan89@gmail.com>
  *
  * This program is released under GNU GPL version 2.
  */
@@ -20,6 +21,7 @@
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
 
 #define PAGESTEPS		8
+#define HPAGESTEPS		16
 #define CTRLKEY(x)		((x) - 96)
 #define MAXWIDTH		2
 #define MAXHEIGHT		3
@@ -84,7 +86,7 @@ static int getcount(int def)
 static void printinfo(void)
 {
 	printf("\x1b[H");
-	printf("FBPDF:     file:%s  page:%d(%d)  zoom:%d%% \x1b[K",
+	printf("JFBPDF:     file:%s  page:%d(%d)  zoom:%d%% \x1b[K",
 		filename, num, doc_pages(doc), zoom * 10);
 	fflush(stdout);
 }
@@ -127,7 +129,7 @@ static void fit_to_width() {
 static void mainloop(void)
 {
 	int step = fb_rows() / PAGESTEPS;
-	int hstep = fb_cols() / PAGESTEPS;
+	int hstep = fb_cols() / HPAGESTEPS;
 	int c, c2;
 	term_setup();
 	signal(SIGCONT, sigcont);
@@ -267,7 +269,7 @@ static void mainloop(void)
 }
 
 static char *usage =
-	"usage: fbpdf [-r rotation] [-z zoom x10] [-p page] filename\n";
+	"usage: jfbpdf [-r rotation] [-z zoom x10] [-p page] filename\n";
 
 int main(int argc, char *argv[])
 {

@@ -73,7 +73,7 @@ Differences between JFBPDF and upstream FBPDF:
     strangely when scrolling.
 
   * Zooming features:
-      - Support for progressive zooming with '+', '=' and '-' keys
+      - Support for progressive zooming with '+' ('=') and '-' keys
       - Support for auto zoom to screen width.
 
   * Outline (TOC) view: JFBPDF has an outline view, toggled by the Tab key,
@@ -88,3 +88,5 @@ Minor changes:
 
   * JFBPDF clears the screen when quitting instead of leaving garbage on
     screen.
+
+  * Smoother horizontal panning.
