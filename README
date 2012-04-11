@@ -79,3 +79,8 @@ Differences between JFBPDF and upstream FBPDF:
   * JFBPDF will move to the next / previous page when scrolling beyond the
     boundaries of the current page.
 
+  * Outline (TOC) view: JFBPDF has an outline view, toggled by the Tab key,
+    that allows the user to browse through the outline / table of contents
+    (TOC) embedded in the current document and jump to the corresponding
+    locations.
+
