@@ -206,19 +206,27 @@ static void mainloop(void)
 		}
 		switch (c) {
 		case 'j':
-			head += step * getcount(1);
-                        if ((head > maxhead) && (num < doc_pages(doc))) {
-                          showpage(num + 1, 0);
+                        head += step * getcount(1);
+                        if (head > maxhead) {
+                          if (head < maxhead + step) {
+                            head = page_rows - fb_rows();
+                          } else if (num < doc_pages(doc)) {
+                            showpage(num + 1, 0);
+                          }
                         }
-			break;
+                        break;
+                       
 		case 'k':
 			head -= step * getcount(1);
-                        if ((head < 0) && (num > 1)) {
-                          doc_draw(doc, pbuf, num - 1, PDFROWS, PDFCOLS, zoom,
-                                   rotate);
-                          doc_geometry(doc, &page_rows, &page_cols);
-                          head = page_rows - fb_rows();
-                          showpage(num - 1, head);
+                        if (head < 0) {
+                          if (head > -step) {
+                            head = 0;
+                          } else if (num > 1) {
+                            doc_draw(doc, pbuf, num - 1, PDFROWS, PDFCOLS, zoom,
+                                     rotate);
+                            doc_geometry(doc, &page_rows, &page_cols);
+                            showpage(num - 1, page_rows - fb_rows());
+                          }
                         }
 			break;
 		case 'l':
