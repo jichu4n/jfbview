@@ -126,12 +126,12 @@ int outline_view(struct doc *_doc) {
   struct winsize screen_size;
 
   if (_doc != doc) {
-    doc = _doc;
-    if ((head = doc_outline(doc)) == NULL) {
+    if ((head = doc_outline(_doc)) == NULL) {
       printf("\x1b[HNo outline found.\x1b[K");
       fflush(stdout);
       return -1;
     }
+    doc = _doc;
     selected = head;
   }
 
