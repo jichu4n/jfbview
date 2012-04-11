@@ -10,7 +10,7 @@ clean:
 	-rm -f *.o fbpdf fbdjvu fbpdf2
 
 # pdf support using mupdf
-fbpdf: fbpdf.o mupdf.o draw.o
+fbpdf: fbpdf.o mupdf.o draw.o outline.o
 	$(CC) -o $@ $^ $(LDFLAGS) -lmupdf -lfitz -lfreetype \
 			-ljbig2dec -ljpeg -lz -lopenjpeg -lm
 # djvu support

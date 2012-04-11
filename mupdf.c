@@ -8,7 +8,44 @@
 struct doc {
 	fz_glyph_cache *glyphcache;
 	pdf_xref *xref;
+        struct outline *outline;
 };
+
+/* Convert pdf_outline to outline_iterator. */
+static struct outline *convert_outline_impl(
+    pdf_outline *src, struct outline *parent, struct outline *prev, int depth) {
+  if (src == NULL) {
+    return NULL;
+  }
+  struct outline *dest = malloc(sizeof(struct outline));
+  dest->title = src->title;
+  dest->depth = depth;
+  dest->parent = parent;
+  dest->prev = prev;
+  dest->first_child = convert_outline_impl(src->child, dest, NULL, depth + 1);
+  dest->last_child = dest->first_child;
+  while (dest->last_child && dest->last_child->next) {
+    dest->last_child = dest->last_child->next;
+  }
+  dest->next = convert_outline_impl(src->next, parent, dest, depth);
+  dest->expand = !depth;
+  dest->data = src;
+  return dest;
+}
+
+/* Convert pdf_outline to outline_iterator. */
+static struct outline *convert_outline(pdf_outline *src) {
+  return convert_outline_impl(src, NULL, NULL, 0);
+}
+
+/* Free doc outline. */
+static void free_outline(struct outline *it) {
+  if (it != NULL) {
+    free_outline(it->first_child);
+    free_outline(it->next);
+    free(it);
+  }
+}
 
 int doc_draw(struct doc *doc, fbval_t *bitmap, int p, int rows, int cols, int zoom, int rotate)
 {
@@ -76,12 +113,24 @@ struct doc *doc_open(char *path)
 		free(doc);
 		return NULL;
 	}
+        doc->outline = convert_outline(pdf_load_outline(doc->xref));
 	return doc;
 }
 
 void doc_close(struct doc *doc)
 {
+        free_outline(doc->outline);
 	pdf_free_xref(doc->xref);
 	fz_free_glyph_cache(doc->glyphcache);
 	free(doc);
 }
+
+struct outline *doc_outline(struct doc *doc) {
+  return doc->outline;
+}
+
+int doc_lookup_page(struct doc *doc, struct outline *it) {
+  pdf_link *link = ((pdf_outline *)(it->data))->link;
+  return pdf_find_page_number(doc->xref, fz_array_get(link->dest, 0)) + 1;
+}
+
