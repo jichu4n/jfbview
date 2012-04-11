@@ -14,6 +14,7 @@
 #include <pty.h>
 #include "draw.h"
 #include "doc.h"
+#include "outline.h"
 
 #define MIN(a, b)	((a) < (b) ? (a) : (b))
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
@@ -180,6 +181,14 @@ static void mainloop(void)
                         zoom = fb_cols() * 10 / page_cols;
                         showpage(num, 0);
                         break;
+                case '\t': {
+                          int dest_page = outline_view(doc);
+                          if (dest_page > 0) {
+                            showpage(dest_page, 0);
+                          }
+                          draw();
+                          break;
+                        }
 		case '`':
 		case '\'':
 			c2 = readkey();
