@@ -45,4 +45,18 @@ L		show bottom
 ^H/^U		(backspace) page up
 ^L		redraw
 e		reload current file
+TAB             open outline (TOC) view
+==============	================================================
+
+Outline view keybindings:
+==============	================================================
+KEY		ACTION
+==============	================================================
+TAB/q           close outline (TOC) view
+j               move up
+k               move down
+' '             (space) toggle fold current item
+=/+             expand current item
+-               fold current item
+^J/g            (enter) go to page referred by item
 ==============	================================================
