@@ -8,9 +8,15 @@
 
 #include <stdio.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <sys/ioctl.h>
 #include "doc.h"
 #include "draw.h"
+
+#define KEY_UP ((unsigned char)-2)
+#define KEY_DOWN ((unsigned char)-3)
+#define KEY_LEFT ((unsigned char)-4)
+#define KEY_RIGHT ((unsigned char)-5)
 
 static struct doc *doc = NULL;  /* Current document. */
 static struct outline *head;  /* First outline item visible. */
@@ -88,14 +94,42 @@ static int main_loop() {
     draw();
 
     read(STDIN_FILENO, &c, 1);
+    if (c == 0x1b) {  /* ESC or arrow keys. */
+      /* If another 2 keys are available, assume an ANSI escape sequence.
+       * Otherwise, assume plain ESC. */
+      int stdin_flags = fcntl(STDIN_FILENO, F_GETFL);
+      unsigned char seq[2];
+      fcntl(STDIN_FILENO, F_SETFL, stdin_flags | O_NONBLOCK);
+      if (read(STDIN_FILENO, &seq, 2) == 2) {
+        switch (seq[1]) {
+         case 'A':
+          c = KEY_UP;
+          break;
+         case 'B':
+          c = KEY_DOWN;
+          break;
+         case 'C':
+          c = KEY_RIGHT;
+          break;
+         case 'D':
+          c = KEY_LEFT;
+          break;
+         default:
+          break;
+        }
+      }
+      fcntl(STDIN_FILENO, F_SETFL, stdin_flags);
+    }
     switch (c) {
      case 'j':
+     case KEY_DOWN:
       if ((selected == tail) && (tail != outline_next(tail))) {
         head = outline_next(head);
       }
       selected = outline_next(selected);
       break;
      case 'k':
+     case KEY_UP:
       if (selected == head) {
         head = outline_prev(head);
       }
@@ -106,9 +140,11 @@ static int main_loop() {
       break;
      case '=':
      case '+':
+     case KEY_RIGHT:
       selected->expand = true;
       break;
      case '-':
+     case KEY_LEFT:
       selected->expand = false;
       break;
      case '\n':
@@ -117,6 +153,7 @@ static int main_loop() {
       break;
      case '\t':
      case 'q':
+     case 0x1b:
       return -1;
     }
   }
