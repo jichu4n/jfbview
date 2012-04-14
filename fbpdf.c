@@ -34,10 +34,10 @@ static char filename[256];
 static int mark[128];		/* page marks */
 static int mark_head[128];	/* head in page marks */
 static int zoom = 15;
+static int prev_zoom = zoom;
 static int rotate;
 static int head;
-/* Horizontal display offset relative to page width. */
-static double left;
+static int left;
 static int count;
 static int bpp;                 /* set by main(). */
 static int page_rows = PDFROWS; /* actual width of current page in pixels */
@@ -45,15 +45,13 @@ static int page_cols = PDFCOLS; /* actual height of current page in pixels */
 
 static void draw(void)
 {
-        double max_left = (double) (page_cols - fb_cols()) / page_cols;
-        int max_head = page_rows - fb_rows();
 	int i;
 
-        left = MAX(0, MIN(max_left, left));
-        head = MAX(0, MIN(max_head, head));
+        left = MAX(0, MIN(page_cols - fb_cols(), left));
+        head = MAX(0, MIN(page_rows - fb_rows(), head));
 	for (i = head; i < MIN(head + fb_rows(), page_rows); i++)
 		fb_set(i - head, 0,
-                       ((void *)pbuf) + (int)(i * PDFCOLS + left * page_cols) * bpp,
+                       ((void *)pbuf) + (i * PDFCOLS + left) * bpp,
                        fb_cols());
 }
 
@@ -186,10 +184,10 @@ static void mainloop(void)
 			head -= step * getcount(1);
 			break;
 		case 'l':
-			left += (double) (hstep * getcount(1)) / page_cols;
+			left += hstep * getcount(1);
 			break;
 		case 'h':
-			left -= (double) (hstep * getcount(1)) / page_cols;
+			left -= hstep * getcount(1);
 			break;
 		case 'H':
 			head = 0;
