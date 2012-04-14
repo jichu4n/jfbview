@@ -28,6 +28,8 @@
 #define MAXHEIGHT		3
 #define PDFCOLS			(1 << 11)
 #define PDFROWS			(1 << 12)
+#define MAXZOOM                 30
+#define MINZOOM                 1
 
 static fbval_t pbuf[PDFROWS * PDFCOLS];
 static struct doc *doc;
@@ -61,6 +63,8 @@ static int showpage(int p, int h)
 	if (p < 1 || p > doc_pages(doc))
 		return 0;
 	memset(pbuf, 0x00, sizeof(pbuf));
+        zoom = MAX(zoom, MINZOOM);
+        zoom = MIN(zoom, MAXZOOM);
 	doc_draw(doc, pbuf, p, PDFROWS, PDFCOLS, zoom, rotate);
         doc_geometry(doc, &page_rows, &page_cols);
 	num = p;
