@@ -34,7 +34,6 @@ static char filename[256];
 static int mark[128];		/* page marks */
 static int mark_head[128];	/* head in page marks */
 static int zoom = 10;
-static int prev_zoom = zoom;
 static int rotate;
 static int head;
 static int left;
@@ -64,7 +63,6 @@ static int showpage(int p, int h)
         doc_geometry(doc, &page_rows, &page_cols);
 	num = p;
 	head = h;
-	draw();
 	return 0;
 }
 
@@ -118,12 +116,25 @@ static void reload(void)
 	showpage(num, head);
 }
 
+/* Sets zoom and redraw. */
+static void set_zoom(int new_zoom) {
+  if (new_zoom != zoom) {
+    double left_ratio = (double) left / page_cols,
+           head_ratio = (double) head / page_rows;
+
+    zoom = new_zoom;
+    showpage(num, 0);
+
+    left = left_ratio * page_cols;
+    head = head_ratio * page_rows;
+  }
+}
+
 /* Automatically adjust zoom to fit current page to screen width. */
 static void fit_to_width() {
   doc_draw(doc, pbuf, num, PDFROWS, PDFCOLS, 10, rotate);
   doc_geometry(doc, &page_rows, &page_cols);
-  zoom = fb_cols() * 10 / page_cols;
-  showpage(num, 0);
+  set_zoom(fb_cols() * 10 / page_cols);
 }
 
 static void mainloop(void)
@@ -134,27 +145,9 @@ static void mainloop(void)
 	term_setup();
 	signal(SIGCONT, sigcont);
         fit_to_width();
+        draw();
 	while ((c = readkey()) != -1) {
 		switch (c) {
-		case CTRLKEY('f'):
-		case 'J':
-			showpage(num + getcount(1), 0);
-			break;
-		case CTRLKEY('b'):
-		case 'K':
-			showpage(num - getcount(1), 0);
-			break;
-		case 'G':
-			showpage(getcount(doc_pages(doc)), 0);
-			break;
-		case 'z':
-			zoom = getcount(15);
-			showpage(num, 0);
-			break;
-		case 'r':
-			rotate = getcount(0);
-			showpage(num, 0);
-			break;
 		case 'i':
 			printinfo();
 			break;
@@ -188,6 +181,24 @@ static void mainloop(void)
 				count = count * 10 + c - '0';
 		}
 		switch (c) {
+		case CTRLKEY('f'):
+		case 'J':
+			showpage(num + getcount(1), 0);
+			break;
+		case CTRLKEY('b'):
+		case 'K':
+			showpage(num - getcount(1), 0);
+			break;
+		case 'G':
+			showpage(getcount(doc_pages(doc)), 0);
+			break;
+		case 'z':
+			set_zoom(getcount(15));
+			break;
+		case 'r':
+			rotate = getcount(0);
+			showpage(num, 0);
+			break;
 		case 'j':
 			head += step * getcount(1);
 			break;
