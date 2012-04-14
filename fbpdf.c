@@ -52,7 +52,7 @@ static int page_cols = PDFCOLS; /* actual height of current page in pixels */
 static void draw(void)
 {
 	int i;
-	for (i = head; i < MIN(head + fb_rows(), page_rows); i++)
+	for (i = head; i < head + fb_rows(); i++)
 		fb_set(i - head, 0,
                        ((void *)pbuf) + (i * PDFCOLS + left) * bpp,
                        fb_cols());
@@ -63,8 +63,7 @@ static int showpage(int p, int h)
 	if (p < 1 || p > doc_pages(doc))
 		return 0;
 	memset(pbuf, 0x00, sizeof(pbuf));
-        zoom = MAX(zoom, MINZOOM);
-        zoom = MIN(zoom, MAXZOOM);
+        zoom = MAX(MIN(zoom, MAXZOOM), MINZOOM);
 	doc_draw(doc, pbuf, p, PDFROWS, PDFCOLS, zoom, rotate);
         doc_geometry(doc, &page_rows, &page_cols);
 	num = p;
