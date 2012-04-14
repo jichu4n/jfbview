@@ -8,6 +8,7 @@
 struct doc {
 	fz_glyph_cache *glyphcache;
 	pdf_xref *xref;
+        int rows, cols;
 };
 
 int doc_draw(struct doc *doc, fbval_t *bitmap, int p, int rows, int cols, int zoom, int rotate)
@@ -42,8 +43,10 @@ int doc_draw(struct doc *doc, fbval_t *bitmap, int p, int rows, int cols, int zo
 	fz_execute_display_list(list, dev, ctm, bbox);
 	fz_free_device(dev);
 
-	for (y = 0; y < MIN(pix->h, rows); y++) {
-		for (x = 0; x < MIN(pix->w, cols); x++) {
+        doc->rows = MIN(pix->h, rows);
+        doc->cols = MIN(pix->w, cols);
+	for (y = 0; y < doc->rows; y++) {
+		for (x = 0; x < doc->cols; x++) {
 			unsigned char *s = pix->samples + y * pix->w * 4 + x * 4;
                         fbval_t *d = (fbval_t *)(((void *)bitmap) +
                                                  (y * cols + x) * bpp);
@@ -84,4 +87,9 @@ void doc_close(struct doc *doc)
 	pdf_free_xref(doc->xref);
 	fz_free_glyph_cache(doc->glyphcache);
 	free(doc);
+}
+
+void doc_geometry(struct doc *doc, int *rows, int *cols) {
+        *rows = doc->rows;
+        *cols = doc->cols;
 }
