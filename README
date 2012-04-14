@@ -76,12 +76,18 @@ Differences between JFBPDF and upstream FBPDF:
 
   * Zooming features:
       - Support for progressive zooming with '+' ('=') and '-' keys
-      - Support for auto zoom to screen width.
+      - Support for auto zoom to screen width with the 's' key; this is also
+        the default.
+      - Changing zoom will preserve the view position within the current page.
+      - Documents are centered horizontally on screen when less wide than screen.
 
   * Outline (TOC) view: JFBPDF has an outline view, toggled by the Tab key,
     that allows the user to browse through the outline / table of contents
     (TOC) embedded in the current document and jump to the corresponding
     locations.
+
+  * Better controls: a range of keyboard shortcuts are added, including arrow
+    keys, page up/down, etc..
 
 Minor changes:
 
