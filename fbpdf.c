@@ -144,6 +144,8 @@ static void mainloop(void)
                         showpage(1, 0);
                         break;
                 case KEY_END:
+			showpage(doc_pages(doc), 0);
+                        break;
 		case 'G':
 			showpage(getcount(doc_pages(doc)), 0);
 			break;
