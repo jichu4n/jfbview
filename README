@@ -32,15 +32,15 @@ q		quit
 mx		mark page as 'x' (or any other letter)
 'x		jump to the page marked as 'x'
 `x		jump to the page and position marked as 'x'
-j		scroll down
-k		scroll up
-h		scroll left
-l		scroll right
+j/DOWN		scroll down
+k/UP		scroll up
+h/LEFT		scroll left
+l/RIGHT		scroll right
 H		show top
 M		show middle
 L		show bottom
-' '/^D		(space) page down
-^H/^U		(backspace) page up
+' '/^D/PageDown	(space) page down
+^H/^U/PageUp	(backspace) page up
 ^L		redraw
 e		reload current file
 TAB             open outline (TOC) view

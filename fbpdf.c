@@ -132,11 +132,9 @@ static void mainloop(void)
 		int maxleft = page_cols - fb_cols();
 		switch (c) {
 		case CTRLKEY('f'):
-                case KEY_NPAGE:
 		case 'J':
 			showpage(num + getcount(1), 0);
 			break;
-                case KEY_PPAGE:
 		case CTRLKEY('b'):
 		case 'K':
 			showpage(num - getcount(1), 0);
@@ -251,10 +249,12 @@ static void mainloop(void)
 			break;
 		case ' ':
 		case CTRL('d'):
+                case KEY_NPAGE:
 			head += fb_rows() * getcount(1) - step;
 			break;
 		case 127:
 		case CTRL('u'):
+                case KEY_PPAGE:
 			head -= fb_rows() * getcount(1) - step;
 			break;
 		case CTRLKEY('l'):
