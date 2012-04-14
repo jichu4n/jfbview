@@ -16,6 +16,7 @@
 #include "draw.h"
 #include "doc.h"
 #include "outline.h"
+#include "input.h"
 
 #define MIN(a, b)	((a) < (b) ? (a) : (b))
 #define MAX(a, b)	((a) > (b) ? (a) : (b))
@@ -66,14 +67,6 @@ static int showpage(int p, int h)
 	head = h;
 	draw();
 	return 0;
-}
-
-static int readkey(void)
-{
-	unsigned char b;
-	if (read(STDIN_FILENO, &b, 1) <= 0)
-		return -1;
-	return b;
 }
 
 static int getcount(int def)
@@ -134,18 +127,24 @@ static void mainloop(void)
 	term_setup();
 	signal(SIGCONT, sigcont);
         fit_to_width();
-	while ((c = readkey()) != -1) {
+	while ((c = GetChar()) != -1) {
 		int maxhead = page_rows - fb_rows();
 		int maxleft = page_cols - fb_cols();
 		switch (c) {
 		case CTRLKEY('f'):
+                case KEY_NPAGE:
 		case 'J':
 			showpage(num + getcount(1), 0);
 			break;
+                case KEY_PPAGE:
 		case CTRLKEY('b'):
 		case 'K':
 			showpage(num - getcount(1), 0);
 			break;
+                case KEY_HOME:
+                        showpage(1, 0);
+                        break;
+                case KEY_END:
 		case 'G':
 			showpage(getcount(doc_pages(doc)), 0);
 			break;
@@ -176,7 +175,7 @@ static void mainloop(void)
 			count = 0;
 			break;
 		case 'm':
-			c2 = readkey();
+			c2 = GetChar();
 			if (isalpha(c2)) {
 				mark[c2] = num;
 				mark_head[c2] = head;
@@ -198,7 +197,7 @@ static void mainloop(void)
                         }
 		case '`':
 		case '\'':
-			c2 = readkey();
+			c2 = GetChar();
 			if (isalpha(c2) && mark[c2])
 				showpage(mark[c2], c == '`' ? mark_head[c2] : 0);
 			break;
@@ -207,6 +206,7 @@ static void mainloop(void)
 				count = count * 10 + c - '0';
 		}
 		switch (c) {
+                case KEY_DOWN:
 		case 'j':
                         head += step * getcount(1);
                         if (head > maxhead) {
@@ -218,6 +218,7 @@ static void mainloop(void)
                         }
                         break;
                        
+                case KEY_UP:
 		case 'k':
 			head -= step * getcount(1);
                         if (head < 0) {
@@ -231,9 +232,11 @@ static void mainloop(void)
                           }
                         }
 			break;
+                case KEY_RIGHT:
 		case 'l':
 			left += hstep * getcount(1);
 			break;
+                case KEY_LEFT:
 		case 'h':
 			left -= hstep * getcount(1);
 			break;
