@@ -13,6 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <pty.h>
+#include <limits.h>
 #include "draw.h"
 #include "doc.h"
 #include "outline.h"
@@ -52,6 +53,10 @@ static int page_cols = PDFCOLS; /* actual height of current page in pixels */
 static void draw(void)
 {
         int i, start_col = MAX((fb_cols() - page_cols) >> 1, 0);
+
+        left = MAX(0, MIN(page_cols - fb_cols(), left));
+        head = MAX(0, MIN(page_rows - fb_rows(), head));
+
 	for (i = head; i < head + fb_rows(); i++)
 		fb_set(i - head, start_col,
                        ((void *)pbuf) + (i * PDFCOLS + left) * bpp,
@@ -68,7 +73,6 @@ static int showpage(int p, int h)
         doc_geometry(doc, &page_rows, &page_cols);
 	num = p;
 	head = h;
-	draw();
 	return 0;
 }
 
@@ -114,12 +118,25 @@ static void reload(void)
 	showpage(num, head);
 }
 
+/* Sets zoom and redraw. */
+static void set_zoom(int new_zoom) {
+  if (new_zoom != zoom) {
+    double left_ratio = (double) left / page_cols,
+           head_ratio = (double) head / page_rows;
+
+    zoom = new_zoom;
+    showpage(num, 0);
+
+    left = left_ratio * page_cols;
+    head = head_ratio * page_rows;
+  }
+}
+
 /* Automatically adjust zoom to fit current page to screen width. */
 static void fit_to_width() {
   doc_draw(doc, pbuf, num, PDFROWS, PDFCOLS, 10, rotate);
   doc_geometry(doc, &page_rows, &page_cols);
-  zoom = fb_cols() * 10 / page_cols;
-  showpage(num, 0);
+  set_zoom(fb_cols() * 10 / page_cols);
 }
 
 static void mainloop(void)
@@ -127,48 +144,14 @@ static void mainloop(void)
 	int step = fb_rows() / PAGESTEPS;
 	int hstep = fb_cols() / HPAGESTEPS;
 	int c, c2;
-        int scrolled_unit = 0;
 	term_setup();
 	signal(SIGCONT, sigcont);
         fit_to_width();
+        draw();
 	while ((c = GetChar()) != -1) {
-		int maxhead = page_rows - fb_rows();
-		int maxleft = page_cols - fb_cols();
+                int maxhead;
+                int scrolled_unit = page_rows;
 		switch (c) {
-		case CTRLKEY('f'):
-		case 'J':
-			showpage(num + getcount(1), 0);
-			break;
-		case CTRLKEY('b'):
-		case 'K':
-			showpage(num - getcount(1), 0);
-			break;
-                case KEY_HOME:
-                        showpage(1, 0);
-                        break;
-                case KEY_END:
-			showpage(doc_pages(doc), 0);
-                        break;
-		case 'G':
-			showpage(getcount(doc_pages(doc)), 0);
-			break;
-		case 'z':
-			zoom = getcount(15);
-			showpage(num, 0);
-			break;
-		case '=':
-		case '+':
-			zoom += zoom_step * getcount(1);
-			showpage(num, head);
-			break;
-		case '-':
-			zoom -= zoom_step * getcount(1);
-			showpage(num, head);
-			break;
-		case 'r':
-			rotate = getcount(0);
-			showpage(num, 0);
-			break;
 		case 'i':
 			printinfo();
 			break;
@@ -210,6 +193,37 @@ static void mainloop(void)
 				count = count * 10 + c - '0';
 		}
 		switch (c) {
+		case CTRLKEY('f'):
+		case 'J':
+			showpage(num + getcount(1), 0);
+			break;
+		case CTRLKEY('b'):
+		case 'K':
+			showpage(num - getcount(1), 0);
+			break;
+                case KEY_HOME:
+                        showpage(1, 0);
+                        break;
+                case KEY_END:
+			showpage(doc_pages(doc), 0);
+                        break;
+		case 'G':
+			showpage(getcount(doc_pages(doc)), 0);
+			break;
+		case 'z':
+			set_zoom(getcount(15));
+			break;
+		case '=':
+		case '+':
+			set_zoom(zoom + zoom_step * getcount(1));
+			break;
+		case '-':
+			set_zoom(zoom - zoom_step * getcount(1));
+			break;
+		case 'r':
+			rotate = getcount(0);
+			showpage(num, 0);
+			break;
                 case KEY_DOWN:
 		case 'j':
                         head += step * getcount(1);
@@ -233,10 +247,10 @@ static void mainloop(void)
 			head = 0;
 			break;
 		case 'L':
-			head = maxhead;
+			head = page_rows;
 			break;
 		case 'M':
-			head = maxhead / 2;
+			head = page_rows >> 1;
 			break;
 		case ' ':
 		case CTRL('d'):
@@ -257,6 +271,7 @@ static void mainloop(void)
 			continue;
 		}
 
+                /* Scroll to next/prev page if we've moved down/up enough. */
 		maxhead = page_rows - fb_rows();
                 if (head > maxhead) {
                   if ((head < maxhead + scrolled_unit) ||
@@ -275,8 +290,6 @@ static void mainloop(void)
                     showpage(num - 1, page_rows - fb_rows());
                   }
                 }
-		maxleft = page_cols - fb_cols();
-		left = MAX(0, MIN(maxleft, left));
 		draw();
 	}
 }
