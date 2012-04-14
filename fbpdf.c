@@ -33,7 +33,7 @@ static struct termios termios;
 static char filename[256];
 static int mark[128];		/* page marks */
 static int mark_head[128];	/* head in page marks */
-static int zoom = 15;
+static int zoom = 10;
 static int prev_zoom = zoom;
 static int rotate;
 static int head;
@@ -118,6 +118,14 @@ static void reload(void)
 	showpage(num, head);
 }
 
+/* Automatically adjust zoom to fit current page to screen width. */
+static void fit_to_width() {
+  doc_draw(doc, pbuf, num, PDFROWS, PDFCOLS, 10, rotate);
+  doc_geometry(doc, &page_rows, &page_cols);
+  zoom = fb_cols() * 10 / page_cols;
+  showpage(num, 0);
+}
+
 static void mainloop(void)
 {
 	int step = fb_rows() / PAGESTEPS;
@@ -125,7 +133,7 @@ static void mainloop(void)
 	int c, c2;
 	term_setup();
 	signal(SIGCONT, sigcont);
-	showpage(num, 0);
+        fit_to_width();
 	while ((c = readkey()) != -1) {
 		switch (c) {
 		case CTRLKEY('f'):
@@ -166,6 +174,9 @@ static void mainloop(void)
 		case 'e':
 			reload();
 			break;
+                case 's':
+                        fit_to_width();
+                        break;
 		case '`':
 		case '\'':
 			c2 = readkey();
