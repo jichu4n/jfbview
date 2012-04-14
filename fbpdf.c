@@ -121,6 +121,7 @@ static void mainloop(void)
 	int step = fb_rows() / PAGESTEPS;
 	int hstep = fb_cols() / PAGESTEPS;
 	int c, c2;
+        int scrolled_unit = 0;
 	term_setup();
 	signal(SIGCONT, sigcont);
 	showpage(num, 0);
@@ -179,27 +180,12 @@ static void mainloop(void)
 		switch (c) {
 		case 'j':
                         head += step * getcount(1);
-                        if (head > maxhead) {
-                          if (head < maxhead + step) {
-                            head = page_rows - fb_rows();
-                          } else if (num < doc_pages(doc)) {
-                            showpage(num + 1, 0);
-                          }
-                        }
+                        scrolled_unit = step;
                         break;
                        
 		case 'k':
 			head -= step * getcount(1);
-                        if (head < 0) {
-                          if (head > -step) {
-                            head = 0;
-                          } else if (num > 1) {
-                            doc_draw(doc, pbuf, num - 1, PDFROWS, PDFCOLS, zoom,
-                                     rotate);
-                            doc_geometry(doc, &page_rows, &page_cols);
-                            showpage(num - 1, page_rows - fb_rows());
-                          }
-                        }
+                        scrolled_unit = step;
 			break;
 		case 'l':
 			left += hstep * getcount(1);
@@ -219,10 +205,12 @@ static void mainloop(void)
 		case ' ':
 		case CTRL('d'):
 			head += fb_rows() * getcount(1) - step;
+                        scrolled_unit = fb_rows() - step;
 			break;
 		case 127:
 		case CTRL('u'):
 			head -= fb_rows() * getcount(1) - step;
+                        scrolled_unit = fb_rows() - step;
 			break;
 		case CTRLKEY('l'):
 			break;
@@ -230,9 +218,26 @@ static void mainloop(void)
 			/* no need to redraw */
 			continue;
 		}
+
 		maxhead = page_rows - fb_rows();
+                if (head > maxhead) {
+                  if ((head < maxhead + scrolled_unit) ||
+                      (num >= doc_pages(doc))) {
+                    head = maxhead;
+                  } else {
+                    showpage(num + 1, 0);
+                  }
+                } else if (head < 0) {
+                  if ((head > -scrolled_unit) || (num <= 1)) {
+                    head = 0;
+                  } else {
+                    doc_draw(doc, pbuf, num - 1, PDFROWS, PDFCOLS, zoom,
+                        rotate);
+                    doc_geometry(doc, &page_rows, &page_cols);
+                    showpage(num - 1, page_rows - fb_rows());
+                  }
+                }
 		maxleft = page_cols - fb_cols();
-		head = MAX(0, MIN(maxhead, head));
 		left = MAX(0, MIN(maxleft, left));
 		draw();
 	}
