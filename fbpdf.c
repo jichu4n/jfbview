@@ -44,9 +44,11 @@ static int page_cols = PDFCOLS; /* actual height of current page in pixels */
 
 static void draw(void)
 {
-        int i, start_col = MAX((fb_cols() - page_cols) >> 1, 0);
+        int i;
+        int start_col = MAX((fb_cols() - page_cols) >> 1, 0),
+            start_row = MAX((fb_rows() - page_rows) >> 1, 0);
 	for (i = head; i < MIN(head + fb_rows(), page_rows); i++)
-		fb_set(i - head, start_col,
+		fb_set(i - head + start_row, start_col,
                        ((void *)pbuf) + (i * PDFCOLS + left) * bpp,
                        fb_cols());
 }
