@@ -170,7 +170,7 @@ static void mainloop(void)
         draw();
 	while ((c = GetChar()) != -1) {
                 int maxhead;
-                int scrolled_unit = page_rows;
+                int scrolled_unit = -1;
 		switch (c) {
 		case 'i':
 			printinfo();
@@ -301,14 +301,15 @@ static void mainloop(void)
                 /* Scroll to next/prev page if we've moved down/up enough. */
 		maxhead = page_rows - fb_rows();
                 if (head > maxhead) {
-                  if ((head < maxhead + scrolled_unit) ||
+                  if ((scrolled_unit < 0) || (head < maxhead + scrolled_unit) ||
                       (num >= doc_pages(doc))) {
                     head = maxhead;
                   } else {
                     showpage(num + 1, 0);
                   }
                 } else if (head < 0) {
-                  if ((head > -scrolled_unit) || (num <= 1)) {
+                  if ((scrolled_unit < 0) || (head > -scrolled_unit) ||
+                      (num <= 1)) {
                     head = 0;
                   } else {
                     doc_draw(doc, pbuf, num - 1, PDFROWS, PDFCOLS, zoom,
