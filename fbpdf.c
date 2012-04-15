@@ -59,6 +59,11 @@ static void draw(void)
         left = MAX(0, MIN(page_cols - fb_cols(), left));
         head = MAX(0, MIN(page_rows - fb_rows(), head));
 
+        for (i = 0; i <= start_row; ++i) {
+                fb_set(i, 0, ((void *)pbuf) + (sizeof(pbuf) - PDFCOLS * bpp),
+                       fb_cols());
+        }
+
 	for (i = head; i < head + fb_rows() - start_row; i++)
 		fb_set(i - head + start_row, start_col,
                        ((void *)pbuf) + (i * PDFCOLS + left) * bpp,
