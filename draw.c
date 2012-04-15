@@ -139,3 +139,8 @@ unsigned fb_val(int r, int g, int b)
 {
 	return ((r >> rr) << rl) | ((g >> gr) << gl) | ((b >> br) << bl);
 }
+
+void fb_clear(int r, int c, int len) {
+	memset(fb_mem(r) + (c + vinfo.xoffset) * bpp, 0, len * bpp);
+}
+
