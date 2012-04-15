@@ -3,63 +3,17 @@ JFBPDF
 
 JFBPDF is a framebuffer pdf/djvu file viewer forked from FBPDF. It currently
 only actively supports the mupdf library for PDF files. See the Makefile for
-other targets. The following options can be specified when starting fbpdf (or
-fbdjvu and fbpdf2):
+other targets. The following options can be specified when starting jfbpdf:
 
-  fbpdf [-r rotation] [-z zoom x10] [-p page] filename
+  jfbpdf [-r rotation] [-z zoom x10] [-p page] path_to_file.pdf
+
+See the man page for details.
 
 KEYS
 ====
 
-The following table describes JFBPDF keybinding.  Most of these commands accept
-a numerical prefix.  For instance, '^F' tells fbpdf to go to the next page
-while '5^F' tells it to move to the fifth next page.
-
-==============	================================================
-KEY		ACTION
-==============	================================================
-^F/J		next page
-^B/K		previous page
-G		goto page (goto the last page if no prefix)
-Home            go to first page in document
-End             go to last page in document
-z		set zoom multiplied by 10 (i.e. '15z' = 150%)
-=/+             zoom in
--               zoom out
-s               zoom to screen width
-r		set rotation in degrees
-i		print info
-q		quit
-^[		(escape) clear numerical prefix
-mx		mark page as 'x' (or any other letter)
-'x		jump to the page marked as 'x'
-`x		jump to the page and position marked as 'x'
-j/Down		scroll down
-k/Up		scroll up
-h/Left		scroll left
-l/Right		Scroll right
-H		show top
-M		show middle
-L		show bottom
-' '/^D/PageDown	(space) page down
-^H/^U/PageUp	(backspace) page up
-^L		redraw
-e		reload current file
-TAB             open outline (TOC) view
-==============	================================================
-
-Outline view keybindings:
-==============	================================================
-KEY		ACTION
-==============	================================================
-TAB/q/ESC       close outline (TOC) view
-j/Down          move up
-k/Up            move down
-' '             (space) toggle fold current item
-=/+/Right       expand current item
--/Left          fold current item
-^J/g            (enter) go to page referred by item
-==============	================================================
+The key bindings available are described in the man page of JFBPDF. To view it,
+do `man jfbpdf'.
 
 CHANGES
 =======
