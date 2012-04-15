@@ -119,14 +119,16 @@ static void reload(void)
 /* Sets zoom and redraw. */
 static void set_zoom(int new_zoom) {
   if (new_zoom != zoom) {
-    double left_ratio = (double) left / page_cols,
-           head_ratio = (double) head / page_rows;
+    int center_x = left + (MIN(page_cols, fb_cols()) >> 1),
+        center_y = head + (MIN(page_rows, fb_rows()) >> 1);
+    double center_ratio_x = (double) center_x / page_cols,
+           center_ratio_y = (double) center_y / page_rows;
 
     zoom = new_zoom;
     showpage(num, 0);
 
-    left = left_ratio * page_cols;
-    head = head_ratio * page_rows;
+    left = center_ratio_x * page_cols - (fb_cols() >> 1);
+    head = center_ratio_y * page_rows - (fb_rows() >> 1);
   }
 }
 
