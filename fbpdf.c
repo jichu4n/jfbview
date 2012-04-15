@@ -52,22 +52,28 @@ static int page_cols = PDFCOLS; /* actual height of current page in pixels */
 
 static void draw(void)
 {
-        int i;
         int start_col = MAX((fb_cols() - page_cols) >> 1, 0),
             start_row = MAX((fb_rows() - page_rows) >> 1, 0);
+        int end_col = MIN(start_col + page_cols, fb_cols() - 1),
+            end_row = MIN(start_row + page_rows, fb_rows() - 1);
+        int i, page_row;
 
         left = MAX(0, MIN(page_cols - fb_cols(), left));
         head = MAX(0, MIN(page_rows - fb_rows(), head));
 
-        for (i = 0; i <= start_row; ++i) {
-                fb_set(i, 0, ((void *)pbuf) + (sizeof(pbuf) - PDFCOLS * bpp),
-                       fb_cols());
+        for (i = 0; i < start_row; ++i) {
+          fb_clear(i, 0, fb_cols());
         }
-
-	for (i = head; i < head + fb_rows() - start_row; i++)
-		fb_set(i - head + start_row, start_col,
-                       ((void *)pbuf) + (i * PDFCOLS + left) * bpp,
-                       fb_cols());
+        for (i = start_row, page_row = head;
+             (i <= end_row) && (page_row < page_rows); ++i) {
+          fb_clear(i, 0, start_col);
+          fb_set(i, start_col,
+              ((void *)pbuf) + ((i - start_row + head) * PDFCOLS + left) * bpp,
+              fb_cols() - start_col - 1);
+        }
+        for (i = end_row + 1; i < fb_rows(); ++i) {
+          fb_clear(i, 0, fb_cols());
+        }
 }
 
 static int showpage(int p, int h)

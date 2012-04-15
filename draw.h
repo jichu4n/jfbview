@@ -17,3 +17,4 @@ void fb_cmap(void);
 /* helper functions */
 void fb_set(int r, int c, void *mem, int len);
 unsigned fb_val(int r, int g, int b);
+void fb_clear(int r, int c, int len);
