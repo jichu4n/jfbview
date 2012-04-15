@@ -31,8 +31,13 @@ static struct doc *doc;
 static int num = 1;
 static struct termios termios;
 static char filename[256];
-static int mark[128];		/* page marks */
-static int mark_head[128];	/* head in page marks */
+static struct Mark {
+  int PageNum;
+  int Zoom;
+  int Rotate;
+  int Head;
+  int Left;
+} marks[128];
 static int zoom = 10;
 static int rotate;
 static int head;
@@ -146,6 +151,7 @@ static void mainloop(void)
 	int c, c2;
 	term_setup();
 	signal(SIGCONT, sigcont);
+        memset(marks, 0, sizeof(marks));
         fit_to_width();
         draw();
 	while ((c = readkey()) != -1) {
@@ -162,8 +168,11 @@ static void mainloop(void)
 		case 'm':
 			c2 = readkey();
 			if (isalpha(c2)) {
-				mark[c2] = num;
-				mark_head[c2] = head;
+				marks[c2].PageNum = num;
+                                marks[c2].Zoom = zoom;
+                                marks[c2].Rotate = rotate;
+                                marks[c2].Head = head;
+                                marks[c2].Left = left;
 			}
 			break;
 		case 'e':
@@ -172,12 +181,6 @@ static void mainloop(void)
                 case 's':
                         fit_to_width();
                         break;
-		case '`':
-		case '\'':
-			c2 = readkey();
-			if (isalpha(c2) && mark[c2])
-				showpage(mark[c2], c == '`' ? mark_head[c2] : 0);
-			break;
 		default:
 			if (isdigit(c))
 				count = count * 10 + c - '0';
@@ -231,6 +234,16 @@ static void mainloop(void)
 			head -= fb_rows() * getcount(1) - step;
 			break;
 		case CTRLKEY('l'):
+			break;
+		case '`':
+		case '\'':
+			c2 = readkey();
+			if (isalpha(c2) && marks[c2].PageNum) {
+				zoom = marks[c2].Zoom;
+                                rotate = marks[c2].Rotate;
+                                left = marks[c2].Left;
+                                showpage(marks[c2].PageNum, marks[c2].Head);
+                        }
 			break;
 		default:
 			/* no need to redraw */
