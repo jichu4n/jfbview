@@ -27,12 +27,10 @@
 #define CTRLKEY(x)		((x) - 96)
 #define MAXWIDTH		2
 #define MAXHEIGHT		3
-#define PDFCOLS			(1 << 11)
-#define PDFROWS			(1 << 12)
 #define MAXZOOM                 30
 #define MINZOOM                 1
 
-static fbval_t pbuf[PDFROWS * PDFCOLS];
+static void *pbuf = NULL;
 static struct doc *doc;
 
 static int num = 1;
@@ -52,8 +50,8 @@ static int left;
 static int count;
 static int bpp;                 /* set by main(). */
 static int zoom_step = 1;       /* multiples of 10% to zoom in or out */
-static int page_rows = PDFROWS; /* actual width of current page in pixels */
-static int page_cols = PDFCOLS; /* actual height of current page in pixels */
+static int page_rows = 0; /* actual width of current page in pixels */
+static int page_cols = 0; /* actual height of current page in pixels */
 
 static void draw(void)
 {
@@ -61,6 +59,10 @@ static void draw(void)
             start_row = MAX((fb_rows() - page_rows) >> 1, 0);
         int end_row = MIN(start_row + page_rows, fb_rows() - 1);
         int i, page_row;
+
+        if (pbuf == NULL) {
+          return;
+        }
 
         left = MAX(0, MIN(page_cols - fb_cols(), left));
         head = MAX(0, MIN(page_rows - fb_rows(), head));
@@ -72,7 +74,7 @@ static void draw(void)
              (i <= end_row) && (page_row < page_rows); ++i) {
           fb_clear(i, 0, start_col);
           fb_set(i, start_col,
-              ((void *)pbuf) + ((i - start_row + head) * PDFCOLS + left) * bpp,
+              pbuf + ((i - start_row + head) * page_cols + left) * bpp,
               fb_cols() - start_col - 1);
         }
         for (i = end_row + 1; i < fb_rows(); ++i) {
@@ -82,15 +84,18 @@ static void draw(void)
 
 static int showpage(int p, int h)
 {
+        void *new_buffer = NULL;
 	if (p < 1 || p > doc_pages(doc))
 		return 0;
-	memset(pbuf, 0x00, sizeof(pbuf));
         zoom = MAX(MIN(zoom, MAXZOOM), MINZOOM);
-	doc_draw(doc, pbuf, p, PDFROWS, PDFCOLS, zoom, rotate);
-        doc_geometry(doc, &page_rows, &page_cols);
-	num = p;
-	head = h;
-	return 0;
+	if ((new_buffer = doc_draw(doc, p, zoom, rotate)) != NULL) {
+          free(pbuf);
+          pbuf = new_buffer;
+          doc_geometry(doc, &page_rows, &page_cols);
+          num = p;
+          head = h;
+        }
+        return 0;
 }
 
 static int getcount(int def)
@@ -153,7 +158,7 @@ static void set_zoom(int new_zoom) {
 
 /* Automatically adjust zoom to fit current page to screen width. */
 static void fit_to_width() {
-  doc_draw(doc, pbuf, num, PDFROWS, PDFCOLS, 10, rotate);
+  free(doc_draw(doc, num, 10, rotate));
   doc_geometry(doc, &page_rows, &page_cols);
   set_zoom(fb_cols() * 10 / page_cols);
 }
@@ -312,8 +317,7 @@ static void mainloop(void)
                       (num <= 1)) {
                     head = 0;
                   } else {
-                    doc_draw(doc, pbuf, num - 1, PDFROWS, PDFCOLS, zoom,
-                        rotate);
+                    pbuf = doc_draw(doc, num - 1, zoom, rotate);
                     doc_geometry(doc, &page_rows, &page_cols);
                     showpage(num - 1, page_rows - fb_rows());
                   }
@@ -360,6 +364,7 @@ int main(int argc, char *argv[])
         bpp = FBM_BPP(fb_mode());
         mainloop();
 	fb_free();
+        free(pbuf);
 	write(STDOUT_FILENO, clear, strlen(clear));
 	write(STDOUT_FILENO, repos, strlen(clear));
 	write(STDIN_FILENO, show, strlen(show));

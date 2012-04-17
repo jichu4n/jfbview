@@ -48,8 +48,7 @@ static void free_outline(struct outline *it) {
   }
 }
 
-int doc_draw(struct doc *doc, fbval_t *bitmap, int p, int rows, int cols, int zoom, int rotate)
-{
+void *doc_draw(struct doc *doc, int p, int zoom, int rotate) {
 	fz_matrix ctm;
 	fz_bbox bbox;
 	fz_pixmap *pix;
@@ -58,13 +57,15 @@ int doc_draw(struct doc *doc, fbval_t *bitmap, int p, int rows, int cols, int zo
 	pdf_page *page;
 	int x, y;
         int bpp = FBM_BPP(fb_mode());
+        void *buffer = NULL;
+        int buffer_size = 0;
 
 	if (pdf_load_page(&page, doc->xref, p - 1))
-		return 1;
+		return NULL;
 	list = fz_new_display_list();
 	dev = fz_new_list_device(list);
 	if (pdf_run_page(doc->xref, page, dev, fz_identity))
-		return 1;
+		return NULL;
 	fz_free_device(dev);
 
 	ctm = fz_translate(0, -page->mediabox.y1);
@@ -80,22 +81,26 @@ int doc_draw(struct doc *doc, fbval_t *bitmap, int p, int rows, int cols, int zo
 	fz_execute_display_list(list, dev, ctm, bbox);
 	fz_free_device(dev);
 
-        doc->rows = MIN(pix->h, rows);
-        doc->cols = MIN(pix->w, cols);
-	for (y = 0; y < doc->rows; y++) {
-		for (x = 0; x < doc->cols; x++) {
-			unsigned char *s = pix->samples + y * pix->w * 4 + x * 4;
-                        fbval_t *d = (fbval_t *)(((void *)bitmap) +
-                                                 (y * cols + x) * bpp);
-			*d = FB_VAL(s[0], s[1], s[2]);
+        doc->rows = pix->h;
+        doc->cols = pix->w;
+        buffer_size = doc->rows * doc->cols * bpp;
+        if ((buffer = malloc(buffer_size)) == NULL) {
+          return NULL;
+        }
+        memset(buffer, 0, buffer_size);
+        for (y = 0; y < doc->rows; y++) {
+          for (x = 0; x < doc->cols; x++) {
+            unsigned char *s = pix->samples + ((y * doc->cols + x) << 2);
+            fbval_t *d = (fbval_t *)(buffer + (y * doc->cols + x) * bpp);
+            *d = FB_VAL(s[0], s[1], s[2]);
 
-		}
-	}
+          }
+        }
 	fz_drop_pixmap(pix);
 	fz_free_display_list(list);
 	pdf_free_page(page);
 	pdf_age_store(doc->xref->store, 3);
-	return 0;
+	return buffer;
 }
 
 int doc_pages(struct doc *doc)
