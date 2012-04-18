@@ -57,7 +57,8 @@ static void draw(void)
 {
         int start_col = MAX((fb_cols() - page_cols) >> 1, 0),
             start_row = MAX((fb_rows() - page_rows) >> 1, 0);
-        int end_row = MIN(start_row + page_rows, fb_rows() - 1);
+        int end_row = MIN(start_row + page_rows, fb_rows() - 1),
+            end_col = MIN(start_col + page_cols, fb_cols() - 1);
         int i, page_row;
 
         if (pbuf == NULL) {
@@ -75,7 +76,8 @@ static void draw(void)
           fb_clear(i, 0, start_col);
           fb_set(i, start_col,
               pbuf + ((i - start_row + head) * page_cols + left) * bpp,
-              fb_cols() - start_col - 1);
+              MIN(fb_cols(), page_cols - left));
+          fb_clear(i, end_col, fb_cols() - end_col - 1);
         }
         for (i = end_row + 1; i < fb_rows(); ++i) {
           fb_clear(i, 0, fb_cols());
@@ -158,9 +160,10 @@ static void set_zoom(int new_zoom) {
 
 /* Automatically adjust zoom to fit current page to screen width. */
 static void fit_to_width() {
+  int orig_page_rows, orig_page_cols;
   free(doc_draw(doc, num, 10, rotate));
-  doc_geometry(doc, &page_rows, &page_cols);
-  set_zoom(fb_cols() * 10 / page_cols);
+  doc_geometry(doc, &orig_page_rows, &orig_page_cols);
+  set_zoom(fb_cols() * 10 / orig_page_cols);
 }
 
 static void mainloop(void)
@@ -199,9 +202,6 @@ static void mainloop(void)
 		case 'e':
 			reload();
 			break;
-                case 's':
-                        fit_to_width();
-                        break;
                 case '\t': {
                           int dest_page = outline_view(doc);
                           if (dest_page > 0) {
@@ -298,6 +298,9 @@ static void mainloop(void)
                                 showpage(marks[c2].PageNum, marks[c2].Head);
                         }
 			break;
+                case 's':
+                        fit_to_width();
+                        break;
 		default:
 			/* no need to redraw */
 			continue;

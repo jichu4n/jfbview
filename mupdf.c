@@ -93,7 +93,6 @@ void *doc_draw(struct doc *doc, int p, int zoom, int rotate) {
             unsigned char *s = pix->samples + ((y * doc->cols + x) << 2);
             fbval_t *d = (fbval_t *)(buffer + (y * doc->cols + x) * bpp);
             *d = FB_VAL(s[0], s[1], s[2]);
-
           }
         }
 	fz_drop_pixmap(pix);
