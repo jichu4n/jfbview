@@ -83,6 +83,15 @@ static void draw() {
   fflush(stdout);
 }
 
+/* Expands/folds all items. */
+static void expand_all(struct outline *i, bool expand) {
+  if (i != NULL) {
+    i->expand = expand;
+    expand_all(i->next, expand);
+    expand_all(i->first_child, expand);
+  }
+}
+
 static int main_loop() {
   for (;;) {
     draw();
@@ -122,6 +131,20 @@ static int main_loop() {
      case 'q':
      case 0x1b:
       return -1;
+     case 'z':
+      switch (GetChar()) {
+       case 'M':
+        expand_all(doc_outline(doc), false);
+        break;
+       case 'R':
+        expand_all(doc_outline(doc), true);
+        break;
+       default:
+        break;
+      }
+      break;
+     default:
+      break;
     }
   }
 }
