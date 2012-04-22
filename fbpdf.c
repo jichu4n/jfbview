@@ -43,7 +43,7 @@ static struct Mark {
   int Head;
   int Left;
 } marks[128];
-static int zoom = 10;
+static int zoom = -1;
 static int rotate;
 static int head;
 static int left;
@@ -161,9 +161,9 @@ static void set_zoom(int new_zoom) {
 /* Automatically adjust zoom to fit current page to screen width. */
 static void fit_to_width() {
   int orig_page_rows, orig_page_cols;
-  free(doc_draw(doc, num, 10, rotate));
+  free(doc_draw(doc, num, 1, rotate));
   doc_geometry(doc, &orig_page_rows, &orig_page_cols);
-  set_zoom(fb_cols() * 10 / orig_page_cols);
+  set_zoom(fb_cols() / orig_page_cols);
 }
 
 static void mainloop(void)
@@ -174,7 +174,11 @@ static void mainloop(void)
 	term_setup();
 	signal(SIGCONT, sigcont);
         memset(marks, 0, sizeof(marks));
-        fit_to_width();
+        if (zoom > 0) {
+          showpage(num, 0);
+        } else {
+          fit_to_width();
+        }
         draw();
 	while ((c = GetChar()) != -1) {
                 int maxhead;
