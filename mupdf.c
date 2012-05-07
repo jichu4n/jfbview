@@ -127,8 +127,8 @@ void doc_close(struct doc *doc)
 {
   free_outline(doc->outline);
   pdf_close_document(doc->document);
-  free(doc);
   fz_free_context(doc->context);
+  free(doc);
 }
 
 void doc_geometry(struct doc *doc, int *rows, int *cols) {
