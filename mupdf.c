@@ -60,8 +60,9 @@ void *doc_draw(struct doc *doc, int p, int zoom, int rotate) {
   void *buffer = NULL;
   int buffer_size = 0;
 
-  if ((page = pdf_load_page(doc->document, p - 1)))
+  if ((page = pdf_load_page(doc->document, p - 1)) == NULL) {
     return NULL;
+  }
   list = fz_new_display_list(doc->context);
   dev = fz_new_list_device(doc->context, list);
   pdf_run_page(doc->document, page, dev, fz_identity, NULL);
@@ -83,6 +84,7 @@ void *doc_draw(struct doc *doc, int p, int zoom, int rotate) {
 
   doc->rows = fz_pixmap_height(doc->context, pix);
   doc->cols = fz_pixmap_width(doc->context, pix);
+
   buffer_size = doc->rows * doc->cols * bpp;
   if ((buffer = malloc(buffer_size)) == NULL) {
     fz_free_context(doc->context);
@@ -93,7 +95,8 @@ void *doc_draw(struct doc *doc, int p, int zoom, int rotate) {
     for (x = 0; x < doc->cols; x++) {
       unsigned char *s = fz_pixmap_samples(doc->context, pix) +
         ((y * doc->cols + x) << 2);
-      fbval_t *d = (fbval_t *)(buffer + (y * doc->cols + x) * bpp);
+      int yd = doc->rows - y - 1;
+      fbval_t *d = (fbval_t *)(buffer + (yd * doc->cols + x) * bpp);
       *d = FB_VAL(s[0], s[1], s[2]);
     }
   }
