@@ -23,17 +23,24 @@
 #define PDFDOCUMENT_HPP
 
 #include "document.hpp"
-
-struct fz_context;
-struct fz_outline;
-struct pdf_document;
+extern "C" {
+#include <mupdf.h>
+}
+#include <list>
+#include <map>
 
 // Document implementation using MuPDF.
 class PDFDocument: public Document {
  public:
+  // Default size of page cache.
+  enum { DEFAULT_PAGE_CACHE_SIZE = 5 };
+
   virtual ~PDFDocument();
-  // Factory method to construct an instance of PDFDocument.
-  static PDFDocument *Open(const std::string &path);
+  // Factory method to construct an instance of PDFDocument. path gives the path
+  // to a PDF file. page_cache_size specifies the maximum number of pages to
+  // store in memory.
+  static PDFDocument *Open(const std::string &path,
+                           int page_cache_size = DEFAULT_PAGE_CACHE_SIZE);
   // See Document.
   virtual int GetPageCount();
   // See Document.
@@ -59,8 +66,21 @@ class PDFDocument: public Document {
     fz_outline *_src;
   };
  private:
+  // MuPDF structures.
   fz_context *_fz_context;
   pdf_document *_pdf_document;
+  // Max page cache size.
+  int _page_cache_size;
+  // Page cache. Maps page number to page structure. Does not maintain
+  // ownership.
+  std::map<int, pdf_page *> _page_cache_map;
+  // Page cache, ordered by load age. Maintains ownership.
+  std::list<pdf_page *> _page_cache_list;
+
+  // Wrapper around pdf_load_page that implements caching. If _page_cache_size
+  // is reached, throw out the oldest page. Will also attempt to load the pages
+  // before and after specified page. Returns the loaded page.
+  pdf_page *GetPage(int page);
 };
 
 #endif
