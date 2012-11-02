@@ -19,8 +19,8 @@
 // This file declares PDFDocument, an implementation of the Document abstraction
 // using MuPDF.
 
-#ifndef PDFDOCUMENT_HPP
-#define PDFDOCUMENT_HPP
+#ifndef PDF_DOCUMENT_HPP
+#define PDF_DOCUMENT_HPP
 
 #include "document.hpp"
 extern "C" {

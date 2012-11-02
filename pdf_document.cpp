@@ -19,7 +19,7 @@
 // This file defines PDFDocument, an implementation of the Document abstraction
 // using MuPDF.
 
-#include "pdfdocument.hpp"
+#include "pdf_document.hpp"
 #include <cassert>
 #include <cstring>
 #include <algorithm>
