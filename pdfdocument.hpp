@@ -26,8 +26,9 @@
 extern "C" {
 #include <mupdf.h>
 }
-#include <list>
+#include <queue>
 #include <map>
+#include <vector>
 
 // Document implementation using MuPDF.
 class PDFDocument: public Document {
@@ -44,16 +45,16 @@ class PDFDocument: public Document {
   // See Document.
   virtual int GetPageCount();
   // See Document.
-  virtual const PageSize GetPageSize(int page);
+  virtual const PageSize GetPageSize(int page, float zoom, int rotation);
   // See Document.
-  virtual void *Render(int depth, int page, float zoom, int rotation);
+  virtual void Render(PixelWriter *pw, int page, float zoom, int rotation);
   // See Document.
   virtual const OutlineItem *GetOutline();
   // See Document.
-  virtual int Lookup(const OutlineItem &item);
+  virtual int Lookup(const OutlineItem *item);
  private:
   // We disallow the constructor; use the factory method Open() instead.
-  PDFDocument();
+  PDFDocument() {}
   // We disallow copying because we store lots of heap allocated state.
   PDFDocument(const PDFDocument &other);
 
@@ -62,6 +63,7 @@ class PDFDocument: public Document {
    public:
     PDFOutlineItem(fz_outline *src);
     virtual ~PDFOutlineItem();
+    int GetPageNum();
    private:
     fz_outline *_src;
   };
@@ -73,14 +75,21 @@ class PDFDocument: public Document {
   int _page_cache_size;
   // Page cache. Maps page number to page structure. Does not maintain
   // ownership.
-  std::map<int, pdf_page *> _page_cache_map;
+  std::map<int, pdf_page *> _page_cache_map_num;
+  // Page cache. Maps page structure to page number. Does not maintain
+  // ownership.
+  std::map<pdf_page *, int> _page_cache_map_struct;
   // Page cache, ordered by load age. Maintains ownership.
-  std::list<pdf_page *> _page_cache_list;
+  std::queue<pdf_page *> _page_cache_queue;
 
   // Wrapper around pdf_load_page that implements caching. If _page_cache_size
   // is reached, throw out the oldest page. Will also attempt to load the pages
   // before and after specified page. Returns the loaded page.
   pdf_page *GetPage(int page);
+  // Constructs a transformation matrix from the given parameters.
+  fz_matrix Transform(float zoom, int rotation);
+  // Returns a bounding box for the given page after applying transformations.
+  fz_bbox GetBoundingBox(pdf_page *page_struct, const fz_matrix &m);
 };
 
 #endif

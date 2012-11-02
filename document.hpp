@@ -37,6 +37,13 @@ class Document {
     }
   };
 
+  // An interface for a callback that stores a pixel in a memory buffer.
+  class PixelWriter {
+   public:
+    // Writes a pixel value (r, g, b) to position (x, y).
+    virtual void Write(int r, int g, int b, int x, int y) = 0;
+  };
+
   // An item in a outline. An item may contain further children items.
   class OutlineItem {
    public:
@@ -57,20 +64,22 @@ class Document {
   virtual ~Document();
   // Returns the number of pages in the document.
   virtual int GetPageCount() = 0;
-  // Returns the size of a page, in pixels.
-  virtual const PageSize GetPageSize(int page) = 0;
+  // Returns the size of a page, in pixels. zoom gives the zoom ratio as a
+  // fraction, e.g., 1.5 = 150%. rotation is the desired rotation in clockwise
+  // degrees.
+  virtual const PageSize GetPageSize(int page, float zoom=1.0f,
+                                     int rotation=0) = 0;
   // Renders the given page to a buffer. Page numbers are 0-based. zoom gives
-  // the zoom ratio, e.g., 1.5 = 150%. rotation is the desired rotation in
-  // clockwise degrees. depth is the bit-depth in bytes of the buffer, so a
-  // 32bbp buffer should have a depth of 4.  Returns a newly allocated buffer
-  // containing the rendered page. Caller owns returned buffer. If an error
-  // occurred during the rendering, NULL is returned.
-  virtual void *Render(int depth, int page, float zoom, int rotation) = 0;
+  // the zoom ratio as a fraction, e.g., 1.5 = 150%. rotation is the desired
+  // rotation in clockwise degrees. For every rendered pixel, pw will be invoked
+  // to store that pixel value somewhere.
+  virtual void Render(PixelWriter *pw, int page, float zoom, int rotation) = 0;
   // Returns the outline of this document. The returned item represents the
-  // top-level element in the outline, and is owned by the caller.
+  // top-level element in the outline, and is owned by the caller. If the
+  // document does not have an outline, return NULL.
   virtual const OutlineItem *GetOutline() = 0;
   // Returns the page number referred to by an outline item.
-  virtual int Lookup(const OutlineItem &item) = 0;
+  virtual int Lookup(const OutlineItem *item) = 0;
 };
 
 #endif

@@ -20,6 +20,8 @@
 
 #include "document.hpp"
 
+Document::~Document() { }
+
 Document::OutlineItem::~OutlineItem() {
   for (std::vector<OutlineItem *>::iterator i = _children.begin();
        i != _children.end(); ++i) {
