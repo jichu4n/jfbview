@@ -74,8 +74,7 @@ struct RenderThreadArgs {
   // top-left to (Width - 1, YEnd - 1) at the bottom-right.
   int Width;
   // The pixmap memory buffer. Each pixel takes up 3 bytes, one each for r, g,
-  // and b components in that order. This should be the address of the region
-  // a thread is responsible for, rather than the beginning of the entire
+  // and b components in that order. This should be the beginning of the entire
   // pixmap buffer.
   unsigned char *Buffer;
   // The pixel writer.
@@ -86,7 +85,7 @@ struct RenderThreadArgs {
 // argument should be a RenderThreadArgs.
 void *RenderThread(void *_args) {
   RenderThreadArgs *args = reinterpret_cast<RenderThreadArgs *>(_args);
-  unsigned char *p = args->Buffer;
+  unsigned char *p = args->Buffer + args->YBegin * args->Width * 3;
   for (int y = args->YBegin; y < args->YEnd; ++y) {
     for (int x = 0; x < args->Width; ++x) {
       args->Writer->Write(x, y, p[0], p[1], p[2]);
@@ -125,7 +124,7 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
         fz_pixmap_height(_fz_context, pixmap) :
         (i + 1) * num_rows_per_thread;
     args[i].Width = fz_pixmap_width(_fz_context, pixmap);
-    args[i].Buffer = p + args[i].YBegin * args[i].Width * 3;
+    args[i].Buffer = p;
     args[i].Writer = pw;
     pthread_create(&(threads[i]), NULL, &RenderThread, &(args[i]));
   }
