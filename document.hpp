@@ -40,7 +40,8 @@ class Document {
   // An interface for a callback that stores a pixel in a memory buffer.
   class PixelWriter {
    public:
-    // Writes a pixel value (r, g, b) to position (x, y).
+    // Writes a pixel value (r, g, b) to position (x, y). It is important that
+    // Write be thread-safe when called with different (x, y).
     virtual void Write(int x, int y, int r, int g, int b) = 0;
   };
 

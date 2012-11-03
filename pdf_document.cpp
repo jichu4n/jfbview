@@ -22,6 +22,8 @@
 #include "pdf_document.hpp"
 #include <cassert>
 #include <cstring>
+#include <unistd.h>
+#include <pthread.h>
 #include <algorithm>
 #include <new>
 
@@ -62,6 +64,40 @@ const Document::PageSize PDFDocument::GetPageSize(
   return PageSize(bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
 }
 
+namespace {
+
+// Argument to RenderThread.
+struct RenderThreadArgs {
+  // The first and (last + 1) rows to render. The area rendered is bounded by
+  // (0, YBegin) at the top-left to (Width, YEnd - 1) at the bottom-right.
+  int YBegin, YEnd;
+  // The number of columns; the area rendered is bounded by (0, YBegin) at the
+  // top-left to (Width - 1, YEnd - 1) at the bottom-right.
+  int Width;
+  // The pixmap memory buffer. Each pixel takes up 3 bytes, one each for r, g,
+  // and b components in that order. This should be the address of the region
+  // a thread is responsible for, rather than the beginning of the entire
+  // pixmap buffer.
+  unsigned char *Buffer;
+  // The pixel writer.
+  Document::PixelWriter *Writer;
+};
+
+// Renders a vertical segment on a thread, passed to pthread_create. The
+// argument should be a RenderThreadArgs.
+void *RenderThread(void *_args) {
+  RenderThreadArgs *args = reinterpret_cast<RenderThreadArgs *>(_args);
+  unsigned char *p = args->Buffer;
+  for (int y = args->YBegin; y < args->YEnd; ++y) {
+    for (int x = 0; x < args->Width; ++x) {
+      args->Writer->Write(x, y, p[0], p[1], p[2]);
+      p += 3;
+    }
+  }
+}
+
+}
+
 void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
                          int rotation) {
   assert((page >= 0) && (page < GetPageCount()));
@@ -77,15 +113,28 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
   pdf_run_page(_pdf_document, page_struct, dev, m, NULL);
 
-  // 3. Write pixmap to buffer.
+  // 3. Write pixmap to buffer using #CPUs threads.
   unsigned char *p = fz_pixmap_samples(_fz_context, pixmap);
   assert(fz_pixmap_components(_fz_context, pixmap) == 3);
-  for (int y = 0; y < fz_pixmap_height(_fz_context, pixmap); ++y) {
-    for (int x = 0; x < fz_pixmap_width(_fz_context, pixmap); ++x) {
-      pw->Write(x, y, p[0], p[1], p[2]);
-      p += 3;
-    }
+  int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+  int num_rows_per_thread = fz_pixmap_height(_fz_context, pixmap) / num_threads;
+  pthread_t *threads = new pthread_t[num_threads];
+  RenderThreadArgs *args = new RenderThreadArgs[num_threads];
+  for (int i = 0; i < num_threads; ++i) {
+    args[i].YBegin = i * num_rows_per_thread;
+    args[i].YEnd = (i == num_threads - 1) ?
+        fz_pixmap_height(_fz_context, pixmap) :
+        (i + 1) * num_rows_per_thread;
+    args[i].Width = fz_pixmap_width(_fz_context, pixmap);
+    args[i].Buffer = p + args[i].YBegin * args[i].Width * 3;
+    args[i].Writer = pw;
+    pthread_create(&(threads[i]), NULL, &RenderThread, &(args[i]));
   }
+  for (int i = 0; i < num_threads; ++i) {
+    pthread_join(threads[i], NULL);
+  }
+  delete[] args;
+  delete[] threads;
 
   // 4. Clean up.
   fz_free_device(dev);
