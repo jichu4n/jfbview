@@ -49,7 +49,6 @@ class Cache {
   // This is thrown by Load and Discard if not redefined in child class.
   class UnimplementedError: public std::exception {
    public:
-    virtual ~UnimplementedError() {}
     virtual const char *what() const throw();
   };
  protected:
@@ -59,7 +58,7 @@ class Cache {
   }
   // Frees an element that has been evicted from the cache. This should be
   // overridden in child classes.
-  void Discard(const K &key, const V &value) {
+  void Discard(const K &key, V &value) {
     throw UnimplementedError();
   }
  private:
@@ -106,7 +105,7 @@ Cache<K, V>::Cache(int size)
 
 template <typename K, typename V>
 Cache<K, V>::~Cache() {
-  for (typename std::map<K, V>::const_iterator i = _map.begin();
+  for (typename std::map<K, V>::iterator i = _map.begin();
        i != _map.end(); ++i) {
     Discard(i->first, i->second);
   }
