@@ -123,8 +123,9 @@ V Cache<K, V>::Get(const K &key) {
   }
   while (_queue.size() >= _size) {
     K victim = _queue.front();
-    _queue.pop();
     Discard(victim, _map[victim]);
+    _queue.pop();
+    _map.erase(victim);
   }
   _map[key] = Load(key);
   _queue.push(key);
