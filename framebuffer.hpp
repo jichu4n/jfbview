@@ -28,6 +28,15 @@
 class Framebuffer {
  public:
   static const char * const DEFAULT_FRAMEBUFFER_DEVICE;
+  // Size in pixels.
+  struct ScreenSize {
+    int Width;
+    int Height;
+
+    ScreenSize(int width, int height)
+        : Width(width), Height(height) {
+    }
+  };
   // Factory method to initialize a framebuffer device and returns an
   // abstraction object. Returns NULL if the initialization failed. Caller owns
   // returned object.
@@ -40,6 +49,8 @@ class Framebuffer {
   int GetDepth() const;
   // Set a pixel on the framebuffer.
   void WritePixel(int x, int y, int r, int g, int b);
+  // Retrieve the dimensions of the current display, in pixels.
+  ScreenSize GetSize() const;
  private:
   // File descriptor of the opened framebuffer device.
   int _fd;
