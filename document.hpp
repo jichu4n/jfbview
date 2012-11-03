@@ -41,7 +41,7 @@ class Document {
   class PixelWriter {
    public:
     // Writes a pixel value (r, g, b) to position (x, y).
-    virtual void Write(int r, int g, int b, int x, int y) = 0;
+    virtual void Write(int x, int y, int r, int g, int b) = 0;
   };
 
   // An item in a outline. An item may contain further children items.

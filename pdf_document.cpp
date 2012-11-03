@@ -82,7 +82,7 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   assert(fz_pixmap_components(_fz_context, pixmap) == 3);
   for (int y = 0; y < fz_pixmap_height(_fz_context, pixmap); ++y) {
     for (int x = 0; x < fz_pixmap_width(_fz_context, pixmap); ++x) {
-      pw->Write(p[0], p[1], p[2], x, y);
+      pw->Write(x, y, p[0], p[1], p[2]);
       p += 3;
     }
   }
@@ -92,23 +92,49 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   fz_drop_pixmap(_fz_context, pixmap);
 }
 
-const OutlineItem *PDFDocument::GetOutline() {
+const Document::OutlineItem *PDFDocument::GetOutline() {
   fz_outline *src = pdf_load_outline(_pdf_document);
-  return (src == NULL) ? NULL : new PDFOutlineItem(src);
+  return (src == NULL) ? NULL : PDFOutlineItem::Build(src);
 }
 
 int PDFDocument::Lookup(const OutlineItem *item) {
-  return (dynamic_cast<PDFOutlineItem *>(item))->GetPageNum();
+  return (dynamic_cast<const PDFOutlineItem *>(item))->GetPageNum();
 }
 
 PDFDocument::PDFOutlineItem::PDFOutlineItem(fz_outline *src)
     : _src(src) {
-  _title = src->title;
-  // TODO: write this.
+  _title = (src == NULL) ? "" : src->title;
 }
 
-int PDFDocument::PDFOutlineItem::GetPageNum() {
+int PDFDocument::PDFOutlineItem::GetPageNum() const {
   return _src->dest.ld.gotor.page;
+}
+
+PDFDocument::PDFOutlineItem *PDFDocument::PDFOutlineItem::Build(
+    fz_outline *src) {
+  std::vector<OutlineItem *> items;
+  BuildRecursive(src, &items);
+  if (items.empty()) {
+    return NULL;
+  } else if (items.size() == 1) {
+    return dynamic_cast<PDFOutlineItem *>(items[0]);
+  } else {
+    PDFOutlineItem *root = new PDFOutlineItem(NULL);
+    root->_children.insert(root->_children.begin(), items.begin(), items.end());
+    return root;
+  }
+}
+
+void PDFDocument::PDFOutlineItem::BuildRecursive(
+    fz_outline *src, std::vector<Document::OutlineItem *> *output) {
+  assert(output != NULL);
+  for (fz_outline *i = src; i != NULL; i = i->next) {
+    PDFOutlineItem *item = new PDFOutlineItem(i);
+    if (i->down != NULL) {
+      BuildRecursive(i->down, &(item->_children));
+    }
+    output->push_back(item);
+  }
 }
 
 pdf_page *PDFDocument::GetPage(int page) {

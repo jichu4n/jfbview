@@ -57,15 +57,26 @@ class PDFDocument: public Document {
   PDFDocument() {}
   // We disallow copying because we store lots of heap allocated state.
   PDFDocument(const PDFDocument &other);
+  PDFDocument &operator = (const PDFDocument &other);
 
   // Actual outline item implementation.
   class PDFOutlineItem: public OutlineItem {
    public:
-    PDFOutlineItem(fz_outline *src);
     virtual ~PDFOutlineItem();
-    int GetPageNum();
+    // See Document::OutlineItem.
+    int GetPageNum() const;
+    // Factory method to create outline items from a fz_outline. This constructs
+    // the entire outline hierarchy.
+    static PDFOutlineItem *Build(fz_outline *src);
    private:
     fz_outline *_src;
+    // We disallow constructors; use the factory method Build() instead.
+    PDFOutlineItem(fz_outline *src);
+    // No reason to allow copy constructor.
+    PDFOutlineItem(const PDFOutlineItem &);
+    // Recursive construction.
+    static void BuildRecursive(fz_outline *src,
+                               std::vector<OutlineItem *> *output);
   };
  private:
   // MuPDF structures.
