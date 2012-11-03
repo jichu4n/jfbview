@@ -53,12 +53,6 @@ class PDFDocument: public Document {
   // See Document.
   virtual int Lookup(const OutlineItem *item);
  private:
-  // We disallow the constructor; use the factory method Open() instead.
-  PDFDocument() {}
-  // We disallow copying because we store lots of heap allocated state.
-  PDFDocument(const PDFDocument &other);
-  PDFDocument &operator = (const PDFDocument &other);
-
   // Actual outline item implementation.
   class PDFOutlineItem: public OutlineItem {
    public:
@@ -78,7 +72,7 @@ class PDFDocument: public Document {
     static void BuildRecursive(fz_outline *src,
                                std::vector<OutlineItem *> *output);
   };
- private:
+
   // MuPDF structures.
   fz_context *_fz_context;
   pdf_document *_pdf_document;
@@ -92,6 +86,12 @@ class PDFDocument: public Document {
   std::map<pdf_page *, int> _page_cache_map_struct;
   // Page cache, ordered by load age. Maintains ownership.
   std::queue<pdf_page *> _page_cache_queue;
+
+  // We disallow the constructor; use the factory method Open() instead.
+  PDFDocument() {}
+  // We disallow copying because we store lots of heap allocated state.
+  PDFDocument(const PDFDocument &other);
+  PDFDocument &operator = (const PDFDocument &other);
 
   // Wrapper around pdf_load_page that implements caching. If _page_cache_size
   // is reached, throw out the oldest page. Will also attempt to load the pages
