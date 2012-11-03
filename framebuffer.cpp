@@ -132,15 +132,40 @@ void Framebuffer::WritePixel4(unsigned int v, void *dest) {
 }
 
 #include <iostream>
+#include <pthread.h>
 using namespace std;
-int main() {
-  Framebuffer *fb = Framebuffer::Open();
+
+Framebuffer *fb;
+void *update(void *_line) {
+  int line = static_cast<int>(reinterpret_cast<long>(_line));
   for (int i = 0; i < 1000; ++i) {
-    for (int y = 0; y < 600; ++y) {
+    for (int y = 0; y < 75; ++y) {
       for (int x = 0; x < 800; ++x) {
-        fb->WritePixel(x, y, i % 0x100, i % 0x100, i % 0x100);
+        fb->WritePixel(x, y + line, i % 0x100, i % 0x100, i % 0x100);
       }
     }
   }
+  return NULL;
+}
+
+int main() {
+  fb = Framebuffer::Open();
+  pthread_t a, b, c, d, e, f, g, h;
+  pthread_create(&a, NULL, &update, reinterpret_cast<void *>(0));
+  pthread_create(&b, NULL, &update, reinterpret_cast<void *>(75));
+  pthread_create(&c, NULL, &update, reinterpret_cast<void *>(150));
+  pthread_create(&d, NULL, &update, reinterpret_cast<void *>(225));
+  pthread_create(&e, NULL, &update, reinterpret_cast<void *>(300));
+  pthread_create(&f, NULL, &update, reinterpret_cast<void *>(375));
+  pthread_create(&g, NULL, &update, reinterpret_cast<void *>(450));
+  pthread_create(&h, NULL, &update, reinterpret_cast<void *>(525));
+  pthread_join(a, NULL);
+  pthread_join(b, NULL);
+  pthread_join(c, NULL);
+  pthread_join(d, NULL);
+  pthread_join(e, NULL);
+  pthread_join(f, NULL);
+  pthread_join(g, NULL);
+  pthread_join(h, NULL);
   delete fb;
 }
