@@ -36,18 +36,17 @@ PDFDocument *PDFDocument::Open(const std::string &path,
     return NULL;
   }
 
-  PDFDocument *document = new PDFDocument();
+  PDFDocument *document = new PDFDocument(page_cache_size);
   document->_fz_context = context;
   document->_pdf_document = raw_pdf_document;
-  document->_page_cache_size = page_cache_size;
   return document;
 }
 
+PDFDocument::PDFDocument(int page_cache_size)
+    : _page_cache(page_cache_size, this) {
+}
+
 PDFDocument::~PDFDocument() {
-  while (_page_cache_queue.size()) {
-    pdf_free_page(_pdf_document, _page_cache_queue.front());
-    _page_cache_queue.pop();
-  }
   pdf_close_document(_pdf_document);
   fz_free_context(_fz_context);
 }
@@ -75,8 +74,7 @@ struct RenderThreadArgs {
   // top-left to (Width - 1, YEnd - 1) at the bottom-right.
   int Width;
   // The pixmap memory buffer. Each pixel takes up 3 bytes, one each for r, g,
-  // and b components in that order. This should be the address of the region
-  // a thread is responsible for, rather than the beginning of the entire
+  // and b components in that order. This should be the beginning of the entire
   // pixmap buffer.
   unsigned char *Buffer;
   // The pixel writer.
@@ -87,7 +85,7 @@ struct RenderThreadArgs {
 // argument should be a RenderThreadArgs.
 void *RenderThread(void *_args) {
   RenderThreadArgs *args = reinterpret_cast<RenderThreadArgs *>(_args);
-  unsigned char *p = args->Buffer;
+  unsigned char *p = args->Buffer + args->YBegin * args->Width * 3;
   for (int y = args->YBegin; y < args->YEnd; ++y) {
     for (int x = 0; x < args->Width; ++x) {
       args->Writer->Write(x, y, p[0], p[1], p[2]);
@@ -126,7 +124,7 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
         fz_pixmap_height(_fz_context, pixmap) :
         (i + 1) * num_rows_per_thread;
     args[i].Width = fz_pixmap_width(_fz_context, pixmap);
-    args[i].Buffer = p + args[i].YBegin * args[i].Width * 3;
+    args[i].Buffer = p;
     args[i].Writer = pw;
     pthread_create(&(threads[i]), NULL, &RenderThread, &(args[i]));
   }
@@ -186,36 +184,25 @@ void PDFDocument::PDFOutlineItem::BuildRecursive(
   }
 }
 
+PDFDocument::PDFPageCache::PDFPageCache(int cache_size, PDFDocument *parent)
+    : Cache<int, pdf_page *>(cache_size), _parent(parent) {
+}
+
+pdf_page *PDFDocument::PDFPageCache::Load(const int &page) {
+  return pdf_load_page(_parent->_pdf_document, page);
+}
+
+void PDFDocument::PDFPageCache::Discard(const int &page,
+                                        pdf_page * &page_struct) {
+  pdf_free_page(_parent->_pdf_document, page_struct);
+}
+
 pdf_page *PDFDocument::GetPage(int page) {
   assert((page >= 0) && (page < GetPageCount()));
-  int required_cache_slots = 0;
-  int page_start = std::max(0, page - 1),
-      page_end = std::min(GetPageCount() - 1, page + 1);
-  for (int i = page_start; i <= page_end; ++i) {
-    if (!_page_cache_map_num.count(i)) {
-      ++required_cache_slots;
-    }
+  pdf_page *page_struct = _page_cache.Get(page);
+  if (page < GetPageCount() - 1) {
+    _page_cache.Prepare(page + 1);
   }
-  int pages_to_evict = (static_cast<int>(_page_cache_queue.size()) +
-      required_cache_slots) - _page_cache_size;
-  for (int i = 0; i < pages_to_evict; ++i) {
-    pdf_page *victim = _page_cache_queue.front();
-    int victim_num = _page_cache_map_struct.find(victim)->second;
-    pdf_free_page(_pdf_document, victim);
-    _page_cache_queue.pop();
-    _page_cache_map_num.erase(victim_num);
-    _page_cache_map_struct.erase(victim);
-  }
-  for (int i = page_start; i <= page_end; ++i) {
-    if (!_page_cache_map_num.count(i)) {
-      pdf_page *new_page = pdf_load_page(_pdf_document, i);
-      assert(new_page != NULL);
-      _page_cache_queue.push(new_page);
-      _page_cache_map_num[i] = new_page;
-      _page_cache_map_struct[new_page] = i;
-    }
-  }
-  return _page_cache_map_num[page];
 }
 
 fz_matrix PDFDocument::Transform(float zoom, int rotation) {

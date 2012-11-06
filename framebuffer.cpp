@@ -96,7 +96,7 @@ void Framebuffer::WritePixel(int x, int y, int r, int g, int b) {
   (this->*_write_pixel_impl)(v, GetPixelAddress(x, y));
 }
 
-Framebuffer::ScreenSize Framebuffer::GetSize const {
+Framebuffer::ScreenSize Framebuffer::GetSize() const {
   return ScreenSize(_vinfo.xres, _vinfo.yres);
 }
 

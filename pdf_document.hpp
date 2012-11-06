@@ -22,6 +22,7 @@
 #ifndef PDF_DOCUMENT_HPP
 #define PDF_DOCUMENT_HPP
 
+#include "cache.hpp"
 #include "document.hpp"
 extern "C" {
 #include <mupdf.h>
@@ -72,23 +73,26 @@ class PDFDocument: public Document {
     static void BuildRecursive(fz_outline *src,
                                std::vector<OutlineItem *> *output);
   };
+  // Cache for pdf_page.
+  class PDFPageCache: public Cache<int, pdf_page *> {
+   public:
+    PDFPageCache(int cache_size, PDFDocument *parent);
+   protected:
+    pdf_page *Load(const int &page);
+    void Discard(const int &page, pdf_page * &page_struct);
+   private:
+    PDFDocument *_parent;
+  };
+  friend class PDFPageCache;
 
   // MuPDF structures.
   fz_context *_fz_context;
   pdf_document *_pdf_document;
-  // Max page cache size.
-  int _page_cache_size;
-  // Page cache. Maps page number to page structure. Does not maintain
-  // ownership.
-  std::map<int, pdf_page *> _page_cache_map_num;
-  // Page cache. Maps page structure to page number. Does not maintain
-  // ownership.
-  std::map<pdf_page *, int> _page_cache_map_struct;
-  // Page cache, ordered by load age. Maintains ownership.
-  std::queue<pdf_page *> _page_cache_queue;
+  // Page cache.
+  PDFPageCache _page_cache;
 
   // We disallow the constructor; use the factory method Open() instead.
-  PDFDocument() {}
+  PDFDocument(int page_cache_size);
   // We disallow copying because we store lots of heap allocated state.
   PDFDocument(const PDFDocument &other);
   PDFDocument &operator = (const PDFDocument &other);
