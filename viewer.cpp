@@ -22,6 +22,8 @@
 #include "viewer.hpp"
 #include "document.hpp"
 #include "framebuffer.hpp"
+#warning remove
+#include <cstdio>
 #include <pthread.h>
 #include <cassert>
 #include <unistd.h>
@@ -169,6 +171,7 @@ Viewer::RenderCache::~RenderCache() {
 }
 
 int *Viewer::RenderCache::Load(const RenderCacheKey &key) {
+  printf("Load %d\n", key.Page);
   const Document::PageSize &page_size =
       _parent->_doc->GetPageSize(key.Page, key.Zoom, key.Rotation);
   int buffer_size = page_size.Width * page_size.Height;
@@ -193,7 +196,9 @@ int main(int argc, char *argv[]) {
   Framebuffer *fb = Framebuffer::Open();
   assert(fb != NULL);
   Viewer *viewer = new Viewer(doc, fb);
-  viewer->Render();
+  for (int i = 0; i < 1000; ++i) {
+    viewer->Render();
+  }
 
   delete viewer;
   delete fb;
