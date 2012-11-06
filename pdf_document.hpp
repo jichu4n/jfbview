@@ -62,24 +62,32 @@ class PDFDocument: public Document {
     int GetPageNum() const;
     // Factory method to create outline items from a fz_outline. This constructs
     // the entire outline hierarchy.
-    static PDFOutlineItem *Build(fz_outline *src);
+    static PDFOutlineItem *Build(PDFDocument *parent, fz_outline *src);
    private:
+    // The document we belong to.
+    PDFDocument *_parent;
+    // The fz_outline we represent.
     fz_outline *_src;
+    // Whether we are the root of the outline hierarchy.
+    bool _is_root;
+
     // We disallow constructors; use the factory method Build() instead.
-    PDFOutlineItem(fz_outline *src);
+    PDFOutlineItem(PDFDocument *parent, fz_outline *src);
     // No reason to allow copy constructor.
     PDFOutlineItem(const PDFOutlineItem &);
     // Recursive construction.
-    static void BuildRecursive(fz_outline *src,
+    static void BuildRecursive(PDFDocument *parent, fz_outline *src,
                                std::vector<OutlineItem *> *output);
   };
+  friend class PDFOutlineItem;
   // Cache for pdf_page.
   class PDFPageCache: public Cache<int, pdf_page *> {
    public:
     PDFPageCache(int cache_size, PDFDocument *parent);
+    virtual ~PDFPageCache();
    protected:
-    pdf_page *Load(const int &page);
-    void Discard(const int &page, pdf_page * &page_struct);
+    virtual pdf_page *Load(const int &page);
+    virtual void Discard(const int &page, pdf_page * &page_struct);
    private:
     PDFDocument *_parent;
   };
@@ -89,7 +97,7 @@ class PDFDocument: public Document {
   fz_context *_fz_context;
   pdf_document *_pdf_document;
   // Page cache.
-  PDFPageCache _page_cache;
+  PDFPageCache *_page_cache;
 
   // We disallow the constructor; use the factory method Open() instead.
   PDFDocument(int page_cache_size);

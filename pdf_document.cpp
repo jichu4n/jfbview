@@ -20,10 +20,10 @@
 // using MuPDF.
 
 #include "pdf_document.hpp"
+#include <pthread.h>
 #include <cassert>
 #include <cstring>
 #include <unistd.h>
-#include <pthread.h>
 #include <algorithm>
 #include <new>
 
@@ -43,10 +43,11 @@ PDFDocument *PDFDocument::Open(const std::string &path,
 }
 
 PDFDocument::PDFDocument(int page_cache_size)
-    : _page_cache(page_cache_size, this) {
+    : _page_cache(new PDFPageCache(page_cache_size, this)) {
 }
 
 PDFDocument::~PDFDocument() {
+  delete _page_cache;
   pdf_close_document(_pdf_document);
   fz_free_context(_fz_context);
 }
@@ -65,8 +66,8 @@ const Document::PageSize PDFDocument::GetPageSize(
 
 namespace {
 
-// Argument to RenderThread.
-struct RenderThreadArgs {
+// Argument to RenderWorker.
+struct RenderWorkerArgs {
   // The first and (last + 1) rows to render. The area rendered is bounded by
   // (0, YBegin) at the top-left to (Width, YEnd - 1) at the bottom-right.
   int YBegin, YEnd;
@@ -82,16 +83,17 @@ struct RenderThreadArgs {
 };
 
 // Renders a vertical segment on a thread, passed to pthread_create. The
-// argument should be a RenderThreadArgs.
-void *RenderThread(void *_args) {
-  RenderThreadArgs *args = reinterpret_cast<RenderThreadArgs *>(_args);
-  unsigned char *p = args->Buffer + args->YBegin * args->Width * 3;
+// argument should be a RenderWorkerArgs.
+void *RenderWorker(void *_args) {
+  RenderWorkerArgs *args = reinterpret_cast<RenderWorkerArgs *>(_args);
+  unsigned char *p = args->Buffer + args->YBegin * args->Width * 4;
   for (int y = args->YBegin; y < args->YEnd; ++y) {
     for (int x = 0; x < args->Width; ++x) {
       args->Writer->Write(x, y, p[0], p[1], p[2]);
-      p += 3;
+      p += 4;
     }
   }
+  return NULL;
 }
 
 }
@@ -113,11 +115,11 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
 
   // 3. Write pixmap to buffer using #CPUs threads.
   unsigned char *p = fz_pixmap_samples(_fz_context, pixmap);
-  assert(fz_pixmap_components(_fz_context, pixmap) == 3);
+  assert(fz_pixmap_components(_fz_context, pixmap) == 4);
   int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
   int num_rows_per_thread = fz_pixmap_height(_fz_context, pixmap) / num_threads;
   pthread_t *threads = new pthread_t[num_threads];
-  RenderThreadArgs *args = new RenderThreadArgs[num_threads];
+  RenderWorkerArgs *args = new RenderWorkerArgs[num_threads];
   for (int i = 0; i < num_threads; ++i) {
     args[i].YBegin = i * num_rows_per_thread;
     args[i].YEnd = (i == num_threads - 1) ?
@@ -126,7 +128,7 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
     args[i].Width = fz_pixmap_width(_fz_context, pixmap);
     args[i].Buffer = p;
     args[i].Writer = pw;
-    pthread_create(&(threads[i]), NULL, &RenderThread, &(args[i]));
+    pthread_create(&(threads[i]), NULL, &RenderWorker, &(args[i]));
   }
   for (int i = 0; i < num_threads; ++i) {
     pthread_join(threads[i], NULL);
@@ -141,15 +143,22 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
 
 const Document::OutlineItem *PDFDocument::GetOutline() {
   fz_outline *src = pdf_load_outline(_pdf_document);
-  return (src == NULL) ? NULL : PDFOutlineItem::Build(src);
+  return (src == NULL) ? NULL : PDFOutlineItem::Build(this, src);
 }
 
 int PDFDocument::Lookup(const OutlineItem *item) {
   return (dynamic_cast<const PDFOutlineItem *>(item))->GetPageNum();
 }
 
-PDFDocument::PDFOutlineItem::PDFOutlineItem(fz_outline *src)
-    : _src(src) {
+PDFDocument::PDFOutlineItem::~PDFOutlineItem() {
+  if (_is_root) {
+    fz_free_outline(_parent->_fz_context, _src);
+  }
+}
+
+PDFDocument::PDFOutlineItem::PDFOutlineItem(PDFDocument *parent,
+                                            fz_outline *src)
+    : _parent(parent), _src(src), _is_root(false) {
   _title = (src == NULL) ? "" : src->title;
 }
 
@@ -158,27 +167,30 @@ int PDFDocument::PDFOutlineItem::GetPageNum() const {
 }
 
 PDFDocument::PDFOutlineItem *PDFDocument::PDFOutlineItem::Build(
-    fz_outline *src) {
+    PDFDocument *parent, fz_outline *src) {
+  PDFOutlineItem *root = NULL;
   std::vector<OutlineItem *> items;
-  BuildRecursive(src, &items);
+  BuildRecursive(parent, src, &items);
   if (items.empty()) {
     return NULL;
   } else if (items.size() == 1) {
-    return dynamic_cast<PDFOutlineItem *>(items[0]);
+    root =  dynamic_cast<PDFOutlineItem *>(items[0]);
   } else {
-    PDFOutlineItem *root = new PDFOutlineItem(NULL);
+    root = new PDFOutlineItem(parent, NULL);
     root->_children.insert(root->_children.begin(), items.begin(), items.end());
-    return root;
   }
+  root->_is_root = true;
+  return root;
 }
 
 void PDFDocument::PDFOutlineItem::BuildRecursive(
-    fz_outline *src, std::vector<Document::OutlineItem *> *output) {
+    PDFDocument *parent, fz_outline *src,
+    std::vector<Document::OutlineItem *> *output) {
   assert(output != NULL);
   for (fz_outline *i = src; i != NULL; i = i->next) {
-    PDFOutlineItem *item = new PDFOutlineItem(i);
+    PDFOutlineItem *item = new PDFOutlineItem(parent, i);
     if (i->down != NULL) {
-      BuildRecursive(i->down, &(item->_children));
+      BuildRecursive(parent, i->down, &(item->_children));
     }
     output->push_back(item);
   }
@@ -186,6 +198,10 @@ void PDFDocument::PDFOutlineItem::BuildRecursive(
 
 PDFDocument::PDFPageCache::PDFPageCache(int cache_size, PDFDocument *parent)
     : Cache<int, pdf_page *>(cache_size), _parent(parent) {
+}
+
+PDFDocument::PDFPageCache::~PDFPageCache() {
+  Clear();
 }
 
 pdf_page *PDFDocument::PDFPageCache::Load(const int &page) {
@@ -199,10 +215,7 @@ void PDFDocument::PDFPageCache::Discard(const int &page,
 
 pdf_page *PDFDocument::GetPage(int page) {
   assert((page >= 0) && (page < GetPageCount()));
-  pdf_page *page_struct = _page_cache.Get(page);
-  if (page < GetPageCount() - 1) {
-    _page_cache.Prepare(page + 1);
-  }
+  return _page_cache->Get(page);
 }
 
 fz_matrix PDFDocument::Transform(float zoom, int rotation) {

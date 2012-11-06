@@ -78,7 +78,6 @@ class Framebuffer {
   void WritePixel3(unsigned int v, void *dest);
   // Writes a pixel value to a location, assuming 32bpp.
   void WritePixel4(unsigned int v, void *dest);
-  friend int main();
 };
 
 #endif

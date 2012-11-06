@@ -25,7 +25,6 @@
 #define CACHE_HPP
 
 #include <pthread.h>
-#include <exception>
 #include <map>
 #include <queue>
 
@@ -37,8 +36,10 @@ class Cache {
  public:
   // Create a cache with the given maximum size.
   Cache(int size);
-  // This will call Discard() on everything still in the cache.
-  ~Cache();
+  // This does NOT clear the cache, because Discard() is virtual and cannot be
+  // called inside the destructor. Child classes must explicitly call Clear() in
+  // their destructors.
+  virtual ~Cache();
   // Retrieves an item. If the item is in the cache, simply returns it. If
   // not, loads it using the Load() function defined in an implementation.
   V Get(const K &key);
@@ -46,21 +47,16 @@ class Cache {
   // lock on this cache object, and calls to Get() while the asynchronous
   // loading is in progress will block.
   void Prepare(const K &key);
-  // This is thrown by Load and Discard if not redefined in child class.
-  class UnimplementedError: public std::exception {
-   public:
-    virtual const char *what() const throw();
-  };
+  // Clears the cache, calling Discard() on all existing elements.
+  void Clear();
+
  protected:
   // Loads a new element. This should be overridden in child classes.
-  V Load(const K &key) {
-    throw UnimplementedError();
-  }
+  virtual V Load(const K &key) = 0;
   // Frees an element that has been evicted from the cache. This should be
   // overridden in child classes.
-  void Discard(const K &key, V &value) {
-    throw UnimplementedError();
-  }
+  virtual void Discard(const K &key, V &value) = 0;
+
  private:
   // A lock on this object. Calls to Get() and Prepare() will block for access.
   pthread_mutex_t _lock;
@@ -93,6 +89,7 @@ void *CacheWorker(void * _arg) {
   CacheWorkerArg<K, V> *arg = reinterpret_cast<CacheWorkerArg<K, V> *>(_arg);
   arg->Caller->Get(arg->Key);
   delete arg;
+  return NULL;
 }
 
 }
@@ -105,10 +102,6 @@ Cache<K, V>::Cache(int size)
 
 template <typename K, typename V>
 Cache<K, V>::~Cache() {
-  for (typename std::map<K, V>::iterator i = _map.begin();
-       i != _map.end(); ++i) {
-    Discard(i->first, i->second);
-  }
   pthread_mutex_destroy(&_lock);
 }
 
@@ -118,18 +111,22 @@ V Cache<K, V>::Get(const K &key) {
 
   typename std::map<K, V>::iterator i = _map.find(key);
   if (i != _map.end()) {
-    return i->second;
+    V value = i->second;
+    pthread_mutex_unlock(&_lock);
+    return value;
   }
-  while (_queue.size() >= _size) {
+  while (_queue.size() >= static_cast<size_t>(_size)) {
     K victim = _queue.front();
     Discard(victim, _map[victim]);
     _queue.pop();
     _map.erase(victim);
   }
-  _map[key] = Load(key);
+  V value = Load(key);
+  _map[key] = value;
   _queue.push(key);
 
   pthread_mutex_unlock(&_lock);
+  return value;
 }
 
 template <typename K, typename V>
@@ -143,9 +140,17 @@ void Cache<K, V>::Prepare(const K &key) {
 }
 
 template <typename K, typename V>
-const char *Cache<K, V>::UnimplementedError::what() const throw() {
-  return "Implementation error: child class of Cache failed to override "
-         "Discard and Load().";
+void Cache<K, V>::Clear() {
+  pthread_mutex_lock(&_lock);
+  for (typename std::map<K, V>::iterator i = _map.begin();
+       i != _map.end(); ++i) {
+    Discard(i->first, i->second);
+  }
+  _map.clear();
+  while (_queue.size()) {
+    _queue.pop();
+  }
+  pthread_mutex_unlock(&_lock);
 }
 
 #endif

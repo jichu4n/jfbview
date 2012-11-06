@@ -29,43 +29,104 @@ class Framebuffer;
 
 class Viewer {
  public:
+  // Default number of rendered pages to keep in cache.
+  enum { DEFAULT_RENDER_CACHE_SIZE = 5 };
+
   // Zoom modes.
-  enum ZoomMode {
-    // A fixed zoom ratio, e.g., 150%.
-    ZOOM_FIXED,
+  enum {
     // Automatically zoom to fit current page.
-    ZOOM_TO_FIT,
+    ZOOM_TO_FIT = -3,
     // Automatically zoom to fit current page width.
-    ZOOM_TO_WIDTH,
+    ZOOM_TO_WIDTH = -4,
   };
+
+  // Maximum zoom ratio.
+  static const float MAX_ZOOM;
+  // Minimum zoom ratio.
+  static const float MIN_ZOOM;
+
   // A structure representing zoom information.
-  struct ZoomInfo {
-    // The zoom mode.
-    ZoomMode Mode;
-    // If Mode is ZOOM_FIXED, this gives the zoom ratio as a decimal.
-    float Ratio;
+  struct Config {
+    // The displayed page.
+    int Page;
+
+    // The zoom ratio, or ZOOM_*.
+    float Zoom;
+    // Rotation of the document, in clockwise degrees.
+    int Rotation;
+
+    // Number of screen pixels from top of page to top of displayed view.
+    int XOffset;
+    // Number of screen pixels from left of page to left of displayed view.
+    int YOffset;
+
+    Config(int page = 0, float zoom = ZOOM_TO_WIDTH, int rotation = 0,
+           int x_offset = 0, int y_offset = 0)
+        : Page(page), Zoom(zoom), Rotation(rotation),
+          XOffset(x_offset), YOffset(y_offset) {
+    }
   };
 
   // Constructs a new Viewer object. Does not take ownership of the document or
   // the framebuffer object.
-  Viewer(Document *doc, Framebuffer *fb);
+  Viewer(Document *doc, Framebuffer *fb, const Config &config = Config(),
+         int render_cache_size = DEFAULT_RENDER_CACHE_SIZE);
   virtual ~Viewer();
 
   // Renders the present view to the framebuffer.
   void Render();
 
-  // Returns the currently displayed page number. Page numbers start from 0.
-  int GetPage() const;
-  // Sets the currently displayed page number. Page numbers start from 0. If the
-  // page number is invalid, this method does nothing and returns false.
-  // Otherwise returns true.
-  bool SetPage(int page);
+  // Returns the current settings.
+  Config GetConfig() const;
+  // Sets the current settings. Will use minimum and maximum legal values to
+  // replace illegal values.
+  void SetConfig(const Config &pan);
 
-  // Returns the current zoom settings.
-  ZoomInfo GetZoomInfo() const;
-  // Sets the current zoom settings. Tries to preserve the center of the current
-  // view.
-  void SetZoomInfo();
+  // Returns whether the current view is at the bottom of the page.
+  bool AtPageBottom() const;
+  // Returns whether the current view is at the top of the page.
+  bool AtPageTop() const;
+
+ private:
+  // The current document.
+  Document *_doc;
+  // The framebuffer device.
+  Framebuffer *_fb;
+  // Settings.
+  Config _config;
+
+  // Key to the render cache.
+  struct RenderCacheKey {
+    // Page number, starting from 0.
+    int Page;
+    // Zoom ratio at which the buffer was rendered. This must be the actual
+    // ratio, and NOT one of the ZOOM_* constants.
+    float Zoom;
+    // Rotation in clockwise degrees.
+    int Rotation;
+
+    RenderCacheKey(int page, float zoom, int rotation)
+        : Page(page), Zoom(zoom), Rotation(rotation) {
+    }
+
+    // This is required as this class will be inserted into a map.
+    inline bool operator < (const RenderCacheKey &other) const {
+      return Page < other.Page;
+    }
+  };
+  // Render cache class.
+  class RenderCache: public Cache<RenderCacheKey, int *> {
+   public:
+    RenderCache(Viewer *parent, int size);
+    virtual ~RenderCache();
+   protected:
+    virtual int *Load(const RenderCacheKey &key);
+    virtual void Discard(const RenderCacheKey &key, int * &value);
+   private:
+    Viewer *_parent;
+  };
+  // Render cache.
+  RenderCache _render_cache;
 };
 
 #endif
