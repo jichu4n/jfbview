@@ -24,6 +24,44 @@
 #include <linux/fb.h>
 #include <string>
 
+class Framebuffer;
+
+// A class that represents a virtual pixel buffer, which is typically larger
+// than the actual screen size. The pixel format follows that of the actual
+// display, and thus can only be constructed by the Framebuffer class.
+class PixelBuffer {
+ public:
+  // Size in pixels.
+  struct BufferSize {
+    int Width;
+    int Height;
+
+    BufferSize(int width, int height)
+        : Width(width), Height(height) {
+    }
+  };
+  // Returns the size of this buffer in pixels.
+  BufferSize GetSize() const;
+  // Set a pixel on the buffer.
+  void WritePixel(int x, int y, int r, int g, int b);
+
+  // Releases the memory associated with this buffer.
+  ~PixelBuffer();
+
+ private:
+  Framebuffer *_parent;
+  BufferSize _size;
+  unsigned char *_buffer;
+
+  // Called from Framebuffer.
+  PixelBuffer(Framebuffer *parent, const BufferSize &size);
+  // Returns the address within our buffer of a pixel.
+  unsigned char *GetPixelAddress(int x, int y) const;
+
+  friend class Framebuffer;
+  friend void *BlitWorker(void *);
+};
+
 // An abstraction for a framebuffer device.
 class Framebuffer {
  public:
@@ -43,14 +81,20 @@ class Framebuffer {
   static Framebuffer *Open(
       const std::string &device = DEFAULT_FRAMEBUFFER_DEVICE);
   virtual ~Framebuffer();
-  // Returns the size of the mmap'd buffer.
-  int GetBufferSize() const;
+
+  // Creates a new pixel buffer with the given size. The pixel buffer will have
+  // the same color settings as the screen. Caller owns returned value.
+  PixelBuffer *NewPixelBuffer(const PixelBuffer::BufferSize &size);
+  // Renders a portion of a pixel buffer onto the screen.
+  void Blit(const PixelBuffer &pixel_buffer, int x_offset, int y_offset);
+
   // Returns the color depth, i.e., number of bytes per pixel.
   int GetDepth() const;
   // Set a pixel on the framebuffer.
   void WritePixel(int x, int y, int r, int g, int b);
   // Retrieve the dimensions of the current display, in pixels.
   ScreenSize GetSize() const;
+
  private:
   // File descriptor of the opened framebuffer device.
   int _fd;
@@ -68,8 +112,15 @@ class Framebuffer {
   // No copying is allowed.
   Framebuffer(const Framebuffer &);
   Framebuffer &operator = (const Framebuffer &);
+  // Returns the size of the mmap'd buffer.
+  int GetBufferSize() const;
   // Returns the position within the buffer of the pixel at (x, y).
   void *GetPixelAddress(int x, int y) const;
+  // Given r, g and b components, build a pixel value according to screen color
+  // settings.
+  unsigned int GetPixelValue(int r, int g, int b) const;
+  // Set a pixel on a raw buffer.
+  void WritePixel(int r, int g, int b, void *dest);
   // Writes a pixel value to a location, assuming 8bpp.
   void WritePixel1(unsigned int v, void *dest);
   // Writes a pixel value to a location, assuming 16bpp.
@@ -78,6 +129,9 @@ class Framebuffer {
   void WritePixel3(unsigned int v, void *dest);
   // Writes a pixel value to a location, assuming 32bpp.
   void WritePixel4(unsigned int v, void *dest);
+
+  friend class PixelBuffer;
+  friend void *BlitWorker(void *);
 };
 
 #endif

@@ -36,62 +36,22 @@ namespace {
 
 // A PixelWriter that writes pixel values to a in-memory buffer. Each pixel is
 // stored as three consecutive ints representing the r, g, and b values.
-class BufferPixelWriter: public Document::PixelWriter {
+class PixelBufferWriter: public Document::PixelWriter {
  public:
    // Constructs a BufferPixel writer with the given settings. buffer_width
    // gives the number of pixels in a row in the buffer. buffer is the target
    // buffer.
-  BufferPixelWriter(int buffer_width, int *buffer)
-      : _buffer_width(buffer_width), _buffer(buffer) {
+  PixelBufferWriter(PixelBuffer *buffer)
+      : _buffer(buffer) {
   }
   // See PixelWriter.
   virtual void Write(int x, int y, int r, int g, int b) {
-    int *p = _buffer + (_buffer_width * y + x) * 3;
-    p[0] = r;
-    p[1] = g;
-    p[2] = b;
+    _buffer->WritePixel(x, y, r, g, b);
   }
  private:
-  // Number of pixels in a line.
-  int _buffer_width;
   // The destination buffer.
-  int *_buffer;
+  PixelBuffer *_buffer;
 };
-
-// Argument passed to BlitWorker.
-struct BlitWorkerArg {
-  // Source buffer. Each pixel is represented using three ints (r, g, b).
-  int *Buffer;
-  // The framebuffer to render to.
-  Framebuffer *Fb;
-  // The pixel row in the buffer to start rendering from.
-  int BufferStartY;
-  // The first pixel column in the buffer to render.
-  int BufferStartX;
-  // The pixel row in the framebuffer to start rendering from.
-  int FbStartRow;
-  // The last row + 1 to render.
-  int BufferEndY;
-  // The width (in pixels) of a line in the buffer.
-  int BufferWidth;
-};
-
-// A worker thread that writes a rectangular area of a pixel buffer to a
-// framebuffer device. This is passed to pthread_create. The rectangular area is
-// defined by the the argument, which should be of type BlitWorkerArg.
-void *BlitWorker(void *_arg) {
-  BlitWorkerArg *arg = reinterpret_cast<BlitWorkerArg *>(_arg);
-  const int width = arg->Fb->GetSize().Width;
-  const int num_rows = arg->BufferEndY - arg->BufferStartY;
-  for (int y = 0; y < num_rows; ++y) {
-    for (int x = 0; x < width; ++x) {
-      int *p = arg->Buffer + (((arg->BufferStartY + y) * arg->BufferWidth) +
-                               (arg->BufferStartX + x)) * 3;
-      arg->Fb->WritePixel(x, y + arg->FbStartRow, p[0], p[1], p[2]);
-    }
-  }
-  return NULL;
-}
 
 }  // namespace
 
@@ -135,56 +95,37 @@ void Viewer::Render() {
                                       _config.YOffset));
 
   // 2. Render page to buffer.
-  int *buffer = _render_cache.Get(RenderCacheKey(page, zoom, _config.Rotation));
+  PixelBuffer *buffer =
+      _render_cache.Get(RenderCacheKey(page, zoom, _config.Rotation));
 
-  // 3. Blit buffer to framebuffer.
-  int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
-  int num_rows_per_thread = screen_size.Height / num_threads;
-  pthread_t *threads = new pthread_t[num_threads];
-  BlitWorkerArg *args = new BlitWorkerArg[num_threads];
-  for (int i = 0; i < num_threads; ++i) {
-    args[i].Buffer = buffer;
-    args[i].Fb = _fb;
-    args[i].BufferStartY = y_offset + i * num_rows_per_thread;
-    args[i].BufferStartX = x_offset;
-    args[i].FbStartRow = i * num_rows_per_thread;
-    args[i].BufferEndY =
-        (i == num_threads - 1) ? screen_size.Height :
-                                 (i + 1) * num_rows_per_thread;
-    args[i].BufferWidth = page_size.Width;
-
-    pthread_create(&(threads[i]), NULL, &BlitWorker, &(args[i]));
-  }
-  for (int i = 0; i < num_threads; ++i) {
-    pthread_join(threads[i], NULL);
-  }
-  delete []args;
-  delete []threads;
+  // 3. Blit buffer.
+  _fb->Blit(*buffer, x_offset, y_offset);
 }
 
 Viewer::RenderCache::RenderCache(Viewer *parent, int size)
-    : Cache<RenderCacheKey, int *>(size), _parent(parent) {
+    : Cache<RenderCacheKey, PixelBuffer *>(size), _parent(parent) {
 }
 
 Viewer::RenderCache::~RenderCache() {
   Clear();
 }
 
-int *Viewer::RenderCache::Load(const RenderCacheKey &key) {
+PixelBuffer *Viewer::RenderCache::Load(const RenderCacheKey &key) {
   printf("Load %d\n", key.Page);
   const Document::PageSize &page_size =
       _parent->_doc->GetPageSize(key.Page, key.Zoom, key.Rotation);
-  int buffer_size = page_size.Width * page_size.Height;
 
-  int *buffer = new int[buffer_size * 3];
-  BufferPixelWriter writer(page_size.Width, buffer);
+  PixelBuffer *buffer = _parent->_fb->NewPixelBuffer(PixelBuffer::BufferSize(
+      page_size.Width, page_size.Height));
+  PixelBufferWriter writer(buffer);
   _parent->_doc->Render(&writer, key.Page, key.Zoom, key.Rotation);
 
   return buffer;
 }
 
-void Viewer::RenderCache::Discard(const RenderCacheKey &key, int * &value) {
-  delete []value;
+void Viewer::RenderCache::Discard(const RenderCacheKey &key,
+                                  PixelBuffer * &value) {
+  delete value;
 }
 
 #include "pdf_document.hpp"

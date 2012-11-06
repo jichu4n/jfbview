@@ -26,6 +26,7 @@
 
 class Document;
 class Framebuffer;
+class PixelBuffer;
 
 class Viewer {
  public:
@@ -115,13 +116,13 @@ class Viewer {
     }
   };
   // Render cache class.
-  class RenderCache: public Cache<RenderCacheKey, int *> {
+  class RenderCache: public Cache<RenderCacheKey, PixelBuffer *> {
    public:
     RenderCache(Viewer *parent, int size);
     virtual ~RenderCache();
    protected:
-    virtual int *Load(const RenderCacheKey &key);
-    virtual void Discard(const RenderCacheKey &key, int * &value);
+    virtual PixelBuffer *Load(const RenderCacheKey &key);
+    virtual void Discard(const RenderCacheKey &key, PixelBuffer * &value);
    private:
     Viewer *_parent;
   };
