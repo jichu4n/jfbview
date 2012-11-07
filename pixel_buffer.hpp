@@ -35,11 +35,25 @@ class PixelBuffer {
     }
   };
   // Color format of a pixel buffer.
-  struct Format {
+  class Format {
+   public:
     // Length of a pixel, in bytes. Must be between 0 and 4.
-    int Depth;
+    virtual int GetDepth() const = 0;
     // Method to pack an RGB tuple into a pixel value.
     virtual unsigned int Pack(int r, int g, int b) const = 0;
+    // This is required to keep C++ happy.
+    virtual ~Format() {}
+  };
+  // A rectangular area on this pixel buffer.
+  struct Rect {
+    // Coordinates of the top-left corner of the rect.
+    int X, Y;
+    // Size of the rect.
+    int Width, Height;
+
+    Rect(int x = 0, int y = 0, int width = 0, int height = 0)
+        : X(x), Y(y), Width(width), Height(height) {
+    }
   };
 
   // Constructs a new PixelBuffer object, and allocate memory. Will take
@@ -53,9 +67,18 @@ class PixelBuffer {
 
   // Returns the size of this buffer in pixels.
   Size GetSize() const;
+  // Returns a rect covering the buffer exactly.
+  Rect GetRect() const;
 
   // Writes a pixel value to a location in the buffer.
   void WritePixel(int x, int y, int r, int g, int b);
+
+  // Copies a region in the current pixel buffer to another pixel buffer. The
+  // destination region must be at least as large in both dimensions than the
+  // source region. The source region is centered if the destination region is
+  // larger. This is multi-threaded.
+  void Copy(const Rect &src_rect, const Rect &dest_rect,
+            PixelBuffer *dest) const;
 
  private:
   // Prototype for a method that writes a pixel value to a location.
@@ -106,6 +129,13 @@ class PixelBuffer {
   void Init();
   // Returns the address in memory corresponding to the pixel (x, y).
   unsigned char *GetPixelAddress(int x, int y) const;
+
+  // Disable copy and assign.
+  PixelBuffer(const PixelBuffer &);
+  PixelBuffer &operator = (const PixelBuffer &);
+
+  // Thread worker for Copy.
+  friend void *CopyWorker(void *);
 };
 
 #endif

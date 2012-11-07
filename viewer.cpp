@@ -76,7 +76,7 @@ void Viewer::Render() {
            static_cast<float>(
                _doc->GetPageSize(page, 1.0f, _config.Rotation).Width);
   } else if (zoom == ZOOM_TO_FIT) {
-    const Framebuffer::ScreenSize &screen_size = _fb->GetSize();
+    const PixelBuffer::Size &screen_size = _fb->GetSize();
     const Document::PageSize &page_size =
         _doc->GetPageSize(page, 1.0f, _config.Rotation);
     zoom = std::min(static_cast<float>(screen_size.Width) /
@@ -86,20 +86,23 @@ void Viewer::Render() {
   }
   assert(zoom >= 0.0f);
   zoom = std::max(MIN_ZOOM, std::min(MAX_ZOOM, zoom));
-  const Framebuffer::ScreenSize &screen_size = _fb->GetSize();
+  const PixelBuffer::Size &screen_size = _fb->GetSize();
   const Document::PageSize &page_size =
       _doc->GetPageSize(page, zoom, _config.Rotation);
-  int x_offset = std::max(0, std::min(page_size.Width - screen_size.Width - 1,
-                                      _config.XOffset));
-  int y_offset = std::max(0, std::min(page_size.Height - screen_size.Height - 1,
-                                      _config.YOffset));
+  PixelBuffer::Rect src_rect;
+  src_rect.X = std::max(0, std::min(page_size.Width - screen_size.Width - 1,
+                                    _config.XOffset));
+  src_rect.Y = std::max(0, std::min(page_size.Height - screen_size.Height - 1,
+                                    _config.YOffset));
+  src_rect.Width = std::min(screen_size.Width, page_size.Width - src_rect.X);
+  src_rect.Height = std::min(screen_size.Height, page_size.Height - src_rect.Y);
 
   // 2. Render page to buffer.
   PixelBuffer *buffer =
       _render_cache.Get(RenderCacheKey(page, zoom, _config.Rotation));
 
   // 3. Blit buffer.
-  _fb->Blit(*buffer, x_offset, y_offset);
+  _fb->Render(*buffer, src_rect);
 }
 
 Viewer::RenderCache::RenderCache(Viewer *parent, int size)
@@ -115,7 +118,7 @@ PixelBuffer *Viewer::RenderCache::Load(const RenderCacheKey &key) {
   const Document::PageSize &page_size =
       _parent->_doc->GetPageSize(key.Page, key.Zoom, key.Rotation);
 
-  PixelBuffer *buffer = _parent->_fb->NewPixelBuffer(PixelBuffer::BufferSize(
+  PixelBuffer *buffer = _parent->_fb->NewPixelBuffer(PixelBuffer::Size(
       page_size.Width, page_size.Height));
   PixelBufferWriter writer(buffer);
   _parent->_doc->Render(&writer, key.Page, key.Zoom, key.Rotation);

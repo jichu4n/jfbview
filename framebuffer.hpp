@@ -21,6 +21,7 @@
 #ifndef FRAMEBUFFER_HPP
 #define FRAMEBUFFER_HPP
 
+#include "pixel_buffer.hpp"
 #include <linux/fb.h>
 #include <string>
 
@@ -28,15 +29,6 @@
 class Framebuffer {
  public:
   static const char * const DEFAULT_FRAMEBUFFER_DEVICE;
-  // Size in pixels.
-  struct ScreenSize {
-    int Width;
-    int Height;
-
-    ScreenSize(int width, int height)
-        : Width(width), Height(height) {
-    }
-  };
   // Factory method to initialize a framebuffer device and returns an
   // abstraction object. Returns NULL if the initialization failed. Caller owns
   // returned object.
@@ -46,54 +38,51 @@ class Framebuffer {
 
   // Creates a new pixel buffer with the given size. The pixel buffer will have
   // the same color settings as the screen. Caller owns returned value.
-  PixelBuffer *NewPixelBuffer(const PixelBuffer::BufferSize &size);
-  // Renders a portion of a pixel buffer onto the screen.
-  void Blit(const PixelBuffer &pixel_buffer, int x_offset, int y_offset);
+  PixelBuffer *NewPixelBuffer(const PixelBuffer::Size &size);
 
-  // Returns the color depth, i.e., number of bytes per pixel.
-  int GetDepth() const;
-  // Set a pixel on the framebuffer.
-  void WritePixel(int x, int y, int r, int g, int b);
   // Retrieve the dimensions of the current display, in pixels.
-  ScreenSize GetSize() const;
+  PixelBuffer::Size GetSize() const;
+
+  // Renders a region in a pixel buffer onto the framebuffer device. The region
+  // must be equal to or smaller than the screen size. If smaller, the source
+  // rect is centered on screen.
+  void Render(const PixelBuffer &src, const PixelBuffer::Rect &rect);
 
  private:
+  // Color format of the framebuffer.
+  class Format: public PixelBuffer::Format {
+   public:
+    // Grab settings from a fb_var_screeninfo.
+    Format(const fb_var_screeninfo &vinfo);
+    // See PixelBuffer::Format.
+    virtual int GetDepth() const;
+    // See PixelBuffer::Format.
+    virtual unsigned int Pack(int r, int g, int b) const;
+    // This is required to keep C++ happy.
+    virtual ~Format() {}
+   private:
+    fb_var_screeninfo _vinfo;
+  };
+
   // File descriptor of the opened framebuffer device.
   int _fd;
   // Framebuffer info structures.
   fb_var_screeninfo _vinfo;
   fb_fix_screeninfo _finfo;
-  // Whether we're on a little-endian system.
-  bool _little_endian;
   // mmap'd buffer.
-  void *_buffer;
-  // Handle to WritePixel[1-4], depending on present bpp.
-  void (Framebuffer::*_write_pixel_impl)(unsigned int v, void *dest);
+  unsigned char *_buffer;
+  Format *_format;
+  // Pixel buffer object managing the mmap'ed buffer.
+  PixelBuffer *_pixel_buffer;
+
   // Contructors are disallowed. Use factory method Open() instead.
   Framebuffer();
   // No copying is allowed.
   Framebuffer(const Framebuffer &);
   Framebuffer &operator = (const Framebuffer &);
+
   // Returns the size of the mmap'd buffer.
   int GetBufferSize() const;
-  // Returns the position within the buffer of the pixel at (x, y).
-  void *GetPixelAddress(int x, int y) const;
-  // Given r, g and b components, build a pixel value according to screen color
-  // settings.
-  unsigned int GetPixelValue(int r, int g, int b) const;
-  // Set a pixel on a raw buffer.
-  void WritePixel(int r, int g, int b, void *dest);
-  // Writes a pixel value to a location, assuming 8bpp.
-  void WritePixel1(unsigned int v, void *dest);
-  // Writes a pixel value to a location, assuming 16bpp.
-  void WritePixel2(unsigned int v, void *dest);
-  // Writes a pixel value to a location, assuming 24bpp.
-  void WritePixel3(unsigned int v, void *dest);
-  // Writes a pixel value to a location, assuming 32bpp.
-  void WritePixel4(unsigned int v, void *dest);
-
-  friend class PixelBuffer;
-  friend void *BlitWorker(void *);
 };
 
 #endif

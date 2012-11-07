@@ -112,7 +112,13 @@ class Viewer {
 
     // This is required as this class will be inserted into a map.
     inline bool operator < (const RenderCacheKey &other) const {
-      return Page < other.Page;
+      if (Page != other.Page) {
+        return Page < other.Page;
+      }
+      if (Zoom != other.Zoom) {
+        return Zoom < other.Zoom;
+      }
+      return Rotation < other.Rotation;
     }
   };
   // Render cache class.
