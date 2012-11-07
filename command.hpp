@@ -1,0 +1,61 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *                                                                           *
+ *  Copyright (C) 2012 Chuan Ji <jichuan89@gmail.com>                        *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *   http://www.apache.org/licenses/LICENSE-2.0                              *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+// This file declares abstractions for user commands.
+
+#ifndef COMMAND_HPP
+#define COMMAND_HPP
+
+#include <map>
+#include <string>
+
+// Interface for a user command.
+class Command {
+ public:
+  // A constant for Execute, specifying that the user did not enter a repeat
+  // number.
+  static const int NO_REPEAT;
+  // Executes a command. Repeat is an integer specifying how many times the
+  // command should be repeated. If the user did not specify a number, NO_REPEAT
+  // is passed.
+  virtual void Execute(int repeat) = 0;
+  // This is to make C++ happy.
+  virtual ~Command() {}
+};
+
+// A command registry. Maintains a mapping from a key to a command pointer.
+// Keeps ownership of command instances.
+class Registry {
+ public:
+  // Releases registered commands.
+  ~Registry();
+  // Associates a command with a key. The key must not have been already in use.
+  // Takes ownership of the command object.
+  void Register(int key, Command *command);
+  // Executes the command associated with a key, with the given repeat argument.
+  // If no command is associated with the key, returns false. Otherwise returns
+  // true.
+  bool Dispatch(int key, int repeat);
+
+ private:
+  // Maintains the mapping.
+  std::map<int, Command *> _map;
+};
+
+#endif
+
