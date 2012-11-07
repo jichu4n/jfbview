@@ -12,7 +12,7 @@ jfbpdf: fbpdf.o mupdf.o draw.o outline.o input.o
 
 # jfbpdf v2 targets. DO NOT BUILD.
 CXXFLAGS := -Wall -O2 -g
-LDFLAGS := -lfitz -lfreetype -ljbig2dec -ljpeg -lz -lopenjpeg -lpthread \
+LIBS := -lfitz -lfreetype -ljbig2dec -ljpeg -lz -lopenjpeg -lpthread \
 	   -lncurses++
 
 SRCS := $(wildcard *.cpp)
@@ -28,5 +28,5 @@ clean:
 -include $(SRCS:.cpp=.d)
 
 jfbpdf2: $(SRCS:.cpp=.o)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
 
