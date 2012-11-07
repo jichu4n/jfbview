@@ -40,7 +40,7 @@ class PDFDocument: public Document {
   virtual ~PDFDocument();
   // Factory method to construct an instance of PDFDocument. path gives the path
   // to a PDF file. page_cache_size specifies the maximum number of pages to
-  // store in memory.
+  // store in memory. Returns NULL if the file cannot be opened.
   static PDFDocument *Open(const std::string &path,
                            int page_cache_size = DEFAULT_PAGE_CACHE_SIZE);
   // See Document.
