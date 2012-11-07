@@ -24,44 +24,6 @@
 #include <linux/fb.h>
 #include <string>
 
-class Framebuffer;
-
-// A class that represents a virtual pixel buffer, which is typically larger
-// than the actual screen size. The pixel format follows that of the actual
-// display, and thus can only be constructed by the Framebuffer class.
-class PixelBuffer {
- public:
-  // Size in pixels.
-  struct BufferSize {
-    int Width;
-    int Height;
-
-    BufferSize(int width, int height)
-        : Width(width), Height(height) {
-    }
-  };
-  // Returns the size of this buffer in pixels.
-  BufferSize GetSize() const;
-  // Set a pixel on the buffer.
-  void WritePixel(int x, int y, int r, int g, int b);
-
-  // Releases the memory associated with this buffer.
-  ~PixelBuffer();
-
- private:
-  Framebuffer *_parent;
-  BufferSize _size;
-  unsigned char *_buffer;
-
-  // Called from Framebuffer.
-  PixelBuffer(Framebuffer *parent, const BufferSize &size);
-  // Returns the address within our buffer of a pixel.
-  unsigned char *GetPixelAddress(int x, int y) const;
-
-  friend class Framebuffer;
-  friend void *BlitWorker(void *);
-};
-
 // An abstraction for a framebuffer device.
 class Framebuffer {
  public:
