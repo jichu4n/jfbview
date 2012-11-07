@@ -13,7 +13,7 @@ jfbpdf: fbpdf.o mupdf.o draw.o outline.o input.o
 # jfbpdf v2 targets. DO NOT BUILD.
 CXXFLAGS := -Wall -O2 -g
 LIBS := -lfitz -lfreetype -ljbig2dec -ljpeg -lz -lopenjpeg -lpthread \
-	   -lncurses++
+	   -lncursesw
 
 SRCS := $(wildcard *.cpp)
 
