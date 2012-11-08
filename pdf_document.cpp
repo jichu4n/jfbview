@@ -31,8 +31,17 @@
 PDFDocument *PDFDocument::Open(const std::string &path,
                                int page_cache_size) {
   fz_context *context = fz_new_context(NULL, NULL, FZ_STORE_DEFAULT);
-  pdf_document *raw_pdf_document = pdf_open_document(context, path.c_str());
-  if (raw_pdf_document == NULL) {
+  pdf_document *raw_pdf_document = NULL;
+  fz_try(context) {
+    raw_pdf_document = pdf_open_document(context, path.c_str());
+    if ((raw_pdf_document == NULL) || (!pdf_count_pages(raw_pdf_document))) {
+      fz_throw(context, const_cast<char *>("Cannot open document \"%s\""),
+               path.c_str());
+    }
+  } fz_catch(context) {
+    if (raw_pdf_document != NULL) {
+      pdf_close_document(raw_pdf_document);
+    }
     fz_free_context(context);
     return NULL;
   }
