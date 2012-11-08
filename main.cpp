@@ -81,8 +81,9 @@ class MoveDownCommand: public MoveCommand {
     state->YOffset += RepeatOrDefault(repeat, 1) * GetMoveSize(state, false);
     if (state->YOffset + state->ScreenHeight >=
             state->PageHeight - 1 + GetMoveSize(state, false)) {
-      ++(state->Page);
-      state->YOffset = 0;
+      if (++(state->Page) < state->PageCount) {
+        state->YOffset = 0;
+      }
     }
   }
 };
@@ -92,8 +93,9 @@ class MoveUpCommand: public MoveCommand {
   virtual void Execute(int repeat, State *state) {
     state->YOffset -= RepeatOrDefault(repeat, 1) * GetMoveSize(state, false);
     if (state->YOffset <= -GetMoveSize(state, false)) {
-      --(state->Page);
-      state->YOffset = INT_MAX;
+      if (--(state->Page) >= 0) {
+        state->YOffset = INT_MAX;
+      }
     }
   }
 };
@@ -118,8 +120,9 @@ class ScreenDownCommand: public Command {
     state->YOffset += RepeatOrDefault(repeat, 1) * state->ScreenHeight;
     if (state->YOffset + state->ScreenHeight >=
             state->PageHeight - 1 + state->ScreenHeight) {
-      ++(state->Page);
-      state->YOffset = 0;
+      if (++(state->Page) < state->PageCount) {
+        state->YOffset = 0;
+      }
     }
   }
 };
@@ -129,8 +132,9 @@ class ScreenUpCommand: public Command {
   virtual void Execute(int repeat, State *state) {
     state->YOffset -= RepeatOrDefault(repeat, 1) * state->ScreenHeight;
     if (state->YOffset <= -state->ScreenHeight) {
-      --(state->Page);
-      state->YOffset = INT_MAX;
+      if (--(state->Page) >= 0) {
+        state->YOffset = INT_MAX;
+      }
     }
   }
 };

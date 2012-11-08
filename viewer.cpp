@@ -105,6 +105,7 @@ void Viewer::Render() {
 
   // 4. Store corrected state.
   _state.Page = page;
+  _state.PageCount = _doc->GetPageCount();
   if ((_state.Zoom != ZOOM_TO_WIDTH) && (_state.Zoom != ZOOM_TO_FIT)) {
     _state.Zoom = zoom;
   }
@@ -124,6 +125,7 @@ void Viewer::Render() {
 
 void Viewer::GetState(Viewer::State *state) const {
   state->Page = _state.Page;
+  state->PageCount = _state.PageCount;
   state->Zoom = _state.Zoom;
   state->ActualZoom = _state.ActualZoom;
   state->Rotation = _state.Rotation;

@@ -50,6 +50,9 @@ class Viewer {
   struct State {
     // The displayed page.
     int Page;
+    // The total number of pages in the document. This is written by Render()
+    // and is ignored by Render() itself.
+    int PageCount;
 
     // The zoom ratio, or ZOOM_*.
     float Zoom;
