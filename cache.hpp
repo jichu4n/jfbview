@@ -81,9 +81,14 @@ struct CacheWorkerArg {
   Cache<K, V> *Caller;
   // The desired key.
   K Key;
+
+  CacheWorkerArg(Cache<K, V> *caller, const K &key)
+      : Caller(caller), Key(key) {
+  }
 };
 
-// Cache worker method started by pthreads. Takes ownership of _arg.
+// Cache worker method started by pthreads to load a key in the background.
+// Takes ownership of _arg.
 template <typename K, typename V>
 void *CacheWorker(void * _arg) {
   CacheWorkerArg<K, V> *arg = reinterpret_cast<CacheWorkerArg<K, V> *>(_arg);
@@ -132,9 +137,7 @@ V Cache<K, V>::Get(const K &key) {
 template <typename K, typename V>
 void Cache<K, V>::Prepare(const K &key) {
   CacheInternal::CacheWorkerArg<K, V> *arg =
-      new CacheInternal::CacheWorkerArg<K, V>();
-  arg->Caller = this;
-  arg->Key = key;
+      new CacheInternal::CacheWorkerArg<K, V>(this, key);
   pthread_t thread;
   pthread_create(&thread, NULL, &(CacheInternal::CacheWorker<K, V>), arg);
 }

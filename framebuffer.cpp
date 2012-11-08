@@ -19,12 +19,12 @@
 // This file implements the framebuffer abstraction.
 
 #include "framebuffer.hpp"
-#include <cstdio>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <cstdio>
 
 const char * const Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE = "/dev/fb0";
 

@@ -40,15 +40,30 @@ struct CopyWorkerArg {
 // argument is of type CopyWorkerArg.
 void *CopyWorker(void *_arg) {
   CopyWorkerArg *arg = reinterpret_cast<CopyWorkerArg *>(_arg);
-  assert(arg->SrcRect.Width == arg->DestRect.Width);
+  assert(arg->SrcRect.Width <= arg->DestRect.Width);
   assert(arg->SrcRect.Height == arg->DestRect.Height);
   assert(arg->Src->_format->GetDepth() == arg->Dest->_format->GetDepth());
 
+  const int margin_width_left =
+      (arg->DestRect.Width - arg->SrcRect.Width) / 2;
+  const int margin_width_right =
+      arg->DestRect.Width - margin_width_left - arg->SrcRect.Width;
+  const int dest_x = arg->DestRect.X + margin_width_left;
   for (int y = 0; y < arg->SrcRect.Height; ++y) {
+    const int dest_y = arg->DestRect.Y + y;
+    // 1. Clear un-overwritten left and right margins.
+    if (margin_width_left) {
+      memset(arg->Dest->GetPixelAddress(arg->DestRect.X, dest_y),
+             0, margin_width_left * arg->Dest->_format->GetDepth());
+    }
+    if (margin_width_right) {
+      memset(arg->Dest->GetPixelAddress(dest_x + arg->SrcRect.Width, dest_y),
+             0, margin_width_right * arg->Dest->_format->GetDepth());
+    }
+    // 2. Copy row content.
     void *src_row = arg->Src->GetPixelAddress(
         arg->SrcRect.X, arg->SrcRect.Y + y);
-    void *dest_row = arg->Dest->GetPixelAddress(
-        arg->DestRect.X, arg->DestRect.Y + y);
+    void *dest_row = arg->Dest->GetPixelAddress(dest_x, dest_y);
     memcpy(dest_row, src_row,
            arg->SrcRect.Width * arg->Src->_format->GetDepth());
   }
@@ -60,7 +75,7 @@ PixelBuffer::PixelBuffer(const PixelBuffer::Size &size,
                          const PixelBuffer::Format *format)
     : _size(size), _format(format), _has_ownership(true) {
   assert(_format != NULL);
-  _buffer = new uint8_t[_size.Width * _size.Height * _format->GetDepth()];
+  _buffer = new uint8_t[GetBufferSize()];
   Init();
 }
 
@@ -102,10 +117,25 @@ void PixelBuffer::Copy(const PixelBuffer::Rect &src_rect,
   assert(dest->_size.Width >= dest_rect.X + dest_rect.Width);
   assert(dest->_size.Height >= dest_rect.Y + dest_rect.Height);
 
+  // Clear un-overwritten top and bottom margins.
+  const int margin_top_height = (dest_rect.Height - src_rect.Height) / 2;
+  const int margin_bottom_height =
+      dest_rect.Height - margin_top_height - src_rect.Height;
+  for (int y = 0; y < margin_top_height; ++y) {
+    memset(dest->GetPixelAddress(dest_rect.X, dest_rect.Y + y),
+           0, dest_rect.Width * dest->_format->GetDepth());
+  }
+  for (int y = 0; y < margin_bottom_height; ++y) {
+    memset(dest->GetPixelAddress(
+               dest_rect.X,
+               dest_rect.Y + margin_top_height + src_rect.Height + y),
+           0, dest_rect.Width * dest->_format->GetDepth());
+  }
+
   // Centers src_rect in dest_rect.
   Rect centered_dest_rect;
-  centered_dest_rect.Width = src_rect.Width;
-  centered_dest_rect.X = dest_rect.X + (dest_rect.Width - src_rect.Width) / 2;
+  centered_dest_rect.Width = dest_rect.Width;
+  centered_dest_rect.X = dest_rect.X;
   centered_dest_rect.Height = src_rect.Height;
   centered_dest_rect.Y = dest_rect.Y + (dest_rect.Height - src_rect.Height) / 2;
 
@@ -194,6 +224,10 @@ void PixelBuffer::PixelWriterImpl3BigEndian::WritePixel(uint32_t value,
 
 void PixelBuffer::PixelWriterImpl4::WritePixel(uint32_t value, void *dest) {
   *(reinterpret_cast<uint32_t *>(dest)) = static_cast<uint32_t>(value);
+}
+
+int PixelBuffer::GetBufferSize() const {
+  return _size.Width * _size.Height * _format->GetDepth();
 }
 
 uint8_t *PixelBuffer::GetPixelAddress(int x, int y) const {

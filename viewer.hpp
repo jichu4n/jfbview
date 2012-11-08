@@ -31,7 +31,7 @@ class PixelBuffer;
 class Viewer {
  public:
   // Default number of rendered pages to keep in cache.
-  enum { DEFAULT_RENDER_CACHE_SIZE = 5 };
+  enum { DEFAULT_RENDER_CACHE_SIZE = 8 };
 
   // Zoom modes.
   enum {
@@ -53,6 +53,9 @@ class Viewer {
 
     // The zoom ratio, or ZOOM_*.
     float Zoom;
+    // If Zoom is ZOOM_*, this gives the actual zoom value. This is written by
+    // Render() and is ignored by Render() itself.
+    float ActualZoom;
     // Rotation of the document, in clockwise degrees.
     int Rotation;
 
@@ -60,6 +63,19 @@ class Viewer {
     int XOffset;
     // Number of screen pixels from left of page to left of displayed view.
     int YOffset;
+
+    // Width of current page (after zoom and rotation). This is written by
+    // Render(), and is ignored by Render() itself.
+    int PageWidth;
+    // Height of current page (after zoom and rotation). This is written by
+    // Render(), and is ignored by Render() itself.
+    int PageHeight;
+    // Width of framebuffer. This is written by Render(), and is ignored by
+    // Render() itself.
+    int ScreenWidth;
+    // Height of framebuffer. This is written by Render(), and is ignored by
+    // Render() itself.
+    int ScreenHeight;
 
     State(int page = 0, float zoom = ZOOM_TO_WIDTH, int rotation = 0,
            int x_offset = 0, int y_offset = 0)
@@ -77,16 +93,12 @@ class Viewer {
   // Renders the present view to the framebuffer.
   void Render();
 
-  // Returns the current settings.
-  State GetState() const;
+  // Stores the current state in the given pointer. Must be called AFTER at
+  // least one call to Render().
+  void GetState(State *state) const;
   // Sets the current settings. Will use minimum and maximum legal values to
-  // replace illegal values.
-  void SetState(const State &pan);
-
-  // Returns whether the current view is at the bottom of the page.
-  bool AtPageBottom() const;
-  // Returns whether the current view is at the top of the page.
-  bool AtPageTop() const;
+  // replace illegal values. Has no effect until Render() is called.
+  void SetState(const State &state);
 
  private:
   // The current document.

@@ -82,7 +82,7 @@ class Framebuffer {
   Framebuffer(const Framebuffer &);
   Framebuffer &operator = (const Framebuffer &);
 
-  // Returns the size of the mmap'd buffer.
+  // Returns the size of the mmap'd buffer in bytes.
   int GetBufferSize() const;
 };
 

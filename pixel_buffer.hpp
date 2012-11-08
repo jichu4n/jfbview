@@ -78,7 +78,7 @@ class PixelBuffer {
   // Copies a region in the current pixel buffer to another pixel buffer. The
   // destination region must be at least as large in both dimensions than the
   // source region. The source region is centered if the destination region is
-  // larger. This is multi-threaded.
+  // larger, and the unaffected areas are set to black. This is multi-threaded.
   void Copy(const Rect &src_rect, const Rect &dest_rect,
             PixelBuffer *dest) const;
 
@@ -129,6 +129,8 @@ class PixelBuffer {
 
   // Common initialization called by both constructors.
   void Init();
+  // Returns the size of the buffer in bytes.
+  int GetBufferSize() const;
   // Returns the address in memory corresponding to the pixel (x, y).
   uint8_t *GetPixelAddress(int x, int y) const;
 

@@ -101,6 +101,41 @@ void Viewer::Render() {
 
   // 3. Blit buffer.
   _fb->Render(*buffer, src_rect);
+
+  // 4. Store corrected state.
+  _state.Page = page;
+  if ((_state.Zoom != ZOOM_TO_WIDTH) && (_state.Zoom != ZOOM_TO_FIT)) {
+    _state.Zoom = zoom;
+  }
+  _state.ActualZoom = zoom;
+  _state.XOffset = src_rect.X;
+  _state.YOffset = src_rect.Y;
+  _state.PageWidth = page_size.Width;
+  _state.PageHeight = page_size.Height;
+  _state.ScreenWidth = screen_size.Width;
+  _state.ScreenHeight = screen_size.Height;
+
+  // 5. Preload.
+  if (page < _doc->GetPageCount() - 1) {
+    _render_cache.Prepare(RenderCacheKey(page + 1, zoom, _state.Rotation));
+  }
+}
+
+void Viewer::GetState(Viewer::State *state) const {
+  state->Page = _state.Page;
+  state->Zoom = _state.Zoom;
+  state->ActualZoom = _state.ActualZoom;
+  state->Rotation = _state.Rotation;
+  state->XOffset = _state.XOffset;
+  state->YOffset = _state.YOffset;
+  state->PageWidth = _state.PageWidth;
+  state->PageHeight = _state.PageHeight;
+  state->ScreenWidth = _state.ScreenWidth;
+  state->ScreenHeight = _state.ScreenHeight;
+}
+
+void Viewer::SetState(const State &state) {
+  _state = state;
 }
 
 Viewer::RenderCache::RenderCache(Viewer *parent, int size)
