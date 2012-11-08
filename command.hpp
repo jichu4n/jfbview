@@ -24,6 +24,9 @@
 #include <map>
 #include <string>
 
+// Program state.
+struct State;
+
 // Interface for a user command.
 class Command {
  public:
@@ -32,8 +35,8 @@ class Command {
   static const int NO_REPEAT;
   // Executes a command. Repeat is an integer specifying how many times the
   // command should be repeated. If the user did not specify a number, NO_REPEAT
-  // is passed.
-  virtual void Execute(int repeat) = 0;
+  // is passed. state is a handle to the program state (defined in main.cpp).
+  virtual void Execute(int repeat, State *state) = 0;
   // This is to make C++ happy.
   virtual ~Command() {}
 };
@@ -50,7 +53,7 @@ class Registry {
   // Executes the command associated with a key, with the given repeat argument.
   // If no command is associated with the key, returns false. Otherwise returns
   // true.
-  bool Dispatch(int key, int repeat);
+  bool Dispatch(int key, int repeat, State *state);
 
  private:
   // Maintains the mapping.

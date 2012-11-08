@@ -35,12 +35,12 @@ void Registry::Register(int key, Command *command) {
   _map[key] = command;
 }
 
-bool Registry::Dispatch(int key, int repeat) {
+bool Registry::Dispatch(int key, int repeat, State *state) {
   std::map<int, Command*>::iterator i = _map.find(key);
   if (i == _map.end()) {
     return false;
   }
-  i->second->Execute(repeat);
+  i->second->Execute(repeat, state);
   return true;
 }
 
