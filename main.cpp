@@ -354,6 +354,9 @@ int main(int argc, char *argv[]) {
   nonl();
   cbreak();
   noecho();
+  // This is necessary to prevent curses erasing the framebuffer on first call
+  // to getch().
+  refresh();
 
   // 2. Main event loop.
   state.Render = true;
