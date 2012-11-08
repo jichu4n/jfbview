@@ -238,11 +238,39 @@ class GoToPageCommand: public Command {
   int _default_page;
 };
 
-
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                               END COMMANDS                                *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+
+// Help text printed by --help or -h.
+static const char *HELP_STRING =
+    "JFBPDF v0.2\n"
+    "Copyright (C) 2012 Chuan Ji <jichuan89@gmail.com>\n"
+    "\n"
+    "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
+    "you may not use this file except in compliance with the License.\n"
+    "You may obtain a copy of the License at\n"
+    "\n"
+    " http://www.apache.org/licenses/LICENSE-2.0\n"
+    "\n"
+    "Unless required by applicable law or agreed to in writing, software\n"
+    "distributed under the License is distributed on an \"AS IS\" BASIS,\n"
+    "WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+    "See the License for the specific language governing permissions and\n"
+    "limitations under the License.\n"
+    "\n"
+    "Usage: jfbpdf [OPTIONS] my_document.pdf\n"
+    "\n"
+    "Options:\n"
+    "\t--help, -h            Show this message.\n"
+    "\t--fb=/path/to/dev     Specify output framebuffer device.\n"
+    "\t--page=N, -p N        Open page N on start up.\n"
+    "\t--zoom=N, -z N        Set initial zoom to N. E.g., -z 150 sets \n"
+    "\t                      zoom level to 150%.\n"
+    "\t--zoom_to_fit         Start in automatic zoom-to-fit mode.\n"
+    "\t--zoom_to_width       Start in automatic zoom-to-width mode.\n"
+    "\t--rotation=N, -r N    Set initial rotation to N degrees clockwise.\n";
 
 // Parses the command line, and stores settings in state. Crashes the program if
 // the commnad line contains errors.
@@ -255,6 +283,7 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
   };
   // Command line options.
   static const option LongFlags[] = {
+      { "help", false, NULL, 'h' },
       { "fb", true, NULL, FB },
       { "page", true, NULL, 'p' },
       { "zoom", true, NULL, 'z' },
@@ -263,7 +292,7 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
       { "rotation", true, NULL, 'r' },
       { 0, 0, 0, 0 },
   };
-  static const char *ShortFlags = "p:z:r:";
+  static const char *ShortFlags = "hp:z:r:";
 
   for (;;) {
     int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, NULL);
@@ -271,6 +300,9 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
       break;
     }
     switch (opt_char) {
+     case 'h':
+       fprintf(stdout, "%s", HELP_STRING);
+       exit(EXIT_FAILURE);
      case FB:
        state->FramebufferDevice = optarg;
        break;
@@ -279,6 +311,7 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
         fprintf(stderr, "Invalid page number \"%s\"\n", optarg);
         exit(EXIT_FAILURE);
       }
+      --(state->Page);
       break;
      case 'z':
       if (sscanf(optarg, "%f", &(state->Zoom)) < 1) {
@@ -300,14 +333,16 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
       }
       break;
      default:
+      fprintf(stderr, "Try \"-h\" for help.\n");
       exit(EXIT_FAILURE);
     }
   }
   if (optind == argc) {
-    fprintf(stderr, "No file specified.\n");
+    fprintf(stderr, "No file specified. Try \"-h\" for help.\n");
     exit(EXIT_FAILURE);
   } else if (optind < argc - 1) {
-    fprintf(stderr, "Please specify exactly one input file.\n");
+    fprintf(stderr, "Please specify exactly one input file. Try \"-h\" for "
+                    "help.\n");
     exit(EXIT_FAILURE);
   } else {
     state->FilePath = argv[optind];
