@@ -28,5 +28,5 @@ clean:
 -include $(SRCS:.cpp=.d)
 
 jfbpdf2: $(SRCS:.cpp=.o)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS) $(LIBS)
 
