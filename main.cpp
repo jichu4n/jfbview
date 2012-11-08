@@ -221,6 +221,24 @@ class ZoomToWidthCommand: public ZoomCommand {
   }
 };
 
+class GoToPageCommand: public Command {
+ public:
+  GoToPageCommand(int default_page)
+      : _default_page(default_page) {}
+  virtual void Execute(int repeat, State *state) {
+    int page = (std::max(1, std::min(state->PageCount,
+        RepeatOrDefault(repeat, _default_page)))) - 1;
+    if (page != state->Page) {
+      state->Page = page;
+      state->XOffset = 0;
+      state->YOffset = 0;
+    }
+  }
+ private:
+  int _default_page;
+};
+
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                               END COMMANDS                                *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -322,6 +340,11 @@ Registry BuildRegistry() {
   registry.Register('z', new SetZoomCommand());
   registry.Register('s', new ZoomToWidthCommand());
   registry.Register('a', new ZoomToFitCommand());
+
+  registry.Register('g', new GoToPageCommand(0));
+  registry.Register(KEY_HOME, new GoToPageCommand(0));
+  registry.Register('G', new GoToPageCommand(INT_MAX));
+  registry.Register(KEY_END, new GoToPageCommand(INT_MAX));
 
   return registry;
 }
