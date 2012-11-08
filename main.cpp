@@ -318,6 +318,7 @@ int main(int argc, char *argv[]) {
   noecho();
 
   // 2. Main event loop.
+  state.Render = true;
   do {
     // 2.1 Render.
     if (state.Render) {
