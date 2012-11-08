@@ -54,9 +54,9 @@ class PixelBufferWriter: public Document::PixelWriter {
 }  // namespace
 
 
-Viewer::Viewer(Document *doc, Framebuffer *fb, const Viewer::Config &config,
+Viewer::Viewer(Document *doc, Framebuffer *fb, const Viewer::State &state,
                int render_cache_size)
-    : _doc(doc), _fb(fb), _config(config),
+    : _doc(doc), _fb(fb), _state(state),
       _render_cache(this, render_cache_size) {
   assert(_doc != NULL);
   assert(_fb != NULL);
@@ -66,17 +66,17 @@ Viewer::~Viewer() {
 }
 
 void Viewer::Render() {
-  // 1. Process config.
-  int page = std::max(0, std::min(_doc->GetPageCount() - 1, _config.Page));
-  float zoom = _config.Zoom;
+  // 1. Process state.
+  int page = std::max(0, std::min(_doc->GetPageCount() - 1, _state.Page));
+  float zoom = _state.Zoom;
   if (zoom == ZOOM_TO_WIDTH) {
     zoom = static_cast<float>(_fb->GetSize().Width) /
            static_cast<float>(
-               _doc->GetPageSize(page, 1.0f, _config.Rotation).Width);
+               _doc->GetPageSize(page, 1.0f, _state.Rotation).Width);
   } else if (zoom == ZOOM_TO_FIT) {
     const PixelBuffer::Size &screen_size = _fb->GetSize();
     const Document::PageSize &page_size =
-        _doc->GetPageSize(page, 1.0f, _config.Rotation);
+        _doc->GetPageSize(page, 1.0f, _state.Rotation);
     zoom = std::min(static_cast<float>(screen_size.Width) /
                         static_cast<float>(page_size.Width),
                     static_cast<float>(screen_size.Height) /
@@ -86,18 +86,18 @@ void Viewer::Render() {
   zoom = std::max(MIN_ZOOM, std::min(MAX_ZOOM, zoom));
   const PixelBuffer::Size &screen_size = _fb->GetSize();
   const Document::PageSize &page_size =
-      _doc->GetPageSize(page, zoom, _config.Rotation);
+      _doc->GetPageSize(page, zoom, _state.Rotation);
   PixelBuffer::Rect src_rect;
   src_rect.X = std::max(0, std::min(page_size.Width - screen_size.Width - 1,
-                                    _config.XOffset));
+                                    _state.XOffset));
   src_rect.Y = std::max(0, std::min(page_size.Height - screen_size.Height - 1,
-                                    _config.YOffset));
+                                    _state.YOffset));
   src_rect.Width = std::min(screen_size.Width, page_size.Width - src_rect.X);
   src_rect.Height = std::min(screen_size.Height, page_size.Height - src_rect.Y);
 
   // 2. Render page to buffer.
   PixelBuffer *buffer =
-      _render_cache.Get(RenderCacheKey(page, zoom, _config.Rotation));
+      _render_cache.Get(RenderCacheKey(page, zoom, _state.Rotation));
 
   // 3. Blit buffer.
   _fb->Render(*buffer, src_rect);

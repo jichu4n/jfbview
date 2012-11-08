@@ -47,7 +47,7 @@ class Viewer {
   static const float MIN_ZOOM;
 
   // A structure representing zoom information.
-  struct Config {
+  struct State {
     // The displayed page.
     int Page;
 
@@ -61,7 +61,7 @@ class Viewer {
     // Number of screen pixels from left of page to left of displayed view.
     int YOffset;
 
-    Config(int page = 0, float zoom = ZOOM_TO_WIDTH, int rotation = 0,
+    State(int page = 0, float zoom = ZOOM_TO_WIDTH, int rotation = 0,
            int x_offset = 0, int y_offset = 0)
         : Page(page), Zoom(zoom), Rotation(rotation),
           XOffset(x_offset), YOffset(y_offset) {
@@ -70,7 +70,7 @@ class Viewer {
 
   // Constructs a new Viewer object. Does not take ownership of the document or
   // the framebuffer object.
-  Viewer(Document *doc, Framebuffer *fb, const Config &config = Config(),
+  Viewer(Document *doc, Framebuffer *fb, const State &state = State(),
          int render_cache_size = DEFAULT_RENDER_CACHE_SIZE);
   virtual ~Viewer();
 
@@ -78,10 +78,10 @@ class Viewer {
   void Render();
 
   // Returns the current settings.
-  Config GetConfig() const;
+  State GetState() const;
   // Sets the current settings. Will use minimum and maximum legal values to
   // replace illegal values.
-  void SetConfig(const Config &pan);
+  void SetState(const State &pan);
 
   // Returns whether the current view is at the bottom of the page.
   bool AtPageBottom() const;
@@ -94,7 +94,7 @@ class Viewer {
   // The framebuffer device.
   Framebuffer *_fb;
   // Settings.
-  Config _config;
+  State _state;
 
   // Key to the render cache.
   struct RenderCacheKey {
