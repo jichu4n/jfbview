@@ -23,8 +23,9 @@
 #include "document.hpp"
 #include "framebuffer.hpp"
 #include <pthread.h>
-#include <cassert>
 #include <unistd.h>
+#include <cassert>
+#include <cmath>
 #include <algorithm>
 
 const float Viewer::MAX_ZOOM = 10.0f;
@@ -136,6 +137,18 @@ void Viewer::GetState(Viewer::State *state) const {
 
 void Viewer::SetState(const State &state) {
   _state = state;
+}
+
+
+bool Viewer::RenderCacheKey::operator < (
+    const Viewer::RenderCacheKey &other) const {
+  if (Page != other.Page) {
+    return Page < other.Page;
+  }
+  if (fabs(Zoom / other.Zoom - 1.0f) >= 0.1f) {
+    return Zoom < other.Zoom;
+  }
+  return (Rotation % 360) < (other.Rotation % 360);
 }
 
 Viewer::RenderCache::RenderCache(Viewer *parent, int size)

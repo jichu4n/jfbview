@@ -139,7 +139,7 @@ class ScreenUpCommand: public Command {
 class ZoomCommand: public Command {
  protected:
   // How much to zoom in/out by each time.
-  static const float ZOOM_INCREMENT;
+  static const float ZOOM_COEFFICIENT;
   // Sets zoom, preserving original screen center.
   void SetZoom(float zoom, State *state) {
     // Position in page of screen center, as fraction of page size.
@@ -168,12 +168,12 @@ class ZoomCommand: public Command {
     state->Zoom = zoom;
   }
 };
-const float ZoomCommand::ZOOM_INCREMENT = 0.1f;
+const float ZoomCommand::ZOOM_COEFFICIENT = 1.2f;
 
 class ZoomInCommand: public ZoomCommand {
  public:
   virtual void Execute(int repeat, State *state) {
-    SetZoom(state->ActualZoom + RepeatOrDefault(repeat, 1) * ZOOM_INCREMENT,
+    SetZoom(state->ActualZoom * RepeatOrDefault(repeat, 1) * ZOOM_COEFFICIENT,
             state);
   }
 };
@@ -181,7 +181,7 @@ class ZoomInCommand: public ZoomCommand {
 class ZoomOutCommand: public ZoomCommand {
  public:
   virtual void Execute(int repeat, State *state) {
-    SetZoom(state->ActualZoom - RepeatOrDefault(repeat, 1) * ZOOM_INCREMENT,
+    SetZoom(state->ActualZoom * RepeatOrDefault(repeat, 1) / ZOOM_COEFFICIENT,
             state);
   }
 };
