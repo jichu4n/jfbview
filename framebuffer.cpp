@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstdio>
+#include <cstring>
 
 const char * const Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE = "/dev/fb0";
 
@@ -55,6 +56,7 @@ Framebuffer::Framebuffer()
 
 Framebuffer::~Framebuffer() {
   if (_buffer != MAP_FAILED) {
+    memset(_buffer, 0, GetBufferSize());
     munmap(_buffer, GetBufferSize());
   }
   if (_fd != -1) {
