@@ -23,6 +23,7 @@
 #include <pthread.h>
 #include <cassert>
 #include <cstring>
+#include <stdint.h>
 #include <unistd.h>
 #include <algorithm>
 #include <new>
@@ -77,7 +78,7 @@ struct RenderWorkerArgs {
   // The pixmap memory buffer. Each pixel takes up 3 bytes, one each for r, g,
   // and b components in that order. This should be the beginning of the entire
   // pixmap buffer.
-  unsigned char *Buffer;
+  uint8_t *Buffer;
   // The pixel writer.
   Document::PixelWriter *Writer;
 };
@@ -86,7 +87,7 @@ struct RenderWorkerArgs {
 // argument should be a RenderWorkerArgs.
 void *RenderWorker(void *_args) {
   RenderWorkerArgs *args = reinterpret_cast<RenderWorkerArgs *>(_args);
-  unsigned char *p = args->Buffer + args->YBegin * args->Width * 4;
+  uint8_t *p = args->Buffer + args->YBegin * args->Width * 4;
   for (int y = args->YBegin; y < args->YEnd; ++y) {
     for (int x = 0; x < args->Width; ++x) {
       args->Writer->Write(x, y, p[0], p[1], p[2]);
@@ -114,8 +115,9 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   pdf_run_page(_pdf_document, page_struct, dev, m, NULL);
 
   // 3. Write pixmap to buffer using #CPUs threads.
-  unsigned char *p = fz_pixmap_samples(_fz_context, pixmap);
   assert(fz_pixmap_components(_fz_context, pixmap) == 4);
+  uint8_t *p = reinterpret_cast<uint8_t *>(
+      fz_pixmap_samples(_fz_context, pixmap));
   int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
   int num_rows_per_thread = fz_pixmap_height(_fz_context, pixmap) / num_threads;
   pthread_t *threads = new pthread_t[num_threads];

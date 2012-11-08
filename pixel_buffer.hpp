@@ -22,6 +22,8 @@
 #ifndef PIXEL_BUFFER_HPP
 #define PIXEL_BUFFER_HPP
 
+#include <stdint.h>
+
 // A class that represents a rectangular matrix of pixels.
 class PixelBuffer {
  public:
@@ -40,7 +42,7 @@ class PixelBuffer {
     // Length of a pixel, in bytes. Must be between 0 and 4.
     virtual int GetDepth() const = 0;
     // Method to pack an RGB tuple into a pixel value.
-    virtual unsigned int Pack(int r, int g, int b) const = 0;
+    virtual uint32_t Pack(int r, int g, int b) const = 0;
     // This is required to keep C++ happy.
     virtual ~Format() {}
   };
@@ -61,7 +63,7 @@ class PixelBuffer {
   PixelBuffer(const Size &size, const Format *format);
   // Constructs a new PixelBuffer object, using a pre-allocated buffer. Will NOT
   // take ownership of the buffer. Does NOT take ownership of format.
-  PixelBuffer(const Size &size, const Format *format, unsigned char *buffer);
+  PixelBuffer(const Size &size, const Format *format, uint8_t *buffer);
   // Will free buffer if _has_ownship is true.
   ~PixelBuffer();
 
@@ -84,32 +86,32 @@ class PixelBuffer {
   // Prototype for a method that writes a pixel value to a location.
   class PixelWriterImpl {
    public:
-    virtual void WritePixel(unsigned int value, void *dest) = 0;
+    virtual void WritePixel(uint32_t value, void *dest) = 0;
   };
   // A pixel writer impl for depth = 1.
   class PixelWriterImpl1: public PixelWriterImpl {
    public:
-    virtual void WritePixel(unsigned int value, void *dest);
+    virtual void WritePixel(uint32_t value, void *dest);
   } _pixel_writer_impl_1;
   // A pixel writer impl for depth = 2.
   class PixelWriterImpl2: public PixelWriterImpl {
    public:
-    virtual void WritePixel(unsigned int value, void *dest);
+    virtual void WritePixel(uint32_t value, void *dest);
   } _pixel_writer_impl_2;
   // A pixel writer impl for depth = 3.
   class PixelWriterImpl3LittleEndian: public PixelWriterImpl {
    public:
-    virtual void WritePixel(unsigned int value, void *dest);
+    virtual void WritePixel(uint32_t value, void *dest);
   } _pixel_writer_impl_3_little_endian;
   // A pixel writer impl for depth = 3.
   class PixelWriterImpl3BigEndian: public PixelWriterImpl {
    public:
-    virtual void WritePixel(unsigned int value, void *dest);
+    virtual void WritePixel(uint32_t value, void *dest);
   } _pixel_writer_impl_3_big_endian;
   // A pixel writer impl for depth = 4.
   class PixelWriterImpl4: public PixelWriterImpl {
    public:
-    virtual void WritePixel(unsigned int value, void *dest);
+    virtual void WritePixel(uint32_t value, void *dest);
   } _pixel_writer_impl_4;
 
   // Size of the buffer.
@@ -118,7 +120,7 @@ class PixelBuffer {
   const Format *_format;
   // Pointer to buffer memory. Whether we own this memory depends on the
   // _has_ownership flag.
-  unsigned char *_buffer;
+  uint8_t *_buffer;
   // Whether we own _buffer.
   bool _has_ownership;
   // Pixel writer implementation for current buffer. One of
@@ -128,7 +130,7 @@ class PixelBuffer {
   // Common initialization called by both constructors.
   void Init();
   // Returns the address in memory corresponding to the pixel (x, y).
-  unsigned char *GetPixelAddress(int x, int y) const;
+  uint8_t *GetPixelAddress(int x, int y) const;
 
   // Disable copy and assign.
   PixelBuffer(const PixelBuffer &);

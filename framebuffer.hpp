@@ -23,6 +23,7 @@
 
 #include "pixel_buffer.hpp"
 #include <linux/fb.h>
+#include <stdint.h>
 #include <string>
 
 // An abstraction for a framebuffer device.
@@ -57,7 +58,7 @@ class Framebuffer {
     // See PixelBuffer::Format.
     virtual int GetDepth() const;
     // See PixelBuffer::Format.
-    virtual unsigned int Pack(int r, int g, int b) const;
+    virtual uint32_t Pack(int r, int g, int b) const;
     // This is required to keep C++ happy.
     virtual ~Format() {}
    private:
@@ -70,7 +71,7 @@ class Framebuffer {
   fb_var_screeninfo _vinfo;
   fb_fix_screeninfo _finfo;
   // mmap'd buffer.
-  unsigned char *_buffer;
+  uint8_t *_buffer;
   Format *_format;
   // Pixel buffer object managing the mmap'ed buffer.
   PixelBuffer *_pixel_buffer;

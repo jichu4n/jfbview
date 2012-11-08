@@ -19,7 +19,6 @@
 // This file implements the framebuffer abstraction.
 
 #include "framebuffer.hpp"
-#include <cassert>
 #include <cstdio>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -34,7 +33,7 @@ Framebuffer *Framebuffer::Open(const std::string &device) {
   if ((fb->_fd = open(device.c_str(), O_RDWR)) != -1) {
     if ((ioctl(fb->_fd, FBIOGET_VSCREENINFO, &(fb->_vinfo)) != -1) &&
         (ioctl(fb->_fd, FBIOGET_FSCREENINFO, &(fb->_finfo)) != -1)) {
-      if ((fb->_buffer = reinterpret_cast<unsigned char *> (
+      if ((fb->_buffer = reinterpret_cast<uint8_t *> (
               mmap(NULL, fb->GetBufferSize(), PROT_READ | PROT_WRITE,
                    MAP_SHARED, fb->_fd, 0))) != MAP_FAILED) {
         fb->_format = new Format(fb->_vinfo);
@@ -94,11 +93,10 @@ int Framebuffer::Format::GetDepth() const {
   return (_vinfo.bits_per_pixel + 7) >> 3;
 }
 
-unsigned int Framebuffer::Format::Pack(int r, int g, int b) const {
-  assert(GetDepth() <= static_cast<int>(sizeof(unsigned int)));
-  unsigned int v = ((r >> (8 - _vinfo.red.length)) << _vinfo.red.offset) |
-                   ((g >> (8 - _vinfo.green.length)) << _vinfo.green.offset) |
-                   ((b >> (8 - _vinfo.blue.length)) << _vinfo.blue.offset);
+uint32_t Framebuffer::Format::Pack(int r, int g, int b) const {
+  uint32_t v = ((r >> (8 - _vinfo.red.length)) << _vinfo.red.offset) |
+               ((g >> (8 - _vinfo.green.length)) << _vinfo.green.offset) |
+               ((b >> (8 - _vinfo.blue.length)) << _vinfo.blue.offset);
   return v;
 }
 
