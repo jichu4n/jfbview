@@ -158,13 +158,13 @@ class ZoomCommand: public Command {
     // Quotient of new and old zoom ratios.
     const float q = zoom / state->ActualZoom;
     // New page size after zoom change.
-    const float new_page_width = roundf(
-        static_cast<float>(state->PageWidth) * q);
-    const float new_page_height = roundf(
-        static_cast<float>(state->PageHeight) * q);
+    const float new_page_width =
+        static_cast<float>(state->PageWidth) * q;
+    const float new_page_height =
+        static_cast<float>(state->PageHeight) * q;
     // New center position within page after zoom change.
-    const float new_center_x = roundf(new_page_width * center_ratio_x);
-    const float new_center_y = roundf(new_page_height * center_ratio_y);
+    const float new_center_x = new_page_width * center_ratio_x;
+    const float new_center_y = new_page_height * center_ratio_y;
     // New offsets.
     state->XOffset = static_cast<int>(new_center_x) - state->ScreenWidth / 2;
     state->YOffset = static_cast<int>(new_center_y) - state->ScreenHeight / 2;
@@ -187,6 +187,37 @@ class ZoomOutCommand: public ZoomCommand {
   virtual void Execute(int repeat, State *state) {
     SetZoom(state->ActualZoom * RepeatOrDefault(repeat, 1) / ZOOM_COEFFICIENT,
             state);
+  }
+};
+
+class SetZoomCommand: public ZoomCommand {
+ public:
+  virtual void Execute(int repeat, State *state) {
+    SetZoom(static_cast<float>(RepeatOrDefault(repeat, 100)) / 100.0f,
+            state);
+  }
+};
+
+class ZoomToFitCommand: public Command {
+ public:
+  virtual void Execute(int repeat, State *state) {
+    state->Zoom = Viewer::ZOOM_TO_FIT;
+  }
+};
+
+class ZoomToWidthCommand: public ZoomCommand {
+ public:
+  virtual void Execute(int repeat, State *state) {
+    // Estimate page width at 100%.
+    const float orig_page_width =
+        static_cast<float>(state->PageWidth) / state->ActualZoom;
+    // Estimate actual zoom ratio with zoom to width.
+    const float actual_zoom =
+        static_cast<float>(state->ScreenWidth) / orig_page_width;
+    // Set center according to estimated actual zoom.
+    SetZoom(actual_zoom, state);
+    // Actually set zoom to width.
+    state->Zoom = Viewer::ZOOM_TO_WIDTH;
   }
 };
 
@@ -288,6 +319,9 @@ Registry BuildRegistry() {
   registry.Register('=', new ZoomInCommand());
   registry.Register('+', new ZoomInCommand());
   registry.Register('-', new ZoomOutCommand());
+  registry.Register('z', new SetZoomCommand());
+  registry.Register('s', new ZoomToWidthCommand());
+  registry.Register('a', new ZoomToFitCommand());
 
   return registry;
 }
