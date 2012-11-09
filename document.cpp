@@ -37,6 +37,6 @@ int Document::OutlineItem::GetChildrenCount() const {
   return _children.size();
 }
 
-const Document::OutlineItem *Document::OutlineItem::GetChild(int i) {
+const Document::OutlineItem *Document::OutlineItem::GetChild(int i) const {
   return _children[i];
 }

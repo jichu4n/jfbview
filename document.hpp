@@ -55,7 +55,7 @@ class Document {
     // Returns the number of children items contained within this item.
     int GetChildrenCount() const;
     // Returns a const pointer to the i-th child of this item.
-    const OutlineItem *GetChild(int i);
+    const OutlineItem *GetChild(int i) const;
 
    protected:
     std::string _title;
