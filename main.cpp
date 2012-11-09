@@ -20,6 +20,7 @@
 
 #include "command.hpp"
 #include "framebuffer.hpp"
+#include "outline_viewer.hpp"
 #include "pdf_document.hpp"
 #include "viewer.hpp"
 #include <curses.h>
@@ -43,11 +44,14 @@ struct State: public Viewer::State {
   std::string FilePath;
   // Framebuffer device.
   std::string FramebufferDevice;
+  // Outline viewer instance.
+  OutlineViewer *OutlineViewerInst;
 
   // Default state.
   State()
       : Viewer::State(), Exit(false), Render(true), FilePath(""),
-        FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE) {
+        FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
+        OutlineViewerInst(NULL) {
   }
 };
 
@@ -238,6 +242,17 @@ class GoToPageCommand: public Command {
   int _default_page;
 };
 
+class ShowOutlineViewerCommand: public Command {
+ public:
+  virtual void Execute(int repeat, State *state) {
+    int dest_page;
+    if (state->OutlineViewerInst->Show(&dest_page)) {
+      GoToPageCommand c(0);
+      c.Execute(dest_page, state);
+    }
+  }
+};
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                               END COMMANDS                                *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -381,6 +396,8 @@ Registry BuildRegistry() {
   registry.Register('G', new GoToPageCommand(INT_MAX));
   registry.Register(KEY_END, new GoToPageCommand(INT_MAX));
 
+  registry.Register('\t', new ShowOutlineViewerCommand());
+
   return registry;
 }
 
@@ -404,6 +421,7 @@ int main(int argc, char *argv[]) {
     delete doc;
     exit(EXIT_FAILURE);
   }
+  state.OutlineViewerInst = new OutlineViewer(doc->GetOutline());
   Viewer viewer(doc, fb, state);
   const Registry &registry = BuildRegistry();
 
@@ -447,6 +465,7 @@ int main(int argc, char *argv[]) {
   // 3. Clean up.
   endwin();
 
+  delete state.OutlineViewerInst;
   delete fb;
   delete doc;
 
