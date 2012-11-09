@@ -31,7 +31,7 @@
 class OutlineViewer {
  public:
   // Constructs an instance of OutlineViewer that displays the given Outline.
-  // Does not take ownership of the outline object.
+  // Takes ownership of the outline object.
   OutlineViewer(const Document::OutlineItem *outline);
   // Cleans up NCURSES state.
   ~OutlineViewer();

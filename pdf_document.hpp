@@ -68,8 +68,6 @@ class PDFDocument: public Document {
     PDFDocument *_parent;
     // The fz_outline we represent.
     fz_outline *_src;
-    // Whether we are the root of the outline hierarchy.
-    bool _is_root;
 
     // We disallow constructors; use the factory method Build() instead.
     PDFOutlineItem(PDFDocument *parent, fz_outline *src);

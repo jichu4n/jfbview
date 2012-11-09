@@ -140,6 +140,7 @@ void Cache<K, V>::Prepare(const K &key) {
       new CacheInternal::CacheWorkerArg<K, V>(this, key);
   pthread_t thread;
   pthread_create(&thread, NULL, &(CacheInternal::CacheWorker<K, V>), arg);
+  pthread_detach(thread);
 }
 
 template <typename K, typename V>

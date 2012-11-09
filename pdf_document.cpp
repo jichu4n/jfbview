@@ -162,14 +162,12 @@ int PDFDocument::Lookup(const OutlineItem *item) {
 }
 
 PDFDocument::PDFOutlineItem::~PDFOutlineItem() {
-  if (_is_root) {
-    fz_free_outline(_parent->_fz_context, _src);
-  }
+  fz_free_outline(_parent->_fz_context, _src);
 }
 
 PDFDocument::PDFOutlineItem::PDFOutlineItem(PDFDocument *parent,
                                             fz_outline *src)
-    : _parent(parent), _src(src), _is_root(false) {
+    : _parent(parent), _src(src) {
   _title = (src == NULL) ? "" : src->title;
 }
 
@@ -191,7 +189,6 @@ PDFDocument::PDFOutlineItem *PDFDocument::PDFOutlineItem::Build(
     root->_title = "TABLE OF CONTENTS";
     root->_children.insert(root->_children.begin(), items.begin(), items.end());
   }
-  root->_is_root = true;
   return root;
 }
 

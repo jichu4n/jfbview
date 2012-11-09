@@ -33,6 +33,7 @@ OutlineViewer::OutlineViewer(const Document::OutlineItem *outline)
 }
 
 OutlineViewer::~OutlineViewer() {
+  delete _outline;
   delwin(_window);
 }
 
