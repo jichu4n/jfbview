@@ -468,9 +468,9 @@ int main(int argc, char *argv[]) {
 
 
   // 3. Clean up.
+  delete state.OutlineViewerInst;
   endwin();
 
-  delete state.OutlineViewerInst;
   delete fb;
   delete doc;
 
