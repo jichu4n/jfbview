@@ -41,7 +41,7 @@ const Document::OutlineItem *OutlineViewer::Show() {
     return NULL;
   }
 
-  werase(_window);
+  wclear(_window);
   wrefresh(_window);
 
   // Main loop.
@@ -134,9 +134,6 @@ const Document::OutlineItem *OutlineViewer::Show() {
       _first_index = _selected_index - getmaxy(_window) + 1;
     }
   } while (!exit);
-
-  werase(_window);
-  wrefresh(_window);
 
   return result;
 }
