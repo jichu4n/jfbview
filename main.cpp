@@ -421,7 +421,6 @@ int main(int argc, char *argv[]) {
     delete doc;
     exit(EXIT_FAILURE);
   }
-  state.OutlineViewerInst = new OutlineViewer(doc->GetOutline());
   Viewer viewer(doc, fb, state);
   const Registry &registry = BuildRegistry();
 
@@ -430,9 +429,12 @@ int main(int argc, char *argv[]) {
   nonl();
   cbreak();
   noecho();
+  curs_set(false);
   // This is necessary to prevent curses erasing the framebuffer on first call
   // to getch().
   refresh();
+
+  state.OutlineViewerInst = new OutlineViewer(doc->GetOutline());
 
   // 2. Main event loop.
   state.Render = true;

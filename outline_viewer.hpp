@@ -22,8 +22,8 @@
 #define OUTLINE_VIEWER_HPP
 
 #include "document.hpp"
+#include <curses.h>
 #include <set>
-#include <string>
 #include <vector>
 
 // Outline viewer class. This class stores the expansion and focus states
@@ -33,27 +33,44 @@ class OutlineViewer {
   // Constructs an instance of OutlineViewer that displays the given Outline.
   // Does not take ownership of the outline object.
   OutlineViewer(const Document::OutlineItem *outline);
+  // Cleans up NCURSES state.
+  ~OutlineViewer();
   // Displays the outline view and enter the event loop. If the user selected a
   // page to jump to, returns true and sets page to the destination page number.
   // Otherwise returns false.
   bool Show(int *dest_page);
 
  private:
+  // An outline item with display related annotation.
+  struct Line {
+    // The outline item this display item represents.
+    const Document::OutlineItem *OutlineItem;
+    // The displayed string.
+    std::string Label;
+  };
+
+  // NCURSES window we manage.
+  WINDOW *_window;
   // Handle to the outline we display. Does not have ownership.
   const Document::OutlineItem *_outline;
-  // All expanded outline items.
+  // The set of expanded (unfolded) items.
   std::set<const Document::OutlineItem *> _expanded_items;
+  // The set of all expandedable items (i.e., those with children). Built by
+  // Flatten().
+  std::set<const Document::OutlineItem *> _all_expandable_items;
   // The outline flattened out into an array of lines.
-  std::vector<std::string> _lines;
+  std::vector<Line> _lines;
   // Index in _lines of the currently highlighted item.
-  int _selected_item;
+  int _selected_index;
   // Index in _lines of the first displayed item.
-  int _first_item;
+  int _first_index;
 
   // Flatten out _outline to _lines, according to _expanded_items.
   void Flatten();
   // Recursively flatten the outline item using preorder traversal.
   void FlattenRecursive(const Document::OutlineItem *item, int depth);
+  // Renders the viewer to the screen.
+  void Render() const;
 };
 
 #endif

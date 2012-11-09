@@ -188,6 +188,7 @@ PDFDocument::PDFOutlineItem *PDFDocument::PDFOutlineItem::Build(
     root =  dynamic_cast<PDFOutlineItem *>(items[0]);
   } else {
     root = new PDFOutlineItem(parent, NULL);
+    root->_title = "TABLE OF CONTENTS";
     root->_children.insert(root->_children.begin(), items.begin(), items.end());
   }
   root->_is_root = true;
