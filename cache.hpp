@@ -27,6 +27,7 @@
 #include <pthread.h>
 #include <map>
 #include <queue>
+#include <set>
 
 // A generic cache that stores <key, value> pairs. The semantics for Load() and
 // Discard() are implemented in implementing child classes. Supports
@@ -47,6 +48,8 @@ class Cache {
   // lock on this cache object, and calls to Get() while the asynchronous
   // loading is in progress will block.
   void Prepare(const K &key);
+  // Returns the size of the cache.
+  int GetSize() const;
   // Clears the cache, calling Discard() on all existing elements.
   void Clear();
 
@@ -66,6 +69,10 @@ class Cache {
   std::queue<K> _queue;
   // Max size of this cache.
   int _size;
+  // Keys that are being loaded by some thread.
+  std::set<K> _work_set;
+  // Condition variable used to broadcast work done.
+  pthread_cond_t _work_set_update;
 };
 
 
@@ -103,34 +110,79 @@ template <typename K, typename V>
 Cache<K, V>::Cache(int size)
     : _size(size) {
   pthread_mutex_init(&_lock, NULL);
+  pthread_cond_init(&_work_set_update, NULL);
 }
 
 template <typename K, typename V>
 Cache<K, V>::~Cache() {
+  Clear();
+  pthread_cond_destroy(&_work_set_update);
   pthread_mutex_destroy(&_lock);
 }
 
 template <typename K, typename V>
 V Cache<K, V>::Get(const K &key) {
+  // 1. If key exists, return it.
   pthread_mutex_lock(&_lock);
-
   typename std::map<K, V>::iterator i = _map.find(key);
   if (i != _map.end()) {
     V value = i->second;
     pthread_mutex_unlock(&_lock);
     return value;
   }
-  while (_queue.size() >= static_cast<size_t>(_size)) {
-    K victim = _queue.front();
-    Discard(victim, _map[victim]);
-    _queue.pop();
-    _map.erase(victim);
-  }
-  V value = Load(key);
-  _map[key] = value;
-  _queue.push(key);
 
+  // 2. If key is being worked on, wait for it to finish, then go back to 1.
+  bool was_in_work_set = false;
+  while (_work_set.count(key)) {
+    was_in_work_set = true;
+    pthread_cond_wait(&_work_set_update, &_lock);
+  }
+  if (was_in_work_set) {
+    pthread_mutex_unlock(&_lock);
+    return Get(key);
+  }
+
+  // 2. Otherwise, do work to load it.
+  _work_set.insert(key);
+  pthread_cond_broadcast(&_work_set_update);
   pthread_mutex_unlock(&_lock);
+  V value = Load(key);
+
+  // 3. If someone else removed the key, we should discard our work. Otherwise,
+  //    remove it and send out broadcast.
+  pthread_mutex_lock(&_lock);
+  if (!_work_set.count(key)) {
+    pthread_mutex_unlock(&_lock);
+    Discard(key, value);
+    return Get(key);
+  }
+  _work_set.erase(key);
+  pthread_cond_broadcast(&_work_set_update);
+
+  // 4. Try inserting <key, value> into map. If it's already there, throw away
+  //    away our result and return existing result.
+  if (_map.count(key)) {
+    V other_value = _map[key];
+    pthread_mutex_unlock(&_lock);
+    Discard(key, value);
+    return other_value;
+  } else {
+    std::map<K, V> evicted;
+    while (_queue.size() >= static_cast<size_t>(_size)) {
+      K victim_key = _queue.front();
+      evicted[victim_key] = _map[victim_key];
+      _map.erase(victim_key);
+      _queue.pop();
+    }
+    _map[key] = value;
+    _queue.push(key);
+    pthread_mutex_unlock(&_lock);
+
+    for (typename std::map<K, V>::iterator i = evicted.begin();
+         i != evicted.end(); ++i) {
+      Discard(i->first, i->second);
+    }
+  }
   return value;
 }
 
@@ -144,17 +196,23 @@ void Cache<K, V>::Prepare(const K &key) {
 }
 
 template <typename K, typename V>
+int Cache<K, V>::GetSize() const {
+  return _size;
+}
+
+template <typename K, typename V>
 void Cache<K, V>::Clear() {
   pthread_mutex_lock(&_lock);
-  for (typename std::map<K, V>::iterator i = _map.begin();
-       i != _map.end(); ++i) {
-    Discard(i->first, i->second);
-  }
+  std::map<K, V> map_copy(_map);
   _map.clear();
   while (_queue.size()) {
     _queue.pop();
   }
   pthread_mutex_unlock(&_lock);
+  for (typename std::map<K, V>::iterator i = map_copy.begin();
+       i != map_copy.end(); ++i) {
+    Discard(i->first, i->second);
+  }
 }
 
 #endif

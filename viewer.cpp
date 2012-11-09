@@ -118,7 +118,7 @@ void Viewer::Render() {
   _state.ScreenHeight = screen_size.Height;
 
   // 5. Preload.
-  if (page < _doc->GetPageCount() - 1) {
+  if ((_render_cache.GetSize() > 1) && (page < _doc->GetPageCount() - 1)) {
     _render_cache.Prepare(RenderCacheKey(page + 1, zoom, _state.Rotation));
   }
 }
