@@ -44,6 +44,8 @@ struct State: public Viewer::State {
   std::string FilePath;
   // Framebuffer device.
   std::string FramebufferDevice;
+  // Document instance.
+  Document *DocumentInst;
   // Outline viewer instance.
   OutlineViewer *OutlineViewerInst;
 
@@ -245,10 +247,10 @@ class GoToPageCommand: public Command {
 class ShowOutlineViewerCommand: public Command {
  public:
   virtual void Execute(int repeat, State *state) {
-    int dest_page;
-    if (state->OutlineViewerInst->Show(&dest_page)) {
+    const Document::OutlineItem *dest = state->OutlineViewerInst->Show();
+    if (dest != NULL) {
       GoToPageCommand c(0);
-      c.Execute(dest_page, state);
+      c.Execute(state->DocumentInst->Lookup(dest) + 1, state);
     }
   }
 };
@@ -414,6 +416,7 @@ int main(int argc, char *argv[]) {
             state.FilePath.c_str());
     exit(EXIT_FAILURE);
   }
+  state.DocumentInst = doc;
   Framebuffer *fb = Framebuffer::Open(state.FramebufferDevice);
   if (fb == NULL) {
     fprintf(stderr, "Failed to initialize framebuffer device \"%s\".\n",

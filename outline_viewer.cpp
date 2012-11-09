@@ -25,6 +25,7 @@
 OutlineViewer::OutlineViewer(const Document::OutlineItem *outline)
     : _window(newwin(0, 0, 0, 0)), _outline(outline), _selected_index(0),
       _first_index(0) {
+  keypad(_window, true);
   if (_outline != NULL) {
     _expanded_items.insert(_outline);
     Flatten();
@@ -35,9 +36,9 @@ OutlineViewer::~OutlineViewer() {
   delwin(_window);
 }
 
-bool OutlineViewer::Show(int *dest_page) {
+const Document::OutlineItem *OutlineViewer::Show() {
   if (_outline == NULL) {
-    return false;
+    return NULL;
   }
 
   werase(_window);
@@ -45,7 +46,7 @@ bool OutlineViewer::Show(int *dest_page) {
 
   // Main loop.
   bool exit = false;
-  bool page_selected = false;
+  const Document::OutlineItem *result = NULL;
   do {
     Render();
     const Document::OutlineItem *selected_item =
@@ -53,7 +54,7 @@ bool OutlineViewer::Show(int *dest_page) {
     const Document::OutlineItem *first_item =
         _lines[_first_index].OutlineItem;
 
-    switch (getch()) {
+    switch (wgetch(_window)) {
      case '\t':
      case 'q':
      case 27:
@@ -67,6 +68,12 @@ bool OutlineViewer::Show(int *dest_page) {
      case KEY_UP:
       --_selected_index;
       break;
+     case KEY_NPAGE:
+      _selected_index += getmaxy(_window);
+      break;
+     case KEY_PPAGE:
+      _selected_index -= getmaxy(_window);
+      break;
      case ' ':
       if (selected_item->GetChildrenCount()) {
         if (_expanded_items.count(selected_item)) {
@@ -77,13 +84,22 @@ bool OutlineViewer::Show(int *dest_page) {
         Flatten();
       }
       break;
+     case '\n':
+     case '\r':
+     case KEY_ENTER:
+     case 'g':
+      exit = true;
+      result = selected_item;
+      break;
      case 'z':
-      switch (getch()) {
+      switch (wgetch(_window)) {
        case 'R':
+       case 'r':
         _expanded_items = _all_expandable_items;
         Flatten();
         break;
        case 'M':
+       case 'm':
         _expanded_items.clear();
         _expanded_items.insert(_outline);
         Flatten();
@@ -122,7 +138,7 @@ bool OutlineViewer::Show(int *dest_page) {
   werase(_window);
   wrefresh(_window);
 
-  return page_selected;
+  return result;
 }
 
 void OutlineViewer::Flatten() {
