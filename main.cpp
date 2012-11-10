@@ -148,6 +148,20 @@ class ScreenUpCommand: public Command {
   }
 };
 
+class PageDownCommand: public Command {
+ public:
+  virtual void Execute(int repeat, State *state) {
+    state->Page += RepeatOrDefault(repeat, 1);
+  }
+};
+
+class PageUpCommand: public Command {
+ public:
+  virtual void Execute(int repeat, State *state) {
+    state->Page -= RepeatOrDefault(repeat, 1);
+  }
+};
+
 // Base class for zoom commands.
 class ZoomCommand: public Command {
  protected:
@@ -422,10 +436,12 @@ Registry BuildRegistry() {
   registry.Register('l', new MoveRightCommand());
   registry.Register(KEY_RIGHT, new MoveRightCommand());
   registry.Register(' ', new ScreenDownCommand());
-  registry.Register(KEY_NPAGE, new ScreenDownCommand());
   registry.Register(6, new ScreenDownCommand());  // ^F
-  registry.Register(KEY_PPAGE, new ScreenUpCommand());
   registry.Register(2, new ScreenUpCommand());    // ^B
+  registry.Register('J', new PageDownCommand());
+  registry.Register(KEY_NPAGE, new PageDownCommand());
+  registry.Register('K', new PageUpCommand());
+  registry.Register(KEY_PPAGE, new PageUpCommand());
 
   registry.Register('=', new ZoomInCommand());
   registry.Register('+', new ZoomInCommand());
