@@ -109,14 +109,14 @@ const Document::OutlineItem *OutlineViewer::Show() {
         break;
       }
       _selected_index = 0;
-      for (int i = 0; i < _lines.size(); ++i) {
+      for (unsigned int i = 0; i < _lines.size(); ++i) {
         if (_lines[i].OutlineItem == selected_item) {
           _selected_index = i;
           break;
         }
       }
       _first_index = 0;
-      for (int i = 0; i < _lines.size(); ++i) {
+      for (unsigned int i = 0; i < _lines.size(); ++i) {
         if (_lines[i].OutlineItem == first_item) {
           _first_index = i;
           break;
