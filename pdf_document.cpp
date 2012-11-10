@@ -54,9 +54,11 @@ PDFDocument *PDFDocument::Open(const std::string &path,
 
 PDFDocument::PDFDocument(int page_cache_size)
     : _page_cache(new PDFPageCache(page_cache_size, this)) {
+  pthread_mutex_init(&_render_lock, NULL);
 }
 
 PDFDocument::~PDFDocument() {
+  pthread_mutex_destroy(&_render_lock);
   delete _page_cache;
   pdf_close_document(_pdf_document);
   fz_free_context(_fz_context);
@@ -112,9 +114,11 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
                          int rotation) {
   assert((page >= 0) && (page < GetPageCount()));
 
+  pthread_mutex_lock(&_render_lock);
+
   // 1. Init MuPDF structures.
-  pdf_page *page_struct = GetPage(page);
   const fz_matrix &m = Transform(zoom, rotation);
+  pdf_page *page_struct = GetPage(page);
   const fz_bbox &bbox = GetBoundingBox(page_struct, m);
   fz_pixmap *pixmap = fz_new_pixmap_with_bbox(_fz_context, fz_device_rgb, bbox);
   fz_device *dev = fz_new_draw_device(_fz_context, pixmap);
@@ -122,6 +126,8 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   // 2. Render page.
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
   pdf_run_page(_pdf_document, page_struct, dev, m, NULL);
+
+  pthread_mutex_unlock(&_render_lock);
 
   // 3. Write pixmap to buffer using #CPUs threads.
   assert(fz_pixmap_components(_fz_context, pixmap) == 4);
@@ -148,8 +154,12 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   delete[] threads;
 
   // 4. Clean up.
+  pthread_mutex_lock(&_render_lock);
+
   fz_free_device(dev);
   fz_drop_pixmap(_fz_context, pixmap);
+
+  pthread_mutex_unlock(&_render_lock);
 }
 
 const Document::OutlineItem *PDFDocument::GetOutline() {

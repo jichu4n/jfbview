@@ -27,6 +27,7 @@
 extern "C" {
 #include <mupdf.h>
 }
+#include <pthread.h>
 #include <queue>
 #include <map>
 #include <vector>
@@ -47,7 +48,7 @@ class PDFDocument: public Document {
   virtual int GetPageCount();
   // See Document.
   virtual const PageSize GetPageSize(int page, float zoom, int rotation);
-  // See Document.
+  // See Document. Thread-safe.
   virtual void Render(PixelWriter *pw, int page, float zoom, int rotation);
   // See Document.
   virtual const OutlineItem *GetOutline();
@@ -91,6 +92,8 @@ class PDFDocument: public Document {
   pdf_document *_pdf_document;
   // Page cache.
   PDFPageCache *_page_cache;
+  // Lock guarding thread-unsafe parts of Render().
+  pthread_mutex_t _render_lock;
 
   // We disallow the constructor; use the factory method Open() instead.
   PDFDocument(int page_cache_size);

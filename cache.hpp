@@ -31,7 +31,9 @@
 
 // A generic cache that stores <key, value> pairs. The semantics for Load() and
 // Discard() are implemented in implementing child classes. Supports
-// asynchronous pre-emptive loading with pthreads.
+// asynchronous pre-emptive loading with pthreads. For performance, multiple
+// instances of Load() and Discard() may be executed at the same time, so these
+// latter MUST be thread-safe.
 template <typename K, typename V>
 class Cache {
  public:
@@ -55,10 +57,11 @@ class Cache {
   void Clear();
 
  protected:
-  // Loads a new element. This should be overridden in child classes.
+  // Loads a new element. This should be overridden in child classes. MUST BE
+  // THREAD-SAFE.
   virtual V Load(const K &key) = 0;
   // Frees an element that has been evicted from the cache. This should be
-  // overridden in child classes.
+  // overridden in child classes. MUST BE THREAD-SAFE.
   virtual void Discard(const K &key, V &value) = 0;
 
  private:
