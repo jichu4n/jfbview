@@ -9,6 +9,19 @@ JFBView is a PDF and image viewer for the Linux framebuffer. Features include:
   * Asynchronous background rendering of the next page.
   * Customizable multi-threaded caching.
 
+BUILDING
+========
+
+JFBView depends on MuPDF 1.x for PDF rendering and Imlib2 for image rendering.
+Note that the 1.x MuPDF API is incompatible with the pre-1.0 MuPDF API, wich
+means you cannot build JFBView against a pre-1.0 MuPDF library.
+
+To build JFBView, just run 'make'.
+
+It is also possible to build a variant of JFBView without support for images and
+without dependency on Imlib2, which has a rather large list of dependencies
+itself. This target is called JFBPDF. To build, run 'make jfbpdf'.
+
 KEYS AND OPTIONS
 ================
 
