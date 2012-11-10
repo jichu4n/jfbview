@@ -1,35 +1,67 @@
-.\" Manpage for nuseradd.
-.\" Contact vivek@nixcraft.net.in to correct errors or typos.
-.TH man 1 "14 Apr 2012" "2012-04-14" "JFBPDF Man Page"
+.\" Manpage for JFBView.
+.\" Contact jichuan89 AT gmail DOT com to correct errors or typos.
+.TH man 1 "10 Nov 2012" "2012-11-10" "JFBView Man Page"
 .SH NAME
-JFBPDF \- framebuffer PDF viewer for Linux
+JFBView \- PDF and image viewer for the Linux framebuffer.
 .SH SYNOPSIS
-jfbpdf [-r rotation] [-z zoom x10] [-p page] path_to_pdf.pdf
+jfbview [OPTIONS] FILE
 .SH DESCRIPTION
-JFBPDF is a simple PDF viewer for the Linux framebuffer. It is originally based
-on the fbpdf program by Ali Gholami Rudi and uses the MuPDF library for parsing
-and rendering PDF files.
+JFBView is a PDF and image viewer for the Linux framebuffer. It is very fast and
+has a number of advanced and unique features.
 .SH OPTIONS
 .TP
-\fB\-z n\fR
-specify initial zoom to be n x 10 percent (between 1 and 30)
+\fB--help\fR, \fB-h\fR
+Shows help message.
 .TP
-\fB\-r n\fR
-specify initial rotation to be n degrees counter-clockwise
+\fB--fb=\fR/path/to/dev
+Specifies the path to the output framebuffer device. The default is /dev/fb0.
 .TP
-\fB\-p n\fR
-go to page n on start up
+\fB--page=\fRn, \fB\-p\fR n
+Go to page n on start up.
+.TP
+\fB--zoom=\fRn, \fB\-z\fR n
+Set initial zoom to be n percent. For example, "-z 75" sets zoom to 75%.
+.TP
+\fB--zoom_to_fit\fR
+Start in zoom-to-fit mode.
+.TP
+\fB--zoom_to_width\fR
+Start in zoom-to-width mode. This is the default.
+.TP
+\fB\--rotation=\fRn, \fB-r\fR n
+Set initial rotation to n degrees clockwise.
+.TP
+\fB--format=image\R
+Forces the program to treat the input file as an image.
+.TP
+\fB--format=pdf\fR
+Forces the program to treat the input file as a PDF. By default, the file format
+is detected based on its extension. If the file does not have a ".pdf" (case is
+ignored) extension, this will force JFBView to load it as a PDF.
+.TP
+\fB--cache_size=\fRn
+Selects the number of pages to cache. JFBView has a in-memory cache of pages
+rendered at a particular zoom and rotation setting. However, you may wish to
+adjust the cache size down if this cache is consuming too much memory, or you
+may wish to adjust the cache size up for increased performance. If you have an
+older machine with limited RAM you may want to set it close to zero.
 .SH KEY BINDINGS - MAIN VIEW
-JFBPDF has a set of vi-like key bindings and many commands can be prefixed with a number. These are shown with a [n] prefix below.
+JFBView has a set of vi-like key bindings and many commands can be prefixed with a number. These are shown with a [n] prefix below.
+.TP
+\fBq\fR
+Quit.
 .TP
 [n]\fBarrow keys\fR, [n]\fBh\fR/\fBl\fR/\fBk\fR/\fBj\fR
 Move left/right/up/down.
 .TP
-[n]\fBSpace\fR/\fB^D\fR/\fBPageDown\fR
+[n]\fBSpace\fR/\fB^F\fR
 Move n screens down. Default is 1.
 .TP
-[n]\fBu\fR/\fBBackSpace\fR/\fBPageUp\fR
+[n]\fB^B\fR
 Move n screens up. Default is 1.
+.TP
+[n]\fBPageDown\fR/\fBPageUp\fR
+Go down / up n pages. Default is 1.
 .TP
 [n]\fB=\fR/\fB+\fR
 Zoom in n times. Default is 1.
@@ -40,47 +72,40 @@ Zoom out n times. Default is 1.
 \fBs\fR
 Zoom to screen width.
 .TP
+\fBa\fR
+Zoom to fit.
+.TP
 \fBTab\fR
 Open outline view (table of contents).
 .TP
-\fBq\fR
-Quit.
+\fBHOME\fR/\fBEND\fR
+Go to first / last page in document.
 .TP
-[n]\fBG\fR
-Go to page n. Default is last page.
+[n]\fBG\fR/\fBg\fR
+Go to page n. Default for \fBG\fR is last page; default for \fBg\fR is first
+page.
 .TP
-\fBm\fRx
-Save current position in document in bookmark `x'. `x' can be any letter.
+[n]\fBm\fR
+Save current position, zoom and rotation in document in bookmark n. The default
+is 0.
 .TP
-\fB`\fRx, \fB'\fRx
-Jump to saved position `x'.
+[n]\fB`\fR
+Restore saved position, zoom and rotation in bookmark n. The default is 0.
 .TP
 [n]\fBr\fR
 Set rotation to n degrees. Default is 0.
 .TP
-\fBHome\fR/\fBEnd\fR
-Go to first / last page.
+[n]\fB>\fR/\fB.\fR
+Rotate 90 degrees clockwise n times. Default is 1.
+.TP
+[n]\fB<\fR/\fB,\fR
+Rotate 90 degrees counter-clockwise n times. Default is 1.
 .TP
 [n]\fBz\fR
-Set zoom to n x 10 percent.
-.TP
-\fBi\fR
-Print information on the current document.
-.TP
-\fBEsc\fR
-Clear numeric prefix.
-.TP
-\fBH\fR/\fBM\fR/\fBL\fR
-Show top\fR/\fBmiddle\fR/\fBbottom of current page.
-.TP
-\fB^L\fR
-Redraw screen.
+Set zoom to n percent.
 .TP
 \fBe\fR
-Reload current file.
-.TP
-[n]\fBJ\fR/\fBK\fR, [n]\fB^F\fR/\fB^B\fR,
-Go down / up n pages. Default is 1.
+Reload current file from disk.
 .SH KEY BINDINGS - OUTLINE VIEW
 The outline view is toggled by the \fBTab\fR key.
 .TP
@@ -88,19 +113,13 @@ The outline view is toggled by the \fBTab\fR key.
 Toggle outline view.
 .TP
 \fBj\fR/\fBDown\fR, \fBk\fR/\fBUp\fR
-Move up or down.
+Move down or up.
 .TP
 \fBEnter\fR/\fBg\fR
 Go to selected item.
 .TP
 \fBSpace\fR
 Fold/unfold selected item.
-.TP
-\fB=\fR/\fB+\fR/\fBRightArrow\fR
-Unfold current item.
-.TP
-\fB-\fR/\fBLeftArrow\fR
-Fold current item.
 .TP
 \fBzR\fR
 Unfold all.
@@ -110,4 +129,4 @@ Fold all.
 .SH BUGS
 This software is still experimental and thus likely contains lots of bugs. You are welcome to submit any bugs or improvement suggestions to the author.
 .SH AUTHOR
-Chuan Ji (jichuan89 AT gmail.com)
+Chuan Ji (jichuan89 AT gmail DOT com)
