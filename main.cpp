@@ -258,6 +258,31 @@ class ShowOutlineViewerCommand: public Command {
   }
 };
 
+// Base class for SaveStateCommand and RestoreStateCommand.
+class StateCommand: public Command {
+ protected:
+  // A global map from register number to saved state.
+  static std::map<int, State> _saved_states;
+};
+std::map<int, State> StateCommand::_saved_states;
+
+class SaveStateCommand: public StateCommand {
+ public:
+  virtual void Execute(int repeat, State *state) {
+   _saved_states[RepeatOrDefault(repeat, 0)] = *state;
+  }
+};
+
+class RestoreStateCommand: public StateCommand {
+ public:
+  virtual void Execute(int repeat, State *state) {
+    int n = RepeatOrDefault(repeat, 0);
+    if (_saved_states.count(n)) {
+      *state = _saved_states[n];
+    }
+  }
+};
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                               END COMMANDS                                *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -402,6 +427,9 @@ Registry BuildRegistry() {
   registry.Register(KEY_END, new GoToPageCommand(INT_MAX));
 
   registry.Register('\t', new ShowOutlineViewerCommand());
+
+  registry.Register('m', new SaveStateCommand());
+  registry.Register('`', new RestoreStateCommand());
 
   return registry;
 }
