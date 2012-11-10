@@ -37,9 +37,9 @@ class Cache {
  public:
   // Create a cache with the given maximum size.
   Cache(int size);
-  // This does NOT clear the cache, because Discard() is virtual and cannot be
-  // called inside the destructor. Child classes must explicitly call Clear() in
-  // their destructors.
+  // DOES NOT CLEAR CACHE because it cannot call the virtual function Discard.
+  // Child classes MUST call Clear() in their destructors. Waits for background
+  // loading threads to terminate first.
   virtual ~Cache();
   // Retrieves an item. If the item is in the cache, simply returns it. If
   // not, loads it using the Load() function defined in an implementation.
@@ -50,7 +50,8 @@ class Cache {
   void Prepare(const K &key);
   // Returns the size of the cache.
   int GetSize() const;
-  // Clears the cache, calling Discard() on all existing elements.
+  // Clears the cache, calling Discard() on all existing elements. Waits for
+  // background loading threads to terminate first.
   void Clear();
 
  protected:
@@ -73,6 +74,8 @@ class Cache {
   std::set<K> _work_set;
   // Condition variable used to broadcast work done.
   pthread_cond_t _work_set_update;
+  // The set of currently running async loading threads.
+  std::set<pthread_t> _threads;
 };
 
 
@@ -127,6 +130,7 @@ V Cache<K, V>::Get(const K &key) {
   typename std::map<K, V>::iterator i = _map.find(key);
   if (i != _map.end()) {
     V value = i->second;
+    _threads.erase(pthread_self());  // Safe even if called from main thread.
     pthread_mutex_unlock(&_lock);
     return value;
   }
@@ -163,26 +167,29 @@ V Cache<K, V>::Get(const K &key) {
   //    away our result and return existing result.
   if (_map.count(key)) {
     V other_value = _map[key];
+    _threads.erase(pthread_self());  // Safe even if called from main thread.
     pthread_mutex_unlock(&_lock);
     Discard(key, value);
     return other_value;
-  } else {
-    std::map<K, V> evicted;
-    while (_queue.size() >= static_cast<size_t>(_size)) {
-      K victim_key = _queue.front();
-      evicted[victim_key] = _map[victim_key];
-      _map.erase(victim_key);
-      _queue.pop();
-    }
-    _map[key] = value;
-    _queue.push(key);
-    pthread_mutex_unlock(&_lock);
-
-    for (typename std::map<K, V>::iterator i = evicted.begin();
-         i != evicted.end(); ++i) {
-      Discard(i->first, i->second);
-    }
   }
+  std::map<K, V> evicted;
+  while (_queue.size() >= static_cast<size_t>(_size)) {
+    K victim_key = _queue.front();
+    evicted[victim_key] = _map[victim_key];
+    _map.erase(victim_key);
+    _queue.pop();
+  }
+  _map[key] = value;
+  _queue.push(key);
+  pthread_mutex_unlock(&_lock);
+
+  for (typename std::map<K, V>::iterator i = evicted.begin();
+       i != evicted.end(); ++i) {
+    Discard(i->first, i->second);
+  }
+  pthread_mutex_lock(&_lock);
+  _threads.erase(pthread_self());  // Safe even if called from main thread.
+  pthread_mutex_unlock(&_lock);
   return value;
 }
 
@@ -192,7 +199,9 @@ void Cache<K, V>::Prepare(const K &key) {
       new CacheInternal::CacheWorkerArg<K, V>(this, key);
   pthread_t thread;
   pthread_create(&thread, NULL, &(CacheInternal::CacheWorker<K, V>), arg);
-  pthread_detach(thread);
+  pthread_mutex_lock(&_lock);
+  _threads.insert(thread);
+  pthread_mutex_unlock(&_lock);
 }
 
 template <typename K, typename V>
@@ -202,6 +211,14 @@ int Cache<K, V>::GetSize() const {
 
 template <typename K, typename V>
 void Cache<K, V>::Clear() {
+  pthread_mutex_lock(&_lock);
+  std::set<pthread_t> threads_copy(_threads);
+  pthread_mutex_unlock(&_lock);
+  for (std::set<pthread_t>::const_iterator i = threads_copy.begin();
+       i != threads_copy.end(); ++i) {
+    pthread_join(*i, NULL);
+  }
+
   pthread_mutex_lock(&_lock);
   std::map<K, V> map_copy(_map);
   _map.clear();

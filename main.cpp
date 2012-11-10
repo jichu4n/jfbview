@@ -427,7 +427,7 @@ int main(int argc, char *argv[]) {
     delete doc;
     exit(EXIT_FAILURE);
   }
-  Viewer viewer(doc, fb, state);
+  Viewer *viewer = new Viewer(doc, fb, state);
   const Registry &registry = BuildRegistry();
 
   initscr();
@@ -447,9 +447,9 @@ int main(int argc, char *argv[]) {
   do {
     // 2.1 Render.
     if (state.Render) {
-      viewer.SetState(state);
-      viewer.Render();
-      viewer.GetState(&state);
+      viewer->SetState(state);
+      viewer->Render();
+      viewer->GetState(&state);
     }
     state.Render = true;
 
@@ -474,6 +474,7 @@ int main(int argc, char *argv[]) {
   delete state.OutlineViewerInst;
   endwin();
 
+  delete viewer;
   delete fb;
   delete doc;
 
