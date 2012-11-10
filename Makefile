@@ -1,6 +1,6 @@
-CXXFLAGS := -Wall -g
+CXXFLAGS := -Wall -O3
 LIBS := -lpthread -lncurses -lfitz -lfreetype -ljbig2dec -ljpeg -lz -lopenjpeg
-JFBVIEW_LIBS = $(LIBS) -lImlib2
+JFBVIEW_LIBS := $(LIBS) -lImlib2
 
 SRCS := $(wildcard *.cpp)
 
