@@ -121,7 +121,6 @@ Cache<K, V>::Cache(int size)
 
 template <typename K, typename V>
 Cache<K, V>::~Cache() {
-  Clear();
   pthread_cond_destroy(&_work_set_update);
   pthread_mutex_destroy(&_lock);
 }
