@@ -28,9 +28,6 @@ extern "C" {
 #include <mupdf.h>
 }
 #include <pthread.h>
-#include <queue>
-#include <map>
-#include <vector>
 
 // Document implementation using MuPDF.
 class PDFDocument: public Document {

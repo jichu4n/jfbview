@@ -26,7 +26,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <algorithm>
-#include <new>
+#include <vector>
 
 PDFDocument *PDFDocument::Open(const std::string &path,
                                int page_cache_size) {
