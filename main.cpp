@@ -221,6 +221,26 @@ class SetZoomCommand: public ZoomCommand {
   }
 };
 
+class SetRotationCommand: public Command {
+ public:
+  virtual void Execute(int repeat, State *state) {
+    state->Rotation = RepeatOrDefault(repeat, 0);
+  }
+};
+
+class RotateCommand: public Command {
+ public:
+  RotateCommand(int increment)
+      : _increment(increment) {
+  }
+
+  virtual void Execute(int repeat, State *state) {
+    state->Rotation += RepeatOrDefault(repeat, 1) * _increment;
+  }
+ private:
+  int _increment;
+};
+
 class ZoomToFitCommand: public Command {
  public:
   virtual void Execute(int repeat, State *state) {
@@ -449,6 +469,12 @@ Registry BuildRegistry() {
   registry.Register('z', new SetZoomCommand());
   registry.Register('s', new ZoomToWidthCommand());
   registry.Register('a', new ZoomToFitCommand());
+
+  registry.Register('r', new SetRotationCommand());
+  registry.Register('>', new RotateCommand(90));
+  registry.Register('.', new RotateCommand(90));
+  registry.Register('<', new RotateCommand(-90));
+  registry.Register(',', new RotateCommand(-90));
 
   registry.Register('g', new GoToPageCommand(0));
   registry.Register(KEY_HOME, new GoToPageCommand(0));

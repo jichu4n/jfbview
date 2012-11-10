@@ -250,7 +250,7 @@ pdf_page *PDFDocument::GetPage(int page) {
 fz_matrix PDFDocument::Transform(float zoom, int rotation) {
   fz_matrix m = fz_identity;
   m = fz_concat(m, fz_scale(zoom, zoom));
-  m = fz_concat(m, fz_rotate(-rotation));
+  m = fz_concat(m, fz_rotate(rotation));
   return m;
 }
 
