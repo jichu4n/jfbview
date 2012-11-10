@@ -91,7 +91,7 @@ Rect ProjectRect(int width, int height, float zoom, int rotation) {
 // Given a rectangle starting at (0, 0) and extending to (x, y), returns 
 
 Document *ImageDocument::Open(const std::string &path) {
-  Imlib_Image image = imlib_load_image(path.c_str());
+  Imlib_Image image = imlib_load_image_without_cache(path.c_str());
   if (image == NULL) {
     return NULL;
   }

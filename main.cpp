@@ -69,15 +69,74 @@ struct State: public Viewer::State {
   Document *DocumentInst;
   // Outline viewer instance.
   OutlineViewer *OutlineViewerInst;
+  // Framebuffer instance.
+  Framebuffer *FramebufferInst;
+  // Viewer instance.
+  Viewer *ViewerInst;
 
   // Default state.
   State()
       : Viewer::State(), Exit(false), Render(true), DocumentType(AUTO_DETECT),
         RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE), FilePath(""),
         FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
-        OutlineViewerInst(NULL) {
+        OutlineViewerInst(NULL), FramebufferInst(NULL), ViewerInst(NULL) {
   }
 };
+
+// Returns the all lowercase version of a string.
+static std::string ToLower(const std::string &s) {
+  std::string r(s);
+  std::transform(r.begin(), r.end(), r.begin(), &tolower);
+  return r;
+}
+
+// Returns the file extension of a path, or the empty string. The extension is
+// converted to lower case.
+static std::string GetFileExtension(const std::string &path) {
+  int path_len = path.length();
+  if ((path_len >= 4) && (path[path_len - 4] == '.')) {
+    return ToLower(path.substr(path_len - 3));
+  }
+  return std::string();
+}
+
+// Loads the file specified in a state. Returns true if the file has been
+// loaded.
+static bool LoadFile(State *state) {
+  if (state->DocumentType == State::AUTO_DETECT) {
+    if (GetFileExtension(state->FilePath) == "pdf") {
+      state->DocumentType = State::PDF;
+    } else {
+#ifndef JFBVIEW_NO_IMLIB2
+      state->DocumentType = State::IMAGE;
+#else
+      fprintf(stderr, "Cannot detect file format. Plase specify a file format "
+                      "with --format. Try --help for help.\n");
+      return false;
+#endif
+    }
+  }
+  Document *doc = NULL;
+  switch (state->DocumentType) {
+   case State::PDF:
+    doc = PDFDocument::Open(state->FilePath);
+    break;
+#ifndef JFBVIEW_NO_IMLIB2
+   case State::IMAGE:
+    doc = ImageDocument::Open(state->FilePath);
+    break;
+#endif
+   default:
+    abort();
+  }
+  if (doc == NULL) {
+    fprintf(stderr, "Failed to open document \"%s\".\n",
+            state->FilePath.c_str());
+    return false;
+  }
+  state->DocumentInst = doc;
+  return true;
+}
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -326,6 +385,7 @@ class SaveStateCommand: public StateCommand {
  public:
   virtual void Execute(int repeat, State *state) {
    _saved_states[RepeatOrDefault(repeat, 0)] = *state;
+   state->Render = false;
   }
 };
 
@@ -335,6 +395,21 @@ class RestoreStateCommand: public StateCommand {
     int n = RepeatOrDefault(repeat, 0);
     if (_saved_states.count(n)) {
       *state = _saved_states[n];
+    }
+  }
+};
+
+class ReloadCommand: public StateCommand {
+ public:
+  virtual void Execute(int repeat, State *state) {
+    delete state->ViewerInst;
+    delete state->DocumentInst;
+    if (LoadFile(state)) {
+      state->ViewerInst = new Viewer(
+        state->DocumentInst, state->FramebufferInst, *state,
+        state->RenderCacheSize);
+    } else {
+      state->Exit = true;
     }
   }
 };
@@ -385,13 +460,6 @@ static const char *HELP_STRING =
     "\t                      huge documents, or if you just want to reduce\n"
     "\t                      memory usage, you might want to set this to a\n"
     "\t                      smaller number.\n";
-
-// Returns the all lowercase version of a string.
-static std::string ToLower(const std::string &s) {
-  std::string r(s);
-  std::transform(r.begin(), r.end(), r.begin(), &tolower);
-  return r;
-}
 
 // Parses the command line, and stores settings in state. Crashes the program if
 // the commnad line contains errors.
@@ -537,17 +605,9 @@ Registry BuildRegistry() {
   registry.Register('m', new SaveStateCommand());
   registry.Register('`', new RestoreStateCommand());
 
-  return registry;
-}
+  registry.Register('e', new ReloadCommand());
 
-// Returns the file extension of a path, or the empty string. The extension is
-// converted to lower case.
-static std::string GetFileExtension(const std::string &path) {
-  int path_len = path.length();
-  if ((path_len >= 4) && (path[path_len - 4] == '.')) {
-    return ToLower(path.substr(path_len - 3));
-  }
-  return std::string();
+  return registry;
 }
 
 int main(int argc, char *argv[]) {
@@ -557,46 +617,17 @@ int main(int argc, char *argv[]) {
   // 1. Initialization.
   ParseCommandLine(argc, argv, &state);
 
-  if (state.DocumentType == State::AUTO_DETECT) {
-    if (GetFileExtension(state.FilePath) == "pdf") {
-      state.DocumentType = State::PDF;
-    } else {
-#ifndef JFBVIEW_NO_IMLIB2
-      state.DocumentType = State::IMAGE;
-#else
-      fprintf(stderr, "Cannot detect file format. Plase specify a file format "
-                      "with --format. Try --help for help.\n");
-      exit(EXIT_FAILURE);
-#endif
-    }
-  }
-  Document *doc = NULL;
-  switch (state.DocumentType) {
-   case State::PDF:
-    doc = PDFDocument::Open(state.FilePath);
-    break;
-#ifndef JFBVIEW_NO_IMLIB2
-   case State::IMAGE:
-    doc = ImageDocument::Open(state.FilePath);
-    break;
-#endif
-   default:
-    abort();
-  }
-  if (doc == NULL) {
-    fprintf(stderr, "Failed to open document \"%s\".\n",
-            state.FilePath.c_str());
+  if (!LoadFile(&state)) {
     exit(EXIT_FAILURE);
   }
-  state.DocumentInst = doc;
-  Framebuffer *fb = Framebuffer::Open(state.FramebufferDevice);
-  if (fb == NULL) {
+  state.FramebufferInst = Framebuffer::Open(state.FramebufferDevice);
+  if (state.FramebufferInst == NULL) {
     fprintf(stderr, "Failed to initialize framebuffer device \"%s\".\n",
             state.FramebufferDevice.c_str());
-    delete doc;
     exit(EXIT_FAILURE);
   }
-  Viewer *viewer = new Viewer(doc, fb, state, state.RenderCacheSize);
+  state.ViewerInst = new Viewer(
+      state.DocumentInst, state.FramebufferInst, state, state.RenderCacheSize);
   const Registry &registry = BuildRegistry();
 
   initscr();
@@ -609,16 +640,16 @@ int main(int argc, char *argv[]) {
   // to getch().
   refresh();
 
-  state.OutlineViewerInst = new OutlineViewer(doc->GetOutline());
+  state.OutlineViewerInst = new OutlineViewer(state.DocumentInst->GetOutline());
 
   // 2. Main event loop.
   state.Render = true;
   do {
     // 2.1 Render.
     if (state.Render) {
-      viewer->SetState(state);
-      viewer->Render();
-      viewer->GetState(&state);
+      state.ViewerInst->SetState(state);
+      state.ViewerInst->Render();
+      state.ViewerInst->GetState(&state);
     }
     state.Render = true;
 
@@ -643,9 +674,9 @@ int main(int argc, char *argv[]) {
   delete state.OutlineViewerInst;
   endwin();
 
-  delete viewer;
-  delete fb;
-  delete doc;
+  delete state.ViewerInst;
+  delete state.FramebufferInst;
+  delete state.DocumentInst;
 
   return EXIT_SUCCESS;
 }
