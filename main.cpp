@@ -377,15 +377,16 @@ class ShowOutlineViewerCommand: public Command {
 class StateCommand: public Command {
  protected:
   // A global map from register number to saved state.
-  static std::map<int, State> _saved_states;
+  static std::map<int, Viewer::State> _saved_states;
 };
-std::map<int, State> StateCommand::_saved_states;
+std::map<int, Viewer::State> StateCommand::_saved_states;
 
 class SaveStateCommand: public StateCommand {
  public:
   virtual void Execute(int repeat, State *state) {
-   _saved_states[RepeatOrDefault(repeat, 0)] = *state;
-   state->Render = false;
+    state->ViewerInst->GetState(
+        &(_saved_states[RepeatOrDefault(repeat, 0)]));
+    state->Render = false;
   }
 };
 
@@ -394,7 +395,8 @@ class RestoreStateCommand: public StateCommand {
   virtual void Execute(int repeat, State *state) {
     int n = RepeatOrDefault(repeat, 0);
     if (_saved_states.count(n)) {
-      *state = _saved_states[n];
+      state->ViewerInst->SetState(_saved_states[n]);
+      state->ViewerInst->GetState(state);
     }
   }
 };
