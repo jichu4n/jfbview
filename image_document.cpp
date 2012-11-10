@@ -17,7 +17,10 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // This file defines ImageDocument, an implementation of the Document
-// abstraction using Imlib2.
+// abstraction using Imlib2. If the macro JFBVIEW_NO_IMLIB2 is defined, this
+// file is disabled.
+
+#ifndef JFBVIEW_NO_IMLIB2
 
 #include "image_document.hpp"
 #include <pthread.h>
@@ -27,6 +30,7 @@
 #include <cmath>
 #include <cassert>
 #include <stdint.h>
+#include <algorithm>
 
 // Converts degree angles to radian.
 static inline double ToRadians(int degrees) {
@@ -215,4 +219,7 @@ void ImageDocument::Render(Document::PixelWriter *pw, int page, float zoom,
 
   imlib_free_image();
 }
+
+#endif
+
 

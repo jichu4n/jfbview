@@ -18,6 +18,16 @@
 
 // Main program file.
 
+// Program name. May be overridden in the Makefile.
+#ifndef JFBVIEW_PROGRAM_NAME
+#define JFBVIEW_PROGRAM_NAME "JFBView"
+#endif
+
+// Binary program name. May be overridden in the Makefile.
+#ifndef JFBVIEW_BINARY_NAME
+#define JFBVIEW_BINARY_NAME "jfbview"
+#endif
+
 #include "command.hpp"
 #include "framebuffer.hpp"
 #include "image_document.hpp"
@@ -41,6 +51,14 @@ struct State: public Viewer::State {
   // If true (default), requires refresh after current command.
   bool Render;
 
+  // The type of the displayed file.
+  enum {
+    AUTO_DETECT,
+    PDF,
+#ifndef JFBVIEW_NO_IMLIB2
+    IMAGE,
+#endif
+  } DocumentType;
   // Viewer render cache size.
   int RenderCacheSize;
   // Input file.
@@ -54,7 +72,7 @@ struct State: public Viewer::State {
 
   // Default state.
   State()
-      : Viewer::State(), Exit(false), Render(true),
+      : Viewer::State(), Exit(false), Render(true), DocumentType(AUTO_DETECT),
         RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE), FilePath(""),
         FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
         OutlineViewerInst(NULL) {
@@ -328,14 +346,14 @@ class RestoreStateCommand: public StateCommand {
 
 // Help text printed by --help or -h.
 static const char *HELP_STRING =
-    "JFBView v0.2\n"
+    JFBVIEW_PROGRAM_NAME " v0.2\n"
     "Copyright (C) 2012 Chuan Ji <jichuan89@gmail.com>\n"
     "\n"
     "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
     "you may not use this file except in compliance with the License.\n"
     "You may obtain a copy of the License at\n"
     "\n"
-    " http://www.apache.org/licenses/LICENSE-2.0\n"
+    "    http://www.apache.org/licenses/LICENSE-2.0\n"
     "\n"
     "Unless required by applicable law or agreed to in writing, software\n"
     "distributed under the License is distributed on an \"AS IS\" BASIS,\n"
@@ -343,18 +361,37 @@ static const char *HELP_STRING =
     "See the License for the specific language governing permissions and\n"
     "limitations under the License.\n"
     "\n"
-    "Usage: jfbview [OPTIONS] FILE\n"
+    "Usage: " JFBVIEW_BINARY_NAME " [OPTIONS] FILE\n"
     "\n"
     "Options:\n"
     "\t--help, -h            Show this message.\n"
     "\t--fb=/path/to/dev     Specify output framebuffer device.\n"
-    "\t--cache_size=N        Set cache size to N pages.\n"
     "\t--page=N, -p N        Open page N on start up.\n"
     "\t--zoom=N, -z N        Set initial zoom to N. E.g., -z 150 sets \n"
     "\t                      zoom level to 150%.\n"
     "\t--zoom_to_fit         Start in automatic zoom-to-fit mode.\n"
     "\t--zoom_to_width       Start in automatic zoom-to-width mode.\n"
-    "\t--rotation=N, -r N    Set initial rotation to N degrees clockwise.\n";
+    "\t--rotation=N, -r N    Set initial rotation to N degrees clockwise.\n"
+#ifndef JFBVIEW_NO_IMLIB2
+    "\t--format=image, -f image\n"
+    "\t                      Forces the program to treat the input file as an\n"
+    "\t                      image.\n"
+#endif
+    "\t--format=pdf, -f pdf  Forces the program to treat the input file as a\n"
+    "\t                      PDF document. Use this if your PDF file does not\n"
+    "\t                      end in \".pdf\" (case is ignored).\n"
+    "\t--cache_size=N        Cache at most N pages. If you have an older\n"
+    "\t                      machine with limited RAM, or if you are loading\n"
+    "\t                      huge documents, or if you just want to reduce\n"
+    "\t                      memory usage, you might want to set this to a\n"
+    "\t                      smaller number.\n";
+
+// Returns the all lowercase version of a string.
+static std::string ToLower(const std::string &s) {
+  std::string r(s);
+  std::transform(r.begin(), r.end(), r.begin(), &tolower);
+  return r;
+}
 
 // Parses the command line, and stores settings in state. Crashes the program if
 // the commnad line contains errors.
@@ -376,9 +413,10 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
       { "zoom_to_fit", false, NULL, ZOOM_TO_FIT },
       { "rotation", true, NULL, 'r' },
       { "cache_size", true, NULL, RENDER_CACHE_SIZE },
+      { "format", true, NULL, 'f' },
       { 0, 0, 0, 0 },
   };
-  static const char *ShortFlags = "hp:z:r:";
+  static const char *ShortFlags = "hp:z:r:f:";
 
   for (;;) {
     int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, NULL);
@@ -391,6 +429,18 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
        exit(EXIT_FAILURE);
      case FB:
        state->FramebufferDevice = optarg;
+       break;
+     case 'f':
+       if (ToLower(optarg) == "pdf") {
+         state->DocumentType = State::PDF;
+#ifndef JFBVIEW_NO_IMLIB2
+       } else if (ToLower(optarg) == "image") {
+         state->DocumentType = State::IMAGE;
+#endif
+       } else {
+        fprintf(stderr, "Invalid file format \"%s\"\n", optarg);
+        exit(EXIT_FAILURE);
+       }
        break;
      case RENDER_CACHE_SIZE:
       if (sscanf(optarg, "%d", &(state->RenderCacheSize)) < 1) {
@@ -492,12 +542,10 @@ Registry BuildRegistry() {
 
 // Returns the file extension of a path, or the empty string. The extension is
 // converted to lower case.
-std::string GetFileExtension(const std::string &path) {
+static std::string GetFileExtension(const std::string &path) {
   int path_len = path.length();
   if ((path_len >= 4) && (path[path_len - 4] == '.')) {
-    std::string ext(path.substr(path_len - 3));
-    std::transform(ext.begin(), ext.end(), ext.begin(), &tolower);
-    return ext;
+    return ToLower(path.substr(path_len - 3));
   }
   return std::string();
 }
@@ -509,9 +557,32 @@ int main(int argc, char *argv[]) {
   // 1. Initialization.
   ParseCommandLine(argc, argv, &state);
 
-  Document *doc = (GetFileExtension(state.FilePath) == "pdf") ?
-      PDFDocument::Open(state.FilePath) :
-      ImageDocument::Open(state.FilePath);
+  if (state.DocumentType == State::AUTO_DETECT) {
+    if (GetFileExtension(state.FilePath) == "pdf") {
+      state.DocumentType = State::PDF;
+    } else {
+#ifndef JFBVIEW_NO_IMLIB2
+      state.DocumentType = State::IMAGE;
+#else
+      fprintf(stderr, "Cannot detect file format. Plase specify a file format "
+                      "with --format. Try --help for help.\n");
+      exit(EXIT_FAILURE);
+#endif
+    }
+  }
+  Document *doc = NULL;
+  switch (state.DocumentType) {
+   case State::PDF:
+    doc = PDFDocument::Open(state.FilePath);
+    break;
+#ifndef JFBVIEW_NO_IMLIB2
+   case State::IMAGE:
+    doc = ImageDocument::Open(state.FilePath);
+    break;
+#endif
+   default:
+    abort();
+  }
   if (doc == NULL) {
     fprintf(stderr, "Failed to open document \"%s\".\n",
             state.FilePath.c_str());

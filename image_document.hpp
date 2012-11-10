@@ -17,7 +17,10 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // This file declares ImageDocument, an implementation of the Document
-// abstraction using Imlib2.
+// abstraction using Imlib2. If the macro JFBVIEW_NO_IMLIB2 is defined, this
+// class is disabled.
+
+#ifndef JFBVIEW_NO_IMLIB2
 
 #ifndef IMAGE_DOCUMENT_HPP
 #define IMAGE_DOCUMENT_HPP
@@ -62,6 +65,8 @@ class ImageDocument: public Document {
   ImageDocument(const ImageDocument &other);
   ImageDocument &operator = (const ImageDocument &other);
 };
+
+#endif
 
 #endif
 
