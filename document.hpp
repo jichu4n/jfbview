@@ -32,7 +32,7 @@ class Document {
     int Width;
     int Height;
 
-    PageSize(int width, int height)
+    PageSize(int width = -1, int height = -1)
         : Width(width), Height(height) {
     }
   };

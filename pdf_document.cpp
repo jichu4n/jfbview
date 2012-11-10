@@ -28,7 +28,7 @@
 #include <algorithm>
 #include <vector>
 
-PDFDocument *PDFDocument::Open(const std::string &path,
+Document *PDFDocument::Open(const std::string &path,
                                int page_cache_size) {
   fz_context *context = fz_new_context(NULL, NULL, FZ_STORE_DEFAULT);
   pdf_document *raw_pdf_document = NULL;

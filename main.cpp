@@ -20,6 +20,7 @@
 
 #include "command.hpp"
 #include "framebuffer.hpp"
+#include "image_document.hpp"
 #include "outline_viewer.hpp"
 #include "pdf_document.hpp"
 #include "viewer.hpp"
@@ -327,7 +328,7 @@ class RestoreStateCommand: public StateCommand {
 
 // Help text printed by --help or -h.
 static const char *HELP_STRING =
-    "JFBPDF v0.2\n"
+    "JFBView v0.2\n"
     "Copyright (C) 2012 Chuan Ji <jichuan89@gmail.com>\n"
     "\n"
     "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
@@ -342,7 +343,7 @@ static const char *HELP_STRING =
     "See the License for the specific language governing permissions and\n"
     "limitations under the License.\n"
     "\n"
-    "Usage: jfbpdf [OPTIONS] my_document.pdf\n"
+    "Usage: jfbview [OPTIONS] FILE\n"
     "\n"
     "Options:\n"
     "\t--help, -h            Show this message.\n"
@@ -489,6 +490,18 @@ Registry BuildRegistry() {
   return registry;
 }
 
+// Returns the file extension of a path, or the empty string. The extension is
+// converted to lower case.
+std::string GetFileExtension(const std::string &path) {
+  int path_len = path.length();
+  if ((path_len >= 4) && (path[path_len - 4] == '.')) {
+    std::string ext(path.substr(path_len - 3));
+    std::transform(ext.begin(), ext.end(), ext.begin(), &tolower);
+    return ext;
+  }
+  return std::string();
+}
+
 int main(int argc, char *argv[]) {
   // Main program state.
   State state;
@@ -496,7 +509,9 @@ int main(int argc, char *argv[]) {
   // 1. Initialization.
   ParseCommandLine(argc, argv, &state);
 
-  Document *doc = PDFDocument::Open(state.FilePath);
+  Document *doc = (GetFileExtension(state.FilePath) == "pdf") ?
+      PDFDocument::Open(state.FilePath) :
+      ImageDocument::Open(state.FilePath);
   if (doc == NULL) {
     fprintf(stderr, "Failed to open document \"%s\".\n",
             state.FilePath.c_str());

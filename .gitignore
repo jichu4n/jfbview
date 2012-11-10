@@ -1,6 +1,5 @@
 .*.swp
 *.o
 *.d
-jfbpdf
-jfbpdf2
 tags
+jfbview
