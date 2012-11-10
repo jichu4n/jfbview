@@ -1,7 +1,8 @@
 JFBView
 =====
 
-JFBView is a PDF and image viewer for the Linux framebuffer. Features include:
+JFBView is a PDF and image viewer for the Linux framebuffer. It is very fast and
+has a number of advanced and unique features including:
 
   * Supports arbitrary zoom (10% - 1000%) and rotation.
   * Table of Contents (TOC) viewer for PDF documents.
