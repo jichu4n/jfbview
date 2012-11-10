@@ -40,6 +40,8 @@ struct State: public Viewer::State {
   // If true (default), requires refresh after current command.
   bool Render;
 
+  // Viewer render cache size.
+  int RenderCacheSize;
   // Input file.
   std::string FilePath;
   // Framebuffer device.
@@ -51,7 +53,8 @@ struct State: public Viewer::State {
 
   // Default state.
   State()
-      : Viewer::State(), Exit(false), Render(true), FilePath(""),
+      : Viewer::State(), Exit(false), Render(true),
+        RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE), FilePath(""),
         FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
         OutlineViewerInst(NULL) {
   }
@@ -310,6 +313,7 @@ static const char *HELP_STRING =
     "Options:\n"
     "\t--help, -h            Show this message.\n"
     "\t--fb=/path/to/dev     Specify output framebuffer device.\n"
+    "\t--cache_size=N        Set cache size to N pages.\n"
     "\t--page=N, -p N        Open page N on start up.\n"
     "\t--zoom=N, -z N        Set initial zoom to N. E.g., -z 150 sets \n"
     "\t                      zoom level to 150%.\n"
@@ -322,7 +326,8 @@ static const char *HELP_STRING =
 void ParseCommandLine(int argc, char *argv[], State *state) {
   // Tags for long options that don't have short option chars.
   enum {
-    ZOOM_TO_WIDTH = 0x1000,
+    RENDER_CACHE_SIZE = 0x1000,
+    ZOOM_TO_WIDTH,
     ZOOM_TO_FIT,
     FB,
   };
@@ -335,6 +340,7 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
       { "zoom_to_width", false, NULL, ZOOM_TO_WIDTH },
       { "zoom_to_fit", false, NULL, ZOOM_TO_FIT },
       { "rotation", true, NULL, 'r' },
+      { "cache_size", true, NULL, RENDER_CACHE_SIZE },
       { 0, 0, 0, 0 },
   };
   static const char *ShortFlags = "hp:z:r:";
@@ -351,6 +357,13 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
      case FB:
        state->FramebufferDevice = optarg;
        break;
+     case RENDER_CACHE_SIZE:
+      if (sscanf(optarg, "%d", &(state->RenderCacheSize)) < 1) {
+        fprintf(stderr, "Invalid render cache size \"%s\"\n", optarg);
+        exit(EXIT_FAILURE);
+      }
+      state->RenderCacheSize = std::max(1, state->RenderCacheSize + 1);
+      break;
      case 'p':
       if (sscanf(optarg, "%d", &(state->Page)) < 1) {
         fprintf(stderr, "Invalid page number \"%s\"\n", optarg);
@@ -455,7 +468,7 @@ int main(int argc, char *argv[]) {
     delete doc;
     exit(EXIT_FAILURE);
   }
-  Viewer *viewer = new Viewer(doc, fb, state);
+  Viewer *viewer = new Viewer(doc, fb, state, state.RenderCacheSize);
   const Registry &registry = BuildRegistry();
 
   initscr();
