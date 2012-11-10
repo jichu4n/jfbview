@@ -1,61 +1,30 @@
-JFBPDF
+JFBView
 =====
 
-JFBPDF is a framebuffer pdf/djvu file viewer forked from FBPDF. It currently
-only actively supports the mupdf library for PDF files. See the Makefile for
-other targets. The following options can be specified when starting jfbpdf:
+JFBView is a PDF and image viewer for the Linux framebuffer. Features include:
 
-  jfbpdf [-r rotation] [-z zoom x10] [-p page] path_to_file.pdf
+  * Supports arbitrary zoom (10% - 1000%) and rotation.
+  * Table of Contents (TOC) viewer for PDF documents.
+  * Multi-threaded rendering on multi-core core machines.
+  * Asynchronous background rendering of the next page.
+  * Customizable multi-threaded caching.
 
-See the man page for details.
+KEYS AND OPTIONS
+================
 
-KEYS
-====
+The key bindings and command line options available are described in the man
+page of JFBView. To view it, do `man jfbview'.
 
-The key bindings available are described in the man page of JFBPDF. To view it,
-do `man jfbpdf'.
+ABOUT
+=====
 
-CHANGES
+JFBView is written by Chuan Ji <jichuan89 AT gmail DOT com>, and is distributed
+under the Apache License v2.
+
+HISTORY
 =======
 
-Differences between JFBPDF and upstream FBPDF:
-
-  * Support for alternative framebuffer color depths: FBPDF originally only
-    supports 32bpp mode framebuffer. JFBPDF additionally supports 16bpp and
-    24bpp, which may be the only available color modes on older computers.
-
-  * Page geometry detection: JFBPDF will detect the width and height of PDF
-    pages, whereas FBPDF assumes a fixed maximum size and thus behaves
-    strangely when scrolling.
-
-  * Zooming features:
-      - Support for progressive zooming with '+' ('=') and '-' keys
-      - Support for auto zoom to screen width with the 's' key; this is also
-        the default.
-      - Zooming will preserve the view position (center of screen) within the
-        current page.
-      - Documents are centered horizontally / vertically on screen when page
-        dimensions are less than screen dimensions.
-
-  * Outline (TOC) view: JFBPDF has an outline view, toggled by the Tab key,
-    that allows the user to browse through the outline / table of contents
-    (TOC) embedded in the current document and jump to the corresponding
-    locations.
-
-  * Better controls: a range of keyboard shortcuts are added, including arrow
-    keys, page up/down, etc..
-
-  * Marks save all state (zoom, position, rotation, etc.).
-
-Minor changes:
-
-  * JFBPDF will move to the next / previous page when scrolling beyond the
-    boundaries of the current page.
-
-  * JFBPDF clears the screen when quitting instead of leaving garbage on
-    screen.
-
-  * Smoother horizontal panning.
-
-  * The screen is cleard when zooming, so no garbage is left over from before
-    the zoom.
+JFBView started as a fork of FBPDF by Ali Gholami Rudi with improvements and bug
+fixes, and was named JFBPDF. The JFBPDF code (in C) grew steadily more
+convoluted as features were added, and finally was completely rewritten from
+scratch in November 2012, with added support for images through Imlib2.
