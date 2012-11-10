@@ -59,25 +59,20 @@ class PDFDocument: public Document {
    public:
     virtual ~PDFOutlineItem();
     // See Document::OutlineItem.
-    int GetPageNum() const;
+    int GetDestPage() const;
     // Factory method to create outline items from a fz_outline. This constructs
-    // the entire outline hierarchy.
-    static PDFOutlineItem *Build(PDFDocument *parent, fz_outline *src);
-   private:
-    // The document we belong to.
-    PDFDocument *_parent;
-    // The fz_outline we represent.
-    fz_outline *_src;
+    // the entire outline hierarchy. Takes ownership of src.
+    static PDFOutlineItem *Build(fz_context *ctx, fz_outline *src);
 
+   private:
+    // Destination page number.
+    int _dest_page;
     // We disallow constructors; use the factory method Build() instead.
-    PDFOutlineItem(PDFDocument *parent, fz_outline *src);
-    // No reason to allow copy constructor.
-    PDFOutlineItem(const PDFOutlineItem &);
-    // Recursive construction.
-    static void BuildRecursive(PDFDocument *parent, fz_outline *src,
+    PDFOutlineItem(fz_outline *src);
+    // Recursive construction, called by Build().
+    static void BuildRecursive(fz_outline *src,
                                std::vector<OutlineItem *> *output);
   };
-  friend class PDFOutlineItem;
   // Cache for pdf_page.
   class PDFPageCache: public Cache<int, pdf_page *> {
    public:

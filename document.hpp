@@ -79,7 +79,8 @@ class Document {
   // top-level element in the outline, and is owned by the caller. If the
   // document does not have an outline, return NULL.
   virtual const OutlineItem *GetOutline() = 0;
-  // Returns the page number referred to by an outline item.
+  // Returns the page number referred to by an outline item. If not available,
+  // returns -1.
   virtual int Lookup(const OutlineItem *item) = 0;
 };
 

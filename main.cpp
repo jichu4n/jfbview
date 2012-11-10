@@ -249,8 +249,11 @@ class ShowOutlineViewerCommand: public Command {
   virtual void Execute(int repeat, State *state) {
     const Document::OutlineItem *dest = state->OutlineViewerInst->Show();
     if (dest != NULL) {
-      GoToPageCommand c(0);
-      c.Execute(state->DocumentInst->Lookup(dest) + 1, state);
+      int dest_page = state->DocumentInst->Lookup(dest);
+      if (dest_page >= 0) {
+        GoToPageCommand c(0);
+        c.Execute(dest_page + 1, state);
+      }
     }
   }
 };

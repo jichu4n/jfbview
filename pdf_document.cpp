@@ -154,38 +154,41 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
 
 const Document::OutlineItem *PDFDocument::GetOutline() {
   fz_outline *src = pdf_load_outline(_pdf_document);
-  return (src == NULL) ? NULL : PDFOutlineItem::Build(this, src);
+  return (src == NULL) ? NULL : PDFOutlineItem::Build(_fz_context, src);
 }
 
 int PDFDocument::Lookup(const OutlineItem *item) {
-  return (dynamic_cast<const PDFOutlineItem *>(item))->GetPageNum();
+  return (dynamic_cast<const PDFOutlineItem *>(item))->GetDestPage();
 }
 
 PDFDocument::PDFOutlineItem::~PDFOutlineItem() {
-  fz_free_outline(_parent->_fz_context, _src);
 }
 
-PDFDocument::PDFOutlineItem::PDFOutlineItem(PDFDocument *parent,
-                                            fz_outline *src)
-    : _parent(parent), _src(src) {
-  _title = (src == NULL) ? "" : src->title;
+PDFDocument::PDFOutlineItem::PDFOutlineItem(fz_outline *src) {
+  if (src == NULL) {
+    _dest_page = -1;
+  } else {
+    _title = src->title;
+    _dest_page = src->dest.ld.gotor.page;
+  }
 }
 
-int PDFDocument::PDFOutlineItem::GetPageNum() const {
-  return _src->dest.ld.gotor.page;
+int PDFDocument::PDFOutlineItem::GetDestPage() const {
+  return _dest_page;
 }
 
 PDFDocument::PDFOutlineItem *PDFDocument::PDFOutlineItem::Build(
-    PDFDocument *parent, fz_outline *src) {
+    fz_context *ctx, fz_outline *src) {
   PDFOutlineItem *root = NULL;
   std::vector<OutlineItem *> items;
-  BuildRecursive(parent, src, &items);
+  BuildRecursive(src, &items);
+  fz_free_outline(ctx, src);
   if (items.empty()) {
     return NULL;
   } else if (items.size() == 1) {
     root =  dynamic_cast<PDFOutlineItem *>(items[0]);
   } else {
-    root = new PDFOutlineItem(parent, NULL);
+    root = new PDFOutlineItem(NULL);
     root->_title = "TABLE OF CONTENTS";
     root->_children.insert(root->_children.begin(), items.begin(), items.end());
   }
@@ -193,13 +196,13 @@ PDFDocument::PDFOutlineItem *PDFDocument::PDFOutlineItem::Build(
 }
 
 void PDFDocument::PDFOutlineItem::BuildRecursive(
-    PDFDocument *parent, fz_outline *src,
+    fz_outline *src,
     std::vector<Document::OutlineItem *> *output) {
   assert(output != NULL);
   for (fz_outline *i = src; i != NULL; i = i->next) {
-    PDFOutlineItem *item = new PDFOutlineItem(parent, i);
+    PDFOutlineItem *item = new PDFOutlineItem(i);
     if (i->down != NULL) {
-      BuildRecursive(parent, i->down, &(item->_children));
+      BuildRecursive(i->down, &(item->_children));
     }
     output->push_back(item);
   }
