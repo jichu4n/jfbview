@@ -83,7 +83,10 @@ class PDFDocument: public Document {
     virtual pdf_page *Load(const int &page);
     virtual void Discard(const int &page, pdf_page * &page_struct);
    private:
+    // PDF document we belong to.
     PDFDocument *_parent;
+    // Lock for Load() and Discard().
+    pthread_mutex_t _lock;
   };
   friend class PDFPageCache;
 

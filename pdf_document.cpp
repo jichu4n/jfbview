@@ -220,19 +220,26 @@ void PDFDocument::PDFOutlineItem::BuildRecursive(
 
 PDFDocument::PDFPageCache::PDFPageCache(int cache_size, PDFDocument *parent)
     : Cache<int, pdf_page *>(cache_size), _parent(parent) {
+  pthread_mutex_init(&_lock, NULL);
 }
 
 PDFDocument::PDFPageCache::~PDFPageCache() {
   Clear();
+  pthread_mutex_destroy(&_lock);
 }
 
 pdf_page *PDFDocument::PDFPageCache::Load(const int &page) {
-  return pdf_load_page(_parent->_pdf_document, page);
+  pthread_mutex_lock(&_lock);
+  pdf_page *page_struct = pdf_load_page(_parent->_pdf_document, page);
+  pthread_mutex_unlock(&_lock);
+  return page_struct;
 }
 
 void PDFDocument::PDFPageCache::Discard(const int &page,
                                         pdf_page * &page_struct) {
+  pthread_mutex_lock(&_lock);
   pdf_free_page(_parent->_pdf_document, page_struct);
+  pthread_mutex_unlock(&_lock);
 }
 
 pdf_page *PDFDocument::GetPage(int page) {
