@@ -71,7 +71,7 @@ int PDFDocument::GetPageCount() {
 const Document::PageSize PDFDocument::GetPageSize(
     int page, float zoom, int rotation) {
   assert((page >= 0) && (page < GetPageCount()));
-  const fz_bbox &bbox = GetBoundingBox(
+  const fz_irect &bbox = GetBoundingBox(
       GetPage(page), Transform(zoom, rotation));
   return PageSize(bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
 }
@@ -119,13 +119,13 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   // 1. Init MuPDF structures.
   const fz_matrix &m = Transform(zoom, rotation);
   pdf_page *page_struct = GetPage(page);
-  const fz_bbox &bbox = GetBoundingBox(page_struct, m);
-  fz_pixmap *pixmap = fz_new_pixmap_with_bbox(_fz_context, fz_device_rgb, bbox);
+  const fz_irect &bbox = GetBoundingBox(page_struct, m);
+  fz_pixmap *pixmap = fz_new_pixmap_with_bbox(_fz_context, fz_device_rgb, &bbox);
   fz_device *dev = fz_new_draw_device(_fz_context, pixmap);
 
   // 2. Render page.
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
-  pdf_run_page(_pdf_document, page_struct, dev, m, NULL);
+  pdf_run_page(_pdf_document, page_struct, dev, &m, NULL);
 
   pthread_mutex_unlock(&_render_lock);
 
@@ -248,14 +248,17 @@ pdf_page *PDFDocument::GetPage(int page) {
 }
 
 fz_matrix PDFDocument::Transform(float zoom, int rotation) {
-  fz_matrix m = fz_identity;
-  m = fz_concat(m, fz_scale(zoom, zoom));
-  m = fz_concat(m, fz_rotate(rotation));
-  return m;
+  fz_matrix transformation_matrix, scale_matrix, rotate_matrix;
+  fz_scale(&scale_matrix, zoom, zoom);
+  fz_rotate(&rotate_matrix, rotation);
+  fz_concat(&transformation_matrix, &scale_matrix, & rotate_matrix);
+  return transformation_matrix;
 }
 
-fz_bbox PDFDocument::GetBoundingBox(pdf_page *page_struct, const fz_matrix &m) {
+fz_irect PDFDocument::GetBoundingBox(pdf_page *page_struct, const fz_matrix &m) {
   assert(page_struct != NULL);
-  return fz_round_rect(fz_transform_rect(
-      m, pdf_bound_page(_pdf_document, page_struct)));
+  fz_rect bbox;
+  fz_irect ibbox;
+  return *fz_round_rect(&ibbox, fz_transform_rect(
+      pdf_bound_page(_pdf_document, page_struct, &bbox), &m));
 }

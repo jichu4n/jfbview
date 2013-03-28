@@ -108,7 +108,7 @@ class PDFDocument: public Document {
   // Constructs a transformation matrix from the given parameters.
   fz_matrix Transform(float zoom, int rotation);
   // Returns a bounding box for the given page after applying transformations.
-  fz_bbox GetBoundingBox(pdf_page *page_struct, const fz_matrix &m);
+  fz_irect GetBoundingBox(pdf_page *page_struct, const fz_matrix &m);
 };
 
 #endif
