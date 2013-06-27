@@ -27,6 +27,7 @@
 extern "C" {
 #include <mupdf.h>
 }
+#include <memory>
 #include <mutex>
 
 // Document implementation using MuPDF.
@@ -91,7 +92,7 @@ class PDFDocument: public Document {
   fz_context *_fz_context;
   pdf_document *_pdf_document;
   // Page cache.
-  PDFPageCache *_page_cache;
+  std::unique_ptr<PDFPageCache> _page_cache;
   // Lock guarding thread-unsafe parts of Render().
   std::mutex _render_mutex;
 

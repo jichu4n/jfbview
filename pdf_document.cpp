@@ -56,7 +56,6 @@ PDFDocument::PDFDocument(int page_cache_size)
 }
 
 PDFDocument::~PDFDocument() {
-  delete _page_cache;
   pdf_close_document(_pdf_document);
   fz_free_context(_fz_context);
 }
