@@ -20,10 +20,10 @@
 // using MuPDF.
 
 #include "pdf_document.hpp"
+#include "multithreading.hpp"
 #include <cassert>
 #include <cstring>
 #include <stdint.h>
-#include <unistd.h>
 #include <algorithm>
 #include <thread>
 #include <vector>
@@ -74,18 +74,6 @@ const Document::PageSize PDFDocument::GetPageSize(
   return PageSize(bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
 }
 
-void PDFDocument::RenderWorker(Document::PixelWriter *pw,
-                               int y_begin, int y_end, int width,
-                               uint8_t *buffer) {
-  uint8_t *p = buffer + y_begin * width * 4;
-  for (int y = y_begin; y < y_end; ++y) {
-    for (int x = 0; x < width; ++x) {
-      pw->Write(x, y, p[0], p[1], p[2]);
-      p += 4;
-    }
-  }
-}
-
 void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
                          int rotation) {
   assert((page >= 0) && (page < GetPageCount()));
@@ -103,27 +91,27 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
   pdf_run_page(_pdf_document, page_struct, dev, &m, NULL);
 
-  // 3. Write pixmap to buffer using #CPUs threads.
+  // 3. Write pixmap to buffer. The page is vertically divided into n equal
+  // stripes, each copied to pw by one thread.
   assert(fz_pixmap_components(_fz_context, pixmap) == 4);
-  uint8_t *p = reinterpret_cast<uint8_t *>(
+  uint8_t *buffer = reinterpret_cast<uint8_t *>(
       fz_pixmap_samples(_fz_context, pixmap));
-  int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
-  int num_rows_per_thread = fz_pixmap_height(_fz_context, pixmap) / num_threads;
-  std::vector<std::thread> threads;
-  for (int i = 0; i < num_threads; ++i) {
-    threads.push_back(std::thread(
-        &PDFDocument::RenderWorker,
-        pw,
-        i * num_rows_per_thread,
-        (i == num_threads - 1) ?
-            fz_pixmap_height(_fz_context, pixmap) :
-            (i + 1) * num_rows_per_thread,
-        fz_pixmap_width(_fz_context, pixmap),
-        p));
-  }
-  for (std::thread &thread : threads) {
-    thread.join();
-  }
+  const int num_cols = fz_pixmap_width(_fz_context, pixmap);
+  const int num_rows = fz_pixmap_height(_fz_context, pixmap);
+  ExecuteInParallel([=](int num_threads, int i) {
+    const int num_rows_per_thread = num_rows / num_threads;
+    const int y_begin = i * num_rows_per_thread;
+    const int y_end = (i == num_threads - 1) ?
+                          num_rows :
+                          (i + 1) * num_rows_per_thread;
+    uint8_t *p = buffer + y_begin * num_cols * 4;
+    for (int y = y_begin; y < y_end; ++y) {
+      for (int x = 0; x < num_cols; ++x) {
+        pw->Write(x, y, p[0], p[1], p[2]);
+        p += 4;
+      }
+    }
+  });
 
   // 4. Clean up.
   fz_free_device(dev);
