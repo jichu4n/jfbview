@@ -1,4 +1,4 @@
-CXXFLAGS := -Wall -O3
+CXXFLAGS := -Wall -O3 -std=c++11
 LIBS := -lpthread -lncurses -lfitz -lfreetype -ljbig2dec -ljpeg -lz -lopenjpeg
 JFBVIEW_LIBS := $(LIBS) -lImlib2
 
