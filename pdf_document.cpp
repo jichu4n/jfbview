@@ -56,6 +56,11 @@ PDFDocument::PDFDocument(int page_cache_size)
 }
 
 PDFDocument::~PDFDocument() {
+  // Must destroy page cache explicitly first, since destroying cached pages
+  // involves clearing MuPDF state, which requires document structures
+  // (_pdf_document, _fz_context) to still exist.
+  _page_cache.reset();
+
   pdf_close_document(_pdf_document);
   fz_free_context(_fz_context);
 }
@@ -186,7 +191,7 @@ pdf_page *PDFDocument::PDFPageCache::Load(const int &page) {
 }
 
 void PDFDocument::PDFPageCache::Discard(const int &page,
-                                        pdf_page * &page_struct) {
+                                        pdf_page * const &page_struct) {
   std::unique_lock<std::mutex> lock(_mutex);
   pdf_free_page(_parent->_pdf_document, page_struct);
 }

@@ -19,21 +19,26 @@
 // This file defines the template class Cache, which is a fixed-size generic
 // cache that stores key-value pairs. Users will need to supply methods to load
 // and free elements in child classes. It also supports asynchronous pre-emptive
-// loading with pthreads.
+// loading with C++11 threads.
 
 #ifndef CACHE_HPP
 #define CACHE_HPP
 
-#include <pthread.h>
+#include <cassert>
+#include <condition_variable>
 #include <map>
+#include <mutex>
 #include <queue>
 #include <set>
+#include <thread>
 
 // A generic cache that stores <key, value> pairs. The semantics for Load() and
 // Discard() are implemented in implementing child classes. Supports
-// asynchronous pre-emptive loading with pthreads. For performance, multiple
-// instances of Load() and Discard() may be executed at the same time, so these
-// latter MUST be thread-safe.
+// asynchronous pre-emptive loading with C++11 threads. For performance,
+// multiple instances of Load() and Discard() may be executed at the same time,
+// so these latter MUST be thread-safe. The class assumes K and V are copy-able
+// and also cheap to copy; thus, they should be either primitive values or
+// pointers.
 template <typename K, typename V>
 class Cache {
  public:
@@ -62,148 +67,120 @@ class Cache {
   virtual V Load(const K &key) = 0;
   // Frees an element that has been evicted from the cache. This should be
   // overridden in child classes. MUST BE THREAD-SAFE.
-  virtual void Discard(const K &key, V &value) = 0;
+  virtual void Discard(const K &key, const V &value) = 0;
 
  private:
   // A lock on this object. Calls to Get() and Prepare() will block for access.
-  pthread_mutex_t _lock;
+  std::mutex _mutex;
   // A map from keys to values.
   std::map<K, V> _map;
-  // A queue of loaded keys, in the order they were loaded.
+  // A queue of loaded keys, in the order they were loaded. This is used for
+  // eviction.
   std::queue<K> _queue;
   // Max size of this cache.
   int _size;
   // Keys that are being loaded by some thread.
   std::set<K> _work_set;
   // Condition variable used to broadcast work done.
-  pthread_cond_t _work_set_update;
-  // The set of currently running async loading threads.
-  std::set<pthread_t> _threads;
+  std::condition_variable _condition;
 };
 
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                              Implementation                               *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-namespace CacheInternal {
-
-// Argument passed to pthread worker.
-template <typename K, typename V>
-struct CacheWorkerArg {
-  // The Cache object that started the worker.
-  Cache<K, V> *Caller;
-  // The desired key.
-  K Key;
-
-  CacheWorkerArg(Cache<K, V> *caller, const K &key)
-      : Caller(caller), Key(key) {
-  }
-};
-
-// Cache worker method started by pthreads to load a key in the background.
-// Takes ownership of _arg.
-template <typename K, typename V>
-void *CacheWorker(void * _arg) {
-  CacheWorkerArg<K, V> *arg = reinterpret_cast<CacheWorkerArg<K, V> *>(_arg);
-  arg->Caller->Get(arg->Key);
-  delete arg;
-  return nullptr;
-}
-
-}
-
 template <typename K, typename V>
 Cache<K, V>::Cache(int size)
     : _size(size) {
-  pthread_mutex_init(&_lock, nullptr);
-  pthread_cond_init(&_work_set_update, nullptr);
 }
 
 template <typename K, typename V>
 Cache<K, V>::~Cache() {
-  pthread_cond_destroy(&_work_set_update);
-  pthread_mutex_destroy(&_lock);
 }
 
 template <typename K, typename V>
 V Cache<K, V>::Get(const K &key) {
-  // 1. If key exists, return it.
-  pthread_mutex_lock(&_lock);
-  typename std::map<K, V>::iterator i = _map.find(key);
-  if (i != _map.end()) {
-    V value = i->second;
-    _threads.erase(pthread_self());  // Safe even if called from main thread.
-    pthread_mutex_unlock(&_lock);
-    return value;
-  }
+  for (;;) {
+    {
+      std::unique_lock<std::mutex> lock(_mutex);
 
-  // 2. If key is being worked on, wait for it to finish, then go back to 1.
-  bool was_in_work_set = false;
-  while (_work_set.count(key)) {
-    was_in_work_set = true;
-    pthread_cond_wait(&_work_set_update, &_lock);
-  }
-  if (was_in_work_set) {
-    pthread_mutex_unlock(&_lock);
-    return Get(key);
-  }
+      // 1. If key is already loaded, return the corresponding value.
+      auto i = _map.find(key);
+      if (i != _map.end()) {
+        return i->second;
+      }
+    }
 
-  // 2. Otherwise, do work to load it.
-  _work_set.insert(key);
-  pthread_cond_broadcast(&_work_set_update);
-  pthread_mutex_unlock(&_lock);
-  V value = Load(key);
+    // 2. Otherwise, call Prepare() and wait for a notification.
+    Prepare(key);
 
-  // 3. If someone else removed the key, we should discard our work. Otherwise,
-  //    remove it and send out broadcast.
-  pthread_mutex_lock(&_lock);
-  if (!_work_set.count(key)) {
-    pthread_mutex_unlock(&_lock);
-    Discard(key, value);
-    return Get(key);
-  }
-  _work_set.erase(key);
-  pthread_cond_broadcast(&_work_set_update);
+    {
+      std::unique_lock<std::mutex> lock(_mutex);
 
-  // 4. Try inserting <key, value> into map. If it's already there, throw away
-  //    away our result and return existing result.
-  if (_map.count(key)) {
-    V other_value = _map[key];
-    _threads.erase(pthread_self());  // Safe even if called from main thread.
-    pthread_mutex_unlock(&_lock);
-    Discard(key, value);
-    return other_value;
-  }
-  std::map<K, V> evicted;
-  while (_queue.size() >= static_cast<size_t>(_size)) {
-    K victim_key = _queue.front();
-    evicted[victim_key] = _map[victim_key];
-    _map.erase(victim_key);
-    _queue.pop();
-  }
-  _map[key] = value;
-  _queue.push(key);
-  pthread_mutex_unlock(&_lock);
+      // 3. Wait for notification.
+      _condition.wait(lock);
+    }
 
-  for (typename std::map<K, V>::iterator i = evicted.begin();
-       i != evicted.end(); ++i) {
-    Discard(i->first, i->second);
+    // 4. The notification could have come from the thread that is responsible
+    // for loading our key or another thread. Additionally, our key could have
+    // been evicted before we could acquire a lock and return its value. Either
+    // way, we go back to 1.
   }
-  pthread_mutex_lock(&_lock);
-  _threads.erase(pthread_self());  // Safe even if called from main thread.
-  pthread_mutex_unlock(&_lock);
-  return value;
 }
 
 template <typename K, typename V>
 void Cache<K, V>::Prepare(const K &key) {
-  CacheInternal::CacheWorkerArg<K, V> *arg =
-      new CacheInternal::CacheWorkerArg<K, V>(this, key);
-  pthread_t thread;
-  pthread_create(&thread, nullptr, &(CacheInternal::CacheWorker<K, V>), arg);
-  pthread_mutex_lock(&_lock);
-  _threads.insert(thread);
-  pthread_mutex_unlock(&_lock);
+  std::thread thread([=] (const K &key) {
+    {
+      std::unique_lock<std::mutex> lock(_mutex);
+
+      // 1. If key is already in the cache or being loaded by another thread, no
+      // need to do extra work.
+      if (_map.count(key) || _work_set.count(key)) {
+        return;
+      }
+      // 2. Tell other threads we're going to load the key.
+      _work_set.insert(key);
+    }
+
+    // 3. Do the actual loading.
+    V value = Load(key);
+
+    {
+      std::unique_lock<std::mutex> lock(_mutex);
+
+      // 4. Tell other threads we're done.
+      assert(_work_set.count(key));
+      _work_set.erase(key);
+
+      // 5. Add (key, value) to cache.
+      assert(!_map.count(key));
+      _map[key] = value;
+
+      // 6. Add key to queue.
+      _queue.push(key);
+
+      // 7. If the cache size is now too large, evict some entries in separate
+      // threads.
+      while (_queue.size() >= static_cast<size_t>(_size)) {
+        K evicted_key = _queue.front();
+        V evicted_value = _map[evicted_key];
+
+        _map.erase(evicted_key);
+        _queue.pop();
+
+        std::thread eviction_thread([=] {
+          Discard(evicted_key, evicted_value);
+        });
+        eviction_thread.detach();
+      }
+    }
+
+    // 8. Finally, let everyone know the cache was modified.
+    _condition.notify_all();
+  }, key);
+
+  thread.detach();
 }
 
 template <typename K, typename V>
@@ -213,24 +190,27 @@ int Cache<K, V>::GetSize() const {
 
 template <typename K, typename V>
 void Cache<K, V>::Clear() {
-  pthread_mutex_lock(&_lock);
-  std::set<pthread_t> threads_copy(_threads);
-  pthread_mutex_unlock(&_lock);
-  for (std::set<pthread_t>::const_iterator i = threads_copy.begin();
-       i != threads_copy.end(); ++i) {
-    pthread_join(*i, nullptr);
+  std::vector<std::thread> discard_threads;
+  {
+    std::unique_lock<std::mutex> lock(_mutex);
+    // 1. Block until all ongoing loads are complete.
+    _condition.wait(lock, [=] { return _work_set.empty(); });
+    // 2. Clear queue.
+    while (_queue.size()) {
+      _queue.pop();
+    }
+    // 3. Clear cache and start a thread to call Discard() on each entry.
+    for (auto &i : _map) {
+      K key = i.first;
+      V value = i.second;
+      discard_threads.push_back(std::thread([=] {
+        Discard(key, value);
+      }));
+    }
   }
-
-  pthread_mutex_lock(&_lock);
-  std::map<K, V> map_copy(_map);
-  _map.clear();
-  while (_queue.size()) {
-    _queue.pop();
-  }
-  pthread_mutex_unlock(&_lock);
-  for (typename std::map<K, V>::iterator i = map_copy.begin();
-       i != map_copy.end(); ++i) {
-    Discard(i->first, i->second);
+  // 4. Wait for all Discard() calls to complete.
+  for (std::thread &discard_thread : discard_threads) {
+    discard_thread.join();
   }
 }
 

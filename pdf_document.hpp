@@ -79,7 +79,7 @@ class PDFDocument: public Document {
     virtual ~PDFPageCache();
    protected:
     virtual pdf_page *Load(const int &page);
-    virtual void Discard(const int &page, pdf_page * &page_struct);
+    virtual void Discard(const int &page, pdf_page * const &page_struct);
    private:
     // PDF document we belong to.
     PDFDocument *_parent;

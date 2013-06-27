@@ -173,7 +173,7 @@ PixelBuffer *Viewer::RenderCache::Load(const RenderCacheKey &key) {
 }
 
 void Viewer::RenderCache::Discard(const RenderCacheKey &key,
-                                  PixelBuffer * &value) {
+                                  PixelBuffer * const &value) {
   delete value;
 }
 
