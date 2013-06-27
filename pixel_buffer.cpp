@@ -24,51 +24,42 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <pthread.h>
+#include <thread>
 #include <unistd.h>
+#include <vector>
 
-// Argument to CopyWorker.
-struct CopyWorkerArg {
-  // Source and destination buffers.
-  const PixelBuffer *Src;
-  PixelBuffer *Dest;
-  // Source and destination rects.
-  PixelBuffer::Rect SrcRect, DestRect;
-};
-
-// Copies a PixelBuffer rect sequentially. Passed to pthread_create. The
-// argument is of type CopyWorkerArg.
-void *CopyWorker(void *_arg) {
-  CopyWorkerArg *arg = reinterpret_cast<CopyWorkerArg *>(_arg);
-  assert(arg->SrcRect.Width <= arg->DestRect.Width);
-  assert(arg->SrcRect.Height == arg->DestRect.Height);
-  assert(arg->Src->_format->GetDepth() == arg->Dest->_format->GetDepth());
+// Copies a PixelBuffer rect sequentially.
+void PixelBuffer::CopyWorker(const PixelBuffer &src,
+                             const PixelBuffer::Rect &src_rect,
+                             PixelBuffer *dest,
+                             const PixelBuffer::Rect &dest_rect) {
+  assert(src_rect.Width <= dest_rect.Width);
+  assert(src_rect.Height == dest_rect.Height);
+  assert(src._format->GetDepth() == dest->_format->GetDepth());
 
   const int margin_width_left =
-      (arg->DestRect.Width - arg->SrcRect.Width) / 2;
+      (dest_rect.Width - src_rect.Width) / 2;
   const int margin_width_right =
-      arg->DestRect.Width - margin_width_left - arg->SrcRect.Width;
-  const int dest_x = arg->DestRect.X + margin_width_left;
-  for (int y = 0; y < arg->SrcRect.Height; ++y) {
-    const int dest_y = arg->DestRect.Y + y;
+      dest_rect.Width - margin_width_left - src_rect.Width;
+  const int dest_x = dest_rect.X + margin_width_left;
+  for (int y = 0; y < src_rect.Height; ++y) {
+    const int dest_y = dest_rect.Y + y;
     // 1. Clear un-overwritten left and right margins.
     if (margin_width_left) {
-      memset(arg->Dest->GetPixelAddress(arg->DestRect.X, dest_y),
-             0, margin_width_left * arg->Dest->_format->GetDepth());
+      memset(dest->GetPixelAddress(dest_rect.X, dest_y),
+             0, margin_width_left * dest->_format->GetDepth());
     }
     if (margin_width_right) {
-      memset(arg->Dest->GetPixelAddress(dest_x + arg->SrcRect.Width, dest_y),
-             0, margin_width_right * arg->Dest->_format->GetDepth());
+      memset(dest->GetPixelAddress(dest_x + src_rect.Width, dest_y),
+             0, margin_width_right * dest->_format->GetDepth());
     }
     // 2. Copy row content.
-    void *src_row = arg->Src->GetPixelAddress(
-        arg->SrcRect.X, arg->SrcRect.Y + y);
-    void *dest_row = arg->Dest->GetPixelAddress(dest_x, dest_y);
+    void *src_row = src.GetPixelAddress(
+        src_rect.X, src_rect.Y + y);
+    void *dest_row = dest->GetPixelAddress(dest_x, dest_y);
     memcpy(dest_row, src_row,
-           arg->SrcRect.Width * arg->Src->_format->GetDepth());
+           src_rect.Width * src._format->GetDepth());
   }
-
-  return NULL;
 }
 
 PixelBuffer::PixelBuffer(const PixelBuffer::Size &size,
@@ -142,30 +133,31 @@ void PixelBuffer::Copy(const PixelBuffer::Rect &src_rect,
   // Launch workers.
   int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
   int num_rows_per_thread = src_rect.Height / num_threads;
-  pthread_t *threads = new pthread_t[num_threads];
-  CopyWorkerArg *args = new CopyWorkerArg[num_threads];
+  std::vector<std::thread> threads;
   for (int i = 0; i < num_threads; ++i) {
-    args[i].Src = this;
-    args[i].Dest = dest;
-    args[i].SrcRect.X = src_rect.X;
-    args[i].SrcRect.Width = src_rect.Width;
-    args[i].SrcRect.Y = src_rect.Y + i * num_rows_per_thread;
-    args[i].SrcRect.Height =
+    const Rect src_rect_for_thread(
+        src_rect.X,
+        src_rect.Y + i * num_rows_per_thread,
+        src_rect.Width,
         (i == num_threads - 1) ?
             (src_rect.Height - i * num_rows_per_thread) :
-            num_rows_per_thread;
-    args[i].DestRect.X = centered_dest_rect.X;
-    args[i].DestRect.Width = centered_dest_rect.Width;
-    args[i].DestRect.Y = centered_dest_rect.Y + i * num_rows_per_thread;
-    args[i].DestRect.Height = args[i].SrcRect.Height;
+            num_rows_per_thread);
+    const Rect dest_rect_for_thread(
+        centered_dest_rect.X,
+        centered_dest_rect.Y + i * num_rows_per_thread,
+        centered_dest_rect.Width,
+        src_rect_for_thread.Height);
 
-    pthread_create(&(threads[i]), NULL, &CopyWorker, &(args[i]));
+    threads.push_back(std::thread(
+        &PixelBuffer::CopyWorker,
+        std::cref(*this),
+        src_rect_for_thread,
+        dest,
+        dest_rect_for_thread));
   }
-  for (int i = 0; i < num_threads; ++i) {
-    pthread_join(threads[i], NULL);
+  for (std::thread &thread : threads) {
+    thread.join();
   }
-  delete []args;
-  delete []threads;
 }
 
 void PixelBuffer::Init() {
