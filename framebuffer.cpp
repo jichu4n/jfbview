@@ -38,9 +38,9 @@ Framebuffer *Framebuffer::Open(const std::string &device) {
       if ((fb->_buffer = reinterpret_cast<uint8_t *> (
               mmap(nullptr, fb->GetBufferSize(), PROT_READ | PROT_WRITE,
                    MAP_SHARED, fb->_fd, 0))) != MAP_FAILED) {
-        fb->_format = new Format(fb->_vinfo);
-        fb->_pixel_buffer = new PixelBuffer(
-            fb->GetSize(), fb->_format, fb->_buffer);
+        fb->_format.reset(new Format(fb->_vinfo));
+        fb->_pixel_buffer.reset(new PixelBuffer(
+            fb->GetSize(), fb->_format.get(), fb->_buffer));
         return fb.release();
       }
     }
@@ -62,16 +62,10 @@ Framebuffer::~Framebuffer() {
   if (_fd != -1) {
     close(_fd);
   }
-  if (_format != nullptr) {
-    delete _format;
-  }
-  if (_pixel_buffer != nullptr) {
-    delete _pixel_buffer;
-  }
 }
 
 PixelBuffer *Framebuffer::NewPixelBuffer(const PixelBuffer::Size &size) {
-  return new PixelBuffer(size, _format);
+  return new PixelBuffer(size, _format.get());
 }
 
 int Framebuffer::GetBufferSize() const {
@@ -84,7 +78,7 @@ PixelBuffer::Size Framebuffer::GetSize() const {
 
 void Framebuffer::Render(const PixelBuffer &src,
                          const PixelBuffer::Rect &rect) {
-  src.Copy(rect, _pixel_buffer->GetRect(), _pixel_buffer);
+  src.Copy(rect, _pixel_buffer->GetRect(), _pixel_buffer.get());
 }
 
 Framebuffer::Format::Format(const fb_var_screeninfo &vinfo)

@@ -24,6 +24,7 @@
 #include "pixel_buffer.hpp"
 #include <linux/fb.h>
 #include <stdint.h>
+#include <memory>
 #include <string>
 
 // An abstraction for a framebuffer device.
@@ -31,8 +32,8 @@ class Framebuffer {
  public:
   static const char * const DEFAULT_FRAMEBUFFER_DEVICE;
   // Factory method to initialize a framebuffer device and returns an
-  // abstraction object. Returns nullptr if the initialization failed. Caller owns
-  // returned object.
+  // abstraction object. Returns nullptr if the initialization failed. Caller
+  // owns returned object.
   static Framebuffer *Open(
       const std::string &device = DEFAULT_FRAMEBUFFER_DEVICE);
   virtual ~Framebuffer();
@@ -72,9 +73,9 @@ class Framebuffer {
   fb_fix_screeninfo _finfo;
   // mmap'd buffer.
   uint8_t *_buffer;
-  Format *_format;
+  std::unique_ptr<Format> _format;
   // Pixel buffer object managing the mmap'ed buffer.
-  PixelBuffer *_pixel_buffer;
+  std::unique_ptr<PixelBuffer> _pixel_buffer;
 
   // Contructors are disallowed. Use factory method Open() instead.
   Framebuffer();
