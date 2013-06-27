@@ -25,7 +25,6 @@
 #include <cstring>
 #include <stdint.h>
 #include <algorithm>
-#include <thread>
 #include <vector>
 
 Document *PDFDocument::Open(const std::string &path,
