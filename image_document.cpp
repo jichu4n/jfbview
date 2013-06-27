@@ -23,8 +23,7 @@
 #ifndef JFBVIEW_NO_IMLIB2
 
 #include "image_document.hpp"
-#include <pthread.h>
-#include <unistd.h>
+#include "multithreading.hpp"
 // For the M_PI constant.
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -136,43 +135,6 @@ const Document::PageSize ImageDocument::GetPageSize(
           *std::max_element(ys, ys + 4) - *std::min_element(ys, ys + 4)));
 }
 
-namespace {
-
-// Argument to RenderWorker.
-struct RenderWorkerArgs {
-  // The first and (last + 1) rows to render. The area rendered is bounded by
-  // (0, YBegin) at the top-left to (Width, YEnd - 1) at the bottom-right.
-  int YBegin, YEnd;
-  // The number of columns; the area rendered is bounded by (0, YBegin) at the
-  // top-left to (Width - 1, YEnd - 1) at the bottom-right.
-  int Width;
-  // The pixmap memory buffer. Each pixel takes up 4 bytes, one each for a
-  // (ignored), r, g, and b components from high to low, in native order. This
-  // should be the beginning of the entire pixmap buffer.
-  uint32_t *Buffer;
-  // The pixel writer.
-  Document::PixelWriter *Writer;
-};
-
-// Renders a vertical segment on a thread, passed to pthread_create. The
-// argument should be a RenderWorkerArgs.
-void *RenderWorker(void *_args) {
-  RenderWorkerArgs *args = reinterpret_cast<RenderWorkerArgs *>(_args);
-  uint32_t *p = args->Buffer + args->YBegin * args->Width;
-  for (int y = args->YBegin; y < args->YEnd; ++y) {
-    for (int x = 0; x < args->Width; ++x) {
-      uint8_t r = static_cast<uint8_t>((*p) >> 16),
-              g = static_cast<uint8_t>((*p) >> 8),
-              b = static_cast<uint8_t>((*p) >> 0);
-      args->Writer->Write(x, y, r, g, b);
-      ++p;
-    }
-  }
-  return NULL;
-}
-
-}
-
 void ImageDocument::Render(Document::PixelWriter *pw, int page, float zoom,
                            int rotation) {
   assert(page == 0);
@@ -197,25 +159,23 @@ void ImageDocument::Render(Document::PixelWriter *pw, int page, float zoom,
 
   uint32_t *buffer = reinterpret_cast<uint32_t *>(
       imlib_image_get_data_for_reading_only());
-  int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
-  int num_rows_per_thread = dest_size.Height / num_threads;
-  pthread_t *threads = new pthread_t[num_threads];
-  RenderWorkerArgs *args = new RenderWorkerArgs[num_threads];
-  for (int i = 0; i < num_threads; ++i) {
-    args[i].YBegin = i * num_rows_per_thread;
-    args[i].YEnd = (i == num_threads - 1) ?
-        dest_size.Height :
-        (i + 1) * num_rows_per_thread;
-    args[i].Width = dest_size.Width;
-    args[i].Buffer = buffer;
-    args[i].Writer = pw;
-    pthread_create(&(threads[i]), NULL, &RenderWorker, &(args[i]));
-  }
-  for (int i = 0; i < num_threads; ++i) {
-    pthread_join(threads[i], NULL);
-  }
-  delete[] args;
-  delete[] threads;
+  ExecuteInParallel([=](int num_threads, int i) {
+    const int num_rows_per_thread = dest_size.Height / num_threads;
+    const int y_begin = i * num_rows_per_thread;
+    const int y_end = (i == num_threads - 1) ?
+                          dest_size.Height :
+                          (i + 1) * num_rows_per_thread;
+    uint32_t *p = buffer + y_begin * dest_size.Width;
+    for (int y = y_begin; y < y_end; ++y) {
+      for (int x = 0; x < dest_size.Width; ++x) {
+        uint8_t r = static_cast<uint8_t>((*p) >> 16),
+                g = static_cast<uint8_t>((*p) >> 8),
+                b = static_cast<uint8_t>((*p) >> 0);
+        pw->Write(x, y, r, g, b);
+        ++p;
+      }
+    }
+  });
 
   imlib_free_image();
 }
