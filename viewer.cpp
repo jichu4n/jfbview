@@ -22,7 +22,6 @@
 #include "viewer.hpp"
 #include "document.hpp"
 #include "framebuffer.hpp"
-#include <pthread.h>
 #include <unistd.h>
 #include <cassert>
 #include <cmath>
