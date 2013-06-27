@@ -20,12 +20,12 @@
 // using MuPDF.
 
 #include "pdf_document.hpp"
-#include <pthread.h>
 #include <cassert>
 #include <cstring>
 #include <stdint.h>
 #include <unistd.h>
 #include <algorithm>
+#include <thread>
 #include <vector>
 
 Document *PDFDocument::Open(const std::string &path,
@@ -54,11 +54,9 @@ Document *PDFDocument::Open(const std::string &path,
 
 PDFDocument::PDFDocument(int page_cache_size)
     : _page_cache(new PDFPageCache(page_cache_size, this)) {
-  pthread_mutex_init(&_render_lock, NULL);
 }
 
 PDFDocument::~PDFDocument() {
-  pthread_mutex_destroy(&_render_lock);
   delete _page_cache;
   pdf_close_document(_pdf_document);
   fz_free_context(_fz_context);
@@ -76,45 +74,23 @@ const Document::PageSize PDFDocument::GetPageSize(
   return PageSize(bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
 }
 
-namespace {
-
-// Argument to RenderWorker.
-struct RenderWorkerArgs {
-  // The first and (last + 1) rows to render. The area rendered is bounded by
-  // (0, YBegin) at the top-left to (Width, YEnd - 1) at the bottom-right.
-  int YBegin, YEnd;
-  // The number of columns; the area rendered is bounded by (0, YBegin) at the
-  // top-left to (Width - 1, YEnd - 1) at the bottom-right.
-  int Width;
-  // The pixmap memory buffer. Each pixel takes up 3 bytes, one each for r, g,
-  // and b components in that order. This should be the beginning of the entire
-  // pixmap buffer.
-  uint8_t *Buffer;
-  // The pixel writer.
-  Document::PixelWriter *Writer;
-};
-
-// Renders a vertical segment on a thread, passed to pthread_create. The
-// argument should be a RenderWorkerArgs.
-void *RenderWorker(void *_args) {
-  RenderWorkerArgs *args = reinterpret_cast<RenderWorkerArgs *>(_args);
-  uint8_t *p = args->Buffer + args->YBegin * args->Width * 4;
-  for (int y = args->YBegin; y < args->YEnd; ++y) {
-    for (int x = 0; x < args->Width; ++x) {
-      args->Writer->Write(x, y, p[0], p[1], p[2]);
+void PDFDocument::RenderWorker(Document::PixelWriter *pw,
+                               int y_begin, int y_end, int width,
+                               uint8_t *buffer) {
+  uint8_t *p = buffer + y_begin * width * 4;
+  for (int y = y_begin; y < y_end; ++y) {
+    for (int x = 0; x < width; ++x) {
+      pw->Write(x, y, p[0], p[1], p[2]);
       p += 4;
     }
   }
-  return NULL;
-}
-
 }
 
 void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
                          int rotation) {
   assert((page >= 0) && (page < GetPageCount()));
 
-  pthread_mutex_lock(&_render_lock);
+  std::unique_lock<std::mutex> lock(_render_mutex);
 
   // 1. Init MuPDF structures.
   const fz_matrix &m = Transform(zoom, rotation);
@@ -127,39 +103,31 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
   pdf_run_page(_pdf_document, page_struct, dev, &m, NULL);
 
-  pthread_mutex_unlock(&_render_lock);
-
   // 3. Write pixmap to buffer using #CPUs threads.
   assert(fz_pixmap_components(_fz_context, pixmap) == 4);
   uint8_t *p = reinterpret_cast<uint8_t *>(
       fz_pixmap_samples(_fz_context, pixmap));
   int num_threads = sysconf(_SC_NPROCESSORS_ONLN);
   int num_rows_per_thread = fz_pixmap_height(_fz_context, pixmap) / num_threads;
-  pthread_t *threads = new pthread_t[num_threads];
-  RenderWorkerArgs *args = new RenderWorkerArgs[num_threads];
+  std::vector<std::thread> threads;
   for (int i = 0; i < num_threads; ++i) {
-    args[i].YBegin = i * num_rows_per_thread;
-    args[i].YEnd = (i == num_threads - 1) ?
-        fz_pixmap_height(_fz_context, pixmap) :
-        (i + 1) * num_rows_per_thread;
-    args[i].Width = fz_pixmap_width(_fz_context, pixmap);
-    args[i].Buffer = p;
-    args[i].Writer = pw;
-    pthread_create(&(threads[i]), NULL, &RenderWorker, &(args[i]));
+    threads.push_back(std::thread(
+        &PDFDocument::RenderWorker,
+        pw,
+        i * num_rows_per_thread,
+        (i == num_threads - 1) ?
+            fz_pixmap_height(_fz_context, pixmap) :
+            (i + 1) * num_rows_per_thread,
+        fz_pixmap_width(_fz_context, pixmap),
+        p));
   }
-  for (int i = 0; i < num_threads; ++i) {
-    pthread_join(threads[i], NULL);
+  for (std::thread &thread : threads) {
+    thread.join();
   }
-  delete[] args;
-  delete[] threads;
 
   // 4. Clean up.
-  pthread_mutex_lock(&_render_lock);
-
   fz_free_device(dev);
   fz_drop_pixmap(_fz_context, pixmap);
-
-  pthread_mutex_unlock(&_render_lock);
 }
 
 const Document::OutlineItem *PDFDocument::GetOutline() {
@@ -220,26 +188,21 @@ void PDFDocument::PDFOutlineItem::BuildRecursive(
 
 PDFDocument::PDFPageCache::PDFPageCache(int cache_size, PDFDocument *parent)
     : Cache<int, pdf_page *>(cache_size), _parent(parent) {
-  pthread_mutex_init(&_lock, NULL);
 }
 
 PDFDocument::PDFPageCache::~PDFPageCache() {
   Clear();
-  pthread_mutex_destroy(&_lock);
 }
 
 pdf_page *PDFDocument::PDFPageCache::Load(const int &page) {
-  pthread_mutex_lock(&_lock);
-  pdf_page *page_struct = pdf_load_page(_parent->_pdf_document, page);
-  pthread_mutex_unlock(&_lock);
-  return page_struct;
+  std::unique_lock<std::mutex> lock(_mutex);
+  return pdf_load_page(_parent->_pdf_document, page);
 }
 
 void PDFDocument::PDFPageCache::Discard(const int &page,
                                         pdf_page * &page_struct) {
-  pthread_mutex_lock(&_lock);
+  std::unique_lock<std::mutex> lock(_mutex);
   pdf_free_page(_parent->_pdf_document, page_struct);
-  pthread_mutex_unlock(&_lock);
 }
 
 pdf_page *PDFDocument::GetPage(int page) {

@@ -27,7 +27,7 @@
 extern "C" {
 #include <mupdf.h>
 }
-#include <pthread.h>
+#include <mutex>
 
 // Document implementation using MuPDF.
 class PDFDocument: public Document {
@@ -83,7 +83,7 @@ class PDFDocument: public Document {
     // PDF document we belong to.
     PDFDocument *_parent;
     // Lock for Load() and Discard().
-    pthread_mutex_t _lock;
+    std::mutex _mutex;
   };
   friend class PDFPageCache;
 
@@ -93,7 +93,7 @@ class PDFDocument: public Document {
   // Page cache.
   PDFPageCache *_page_cache;
   // Lock guarding thread-unsafe parts of Render().
-  pthread_mutex_t _render_lock;
+  std::mutex _render_mutex;
 
   // We disallow the constructor; use the factory method Open() instead.
   PDFDocument(int page_cache_size);
@@ -109,6 +109,14 @@ class PDFDocument: public Document {
   fz_matrix Transform(float zoom, int rotation);
   // Returns a bounding box for the given page after applying transformations.
   fz_irect GetBoundingBox(pdf_page *page_struct, const fz_matrix &m);
+
+  // Renders a vertical segment on a thread. The area rendered is bounded by (0,
+  // y_begin) at the top-left to (width, y_end - 1) at the bottom-right. buffer is
+  // a pixmap memory buffer. Each pixel takes up 3 bytes, one each for r, g, and b
+  // components in that order. buffer should be the beginning of the entire pixmap
+  // buffer.
+  static void RenderWorker(Document::PixelWriter *pw, int y_begin, int y_end,
+                           int width, uint8_t *buffer);
 };
 
 #endif
