@@ -134,10 +134,6 @@ class PixelBuffer {
   // Returns the address in memory corresponding to the pixel (x, y).
   uint8_t *GetPixelAddress(int x, int y) const;
 
-  // Thread worker for Copy.
-  static void CopyWorker(const PixelBuffer &src, const Rect &src_rect,
-                         PixelBuffer *dest, const Rect &dest_rect);
-
   // Disable copy and assign.
   PixelBuffer(const PixelBuffer &);
   PixelBuffer &operator = (const PixelBuffer &);
