@@ -107,7 +107,7 @@ void *CacheWorker(void * _arg) {
   CacheWorkerArg<K, V> *arg = reinterpret_cast<CacheWorkerArg<K, V> *>(_arg);
   arg->Caller->Get(arg->Key);
   delete arg;
-  return NULL;
+  return nullptr;
 }
 
 }
@@ -115,8 +115,8 @@ void *CacheWorker(void * _arg) {
 template <typename K, typename V>
 Cache<K, V>::Cache(int size)
     : _size(size) {
-  pthread_mutex_init(&_lock, NULL);
-  pthread_cond_init(&_work_set_update, NULL);
+  pthread_mutex_init(&_lock, nullptr);
+  pthread_cond_init(&_work_set_update, nullptr);
 }
 
 template <typename K, typename V>
@@ -200,7 +200,7 @@ void Cache<K, V>::Prepare(const K &key) {
   CacheInternal::CacheWorkerArg<K, V> *arg =
       new CacheInternal::CacheWorkerArg<K, V>(this, key);
   pthread_t thread;
-  pthread_create(&thread, NULL, &(CacheInternal::CacheWorker<K, V>), arg);
+  pthread_create(&thread, nullptr, &(CacheInternal::CacheWorker<K, V>), arg);
   pthread_mutex_lock(&_lock);
   _threads.insert(thread);
   pthread_mutex_unlock(&_lock);
@@ -218,7 +218,7 @@ void Cache<K, V>::Clear() {
   pthread_mutex_unlock(&_lock);
   for (std::set<pthread_t>::const_iterator i = threads_copy.begin();
        i != threads_copy.end(); ++i) {
-    pthread_join(*i, NULL);
+    pthread_join(*i, nullptr);
   }
 
   pthread_mutex_lock(&_lock);

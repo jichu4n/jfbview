@@ -58,8 +58,8 @@ Viewer::Viewer(Document *doc, Framebuffer *fb, const Viewer::State &state,
                int render_cache_size)
     : _doc(doc), _fb(fb), _state(state),
       _render_cache(this, render_cache_size) {
-  assert(_doc != NULL);
-  assert(_fb != NULL);
+  assert(_doc != nullptr);
+  assert(_fb != nullptr);
 }
 
 Viewer::~Viewer() {

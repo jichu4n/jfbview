@@ -29,20 +29,20 @@
 
 Document *PDFDocument::Open(const std::string &path,
                                int page_cache_size) {
-  fz_context *context = fz_new_context(NULL, NULL, FZ_STORE_DEFAULT);
-  pdf_document *raw_pdf_document = NULL;
+  fz_context *context = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
+  pdf_document *raw_pdf_document = nullptr;
   fz_try(context) {
     raw_pdf_document = pdf_open_document(context, path.c_str());
-    if ((raw_pdf_document == NULL) || (!pdf_count_pages(raw_pdf_document))) {
+    if ((raw_pdf_document == nullptr) || (!pdf_count_pages(raw_pdf_document))) {
       fz_throw(context, const_cast<char *>("Cannot open document \"%s\""),
                path.c_str());
     }
   } fz_catch(context) {
-    if (raw_pdf_document != NULL) {
+    if (raw_pdf_document != nullptr) {
       pdf_close_document(raw_pdf_document);
     }
     fz_free_context(context);
-    return NULL;
+    return nullptr;
   }
 
   PDFDocument *document = new PDFDocument(page_cache_size);
@@ -88,7 +88,7 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
 
   // 2. Render page.
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
-  pdf_run_page(_pdf_document, page_struct, dev, &m, NULL);
+  pdf_run_page(_pdf_document, page_struct, dev, &m, nullptr);
 
   // 3. Write pixmap to buffer. The page is vertically divided into n equal
   // stripes, each copied to pw by one thread.
@@ -119,7 +119,7 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
 
 const Document::OutlineItem *PDFDocument::GetOutline() {
   fz_outline *src = pdf_load_outline(_pdf_document);
-  return (src == NULL) ? NULL : PDFOutlineItem::Build(_fz_context, src);
+  return (src == nullptr) ? nullptr : PDFOutlineItem::Build(_fz_context, src);
 }
 
 int PDFDocument::Lookup(const OutlineItem *item) {
@@ -130,7 +130,7 @@ PDFDocument::PDFOutlineItem::~PDFOutlineItem() {
 }
 
 PDFDocument::PDFOutlineItem::PDFOutlineItem(fz_outline *src) {
-  if (src == NULL) {
+  if (src == nullptr) {
     _dest_page = -1;
   } else {
     _title = src->title;
@@ -144,16 +144,16 @@ int PDFDocument::PDFOutlineItem::GetDestPage() const {
 
 PDFDocument::PDFOutlineItem *PDFDocument::PDFOutlineItem::Build(
     fz_context *ctx, fz_outline *src) {
-  PDFOutlineItem *root = NULL;
+  PDFOutlineItem *root = nullptr;
   std::vector<OutlineItem *> items;
   BuildRecursive(src, &items);
   fz_free_outline(ctx, src);
   if (items.empty()) {
-    return NULL;
+    return nullptr;
   } else if (items.size() == 1) {
     root =  dynamic_cast<PDFOutlineItem *>(items[0]);
   } else {
-    root = new PDFOutlineItem(NULL);
+    root = new PDFOutlineItem(nullptr);
     root->_title = "TABLE OF CONTENTS";
     root->_children.insert(root->_children.begin(), items.begin(), items.end());
   }
@@ -163,10 +163,10 @@ PDFDocument::PDFOutlineItem *PDFDocument::PDFOutlineItem::Build(
 void PDFDocument::PDFOutlineItem::BuildRecursive(
     fz_outline *src,
     std::vector<Document::OutlineItem *> *output) {
-  assert(output != NULL);
-  for (fz_outline *i = src; i != NULL; i = i->next) {
+  assert(output != nullptr);
+  for (fz_outline *i = src; i != nullptr; i = i->next) {
     PDFOutlineItem *item = new PDFOutlineItem(i);
-    if (i->down != NULL) {
+    if (i->down != nullptr) {
       BuildRecursive(i->down, &(item->_children));
     }
     output->push_back(item);
@@ -206,7 +206,7 @@ fz_matrix PDFDocument::Transform(float zoom, int rotation) {
 }
 
 fz_irect PDFDocument::GetBoundingBox(pdf_page *page_struct, const fz_matrix &m) {
-  assert(page_struct != NULL);
+  assert(page_struct != nullptr);
   fz_rect bbox;
   fz_irect ibbox;
   return *fz_round_rect(&ibbox, fz_transform_rect(

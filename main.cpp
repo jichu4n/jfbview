@@ -79,7 +79,7 @@ struct State: public Viewer::State {
       : Viewer::State(), Exit(false), Render(true), DocumentType(AUTO_DETECT),
         RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE), FilePath(""),
         FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
-        OutlineViewerInst(NULL), FramebufferInst(NULL), ViewerInst(NULL) {
+        OutlineViewerInst(nullptr), FramebufferInst(nullptr), ViewerInst(nullptr) {
   }
 };
 
@@ -116,7 +116,7 @@ static bool LoadFile(State *state) {
 #endif
     }
   }
-  Document *doc = NULL;
+  Document *doc = nullptr;
   switch (state->DocumentType) {
    case State::PDF:
     doc = PDFDocument::Open(state->FilePath);
@@ -129,7 +129,7 @@ static bool LoadFile(State *state) {
    default:
     abort();
   }
-  if (doc == NULL) {
+  if (doc == nullptr) {
     fprintf(stderr, "Failed to open document \"%s\".\n",
             state->FilePath.c_str());
     return false;
@@ -363,7 +363,7 @@ class ShowOutlineViewerCommand: public Command {
  public:
   virtual void Execute(int repeat, State *state) {
     const Document::OutlineItem *dest = state->OutlineViewerInst->Show();
-    if (dest != NULL) {
+    if (dest != nullptr) {
       int dest_page = state->DocumentInst->Lookup(dest);
       if (dest_page >= 0) {
         GoToPageCommand c(0);
@@ -475,21 +475,21 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
   };
   // Command line options.
   static const option LongFlags[] = {
-      { "help", false, NULL, 'h' },
-      { "fb", true, NULL, FB },
-      { "page", true, NULL, 'p' },
-      { "zoom", true, NULL, 'z' },
-      { "zoom_to_width", false, NULL, ZOOM_TO_WIDTH },
-      { "zoom_to_fit", false, NULL, ZOOM_TO_FIT },
-      { "rotation", true, NULL, 'r' },
-      { "cache_size", true, NULL, RENDER_CACHE_SIZE },
-      { "format", true, NULL, 'f' },
+      { "help", false, nullptr, 'h' },
+      { "fb", true, nullptr, FB },
+      { "page", true, nullptr, 'p' },
+      { "zoom", true, nullptr, 'z' },
+      { "zoom_to_width", false, nullptr, ZOOM_TO_WIDTH },
+      { "zoom_to_fit", false, nullptr, ZOOM_TO_FIT },
+      { "rotation", true, nullptr, 'r' },
+      { "cache_size", true, nullptr, RENDER_CACHE_SIZE },
+      { "format", true, nullptr, 'f' },
       { 0, 0, 0, 0 },
   };
   static const char *ShortFlags = "hp:z:r:f:";
 
   for (;;) {
-    int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, NULL);
+    int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, nullptr);
     if (opt_char == -1) {
       break;
     }
@@ -623,7 +623,7 @@ int main(int argc, char *argv[]) {
     exit(EXIT_FAILURE);
   }
   state.FramebufferInst = Framebuffer::Open(state.FramebufferDevice);
-  if (state.FramebufferInst == NULL) {
+  if (state.FramebufferInst == nullptr) {
     fprintf(stderr, "Failed to initialize framebuffer device \"%s\".\n",
             state.FramebufferDevice.c_str());
     exit(EXIT_FAILURE);

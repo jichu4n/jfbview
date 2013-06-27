@@ -30,7 +30,7 @@
 PixelBuffer::PixelBuffer(const PixelBuffer::Size &size,
                          const PixelBuffer::Format *format)
     : _size(size), _format(format), _has_ownership(true) {
-  assert(_format != NULL);
+  assert(_format != nullptr);
   _buffer = new uint8_t[GetBufferSize()];
   Init();
 }
@@ -39,8 +39,8 @@ PixelBuffer::PixelBuffer(const PixelBuffer::Size &size,
                          const PixelBuffer::Format *format,
                          uint8_t *buffer)
     : _size(size), _format(format), _buffer(buffer), _has_ownership(false) {
-  assert(_format != NULL);
-  assert(_buffer != NULL);
+  assert(_format != nullptr);
+  assert(_buffer != nullptr);
   Init();
 }
 

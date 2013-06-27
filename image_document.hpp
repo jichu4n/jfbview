@@ -34,7 +34,7 @@ class ImageDocument: public Document {
 
   virtual ~ImageDocument();
   // Factory method to construct an instance of ImageDocument. path gives the
-  // path to an image file. Returns NULL if the file cannot be opened.
+  // path to an image file. Returns nullptr if the file cannot be opened.
   static Document *Open(const std::string &path);
   // See Document.
   virtual int GetPageCount() {
@@ -46,7 +46,7 @@ class ImageDocument: public Document {
   virtual void Render(PixelWriter *pw, int page, float zoom, int rotation);
   // See Document.
   virtual const OutlineItem *GetOutline() {
-    return NULL;
+    return nullptr;
   }
   // See Document.
   virtual int Lookup(const OutlineItem *item) {

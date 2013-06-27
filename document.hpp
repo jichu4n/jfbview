@@ -77,7 +77,7 @@ class Document {
   virtual void Render(PixelWriter *pw, int page, float zoom, int rotation) = 0;
   // Returns the outline of this document. The returned item represents the
   // top-level element in the outline, and is owned by the caller. If the
-  // document does not have an outline, return NULL.
+  // document does not have an outline, return nullptr.
   virtual const OutlineItem *GetOutline() = 0;
   // Returns the page number referred to by an outline item. If not available,
   // returns -1.

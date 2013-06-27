@@ -91,8 +91,8 @@ Rect ProjectRect(int width, int height, float zoom, int rotation) {
 
 Document *ImageDocument::Open(const std::string &path) {
   Imlib_Image image = imlib_load_image_without_cache(path.c_str());
-  if (image == NULL) {
-    return NULL;
+  if (image == nullptr) {
+    return nullptr;
   }
   return new ImageDocument(image);
 }

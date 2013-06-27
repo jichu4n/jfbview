@@ -31,7 +31,7 @@ class Framebuffer {
  public:
   static const char * const DEFAULT_FRAMEBUFFER_DEVICE;
   // Factory method to initialize a framebuffer device and returns an
-  // abstraction object. Returns NULL if the initialization failed. Caller owns
+  // abstraction object. Returns nullptr if the initialization failed. Caller owns
   // returned object.
   static Framebuffer *Open(
       const std::string &device = DEFAULT_FRAMEBUFFER_DEVICE);

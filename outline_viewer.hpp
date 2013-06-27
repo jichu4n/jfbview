@@ -36,7 +36,7 @@ class OutlineViewer {
   // Cleans up NCURSES state.
   ~OutlineViewer();
   // Displays the outline view and enter the event loop. If the user selected a
-  // page to jump to, returns the selected outline item. Otherwise returns NULL.
+  // page to jump to, returns the selected outline item. Otherwise returns nullptr.
   const Document::OutlineItem *Show();
 
  private:

@@ -35,7 +35,7 @@ Framebuffer *Framebuffer::Open(const std::string &device) {
     if ((ioctl(fb->_fd, FBIOGET_VSCREENINFO, &(fb->_vinfo)) != -1) &&
         (ioctl(fb->_fd, FBIOGET_FSCREENINFO, &(fb->_finfo)) != -1)) {
       if ((fb->_buffer = reinterpret_cast<uint8_t *> (
-              mmap(NULL, fb->GetBufferSize(), PROT_READ | PROT_WRITE,
+              mmap(nullptr, fb->GetBufferSize(), PROT_READ | PROT_WRITE,
                    MAP_SHARED, fb->_fd, 0))) != MAP_FAILED) {
         fb->_format = new Format(fb->_vinfo);
         fb->_pixel_buffer = new PixelBuffer(
@@ -47,11 +47,11 @@ Framebuffer *Framebuffer::Open(const std::string &device) {
 
   delete fb;
   perror("Error initializing framebuffer");
-  return NULL;
+  return nullptr;
 }
 
 Framebuffer::Framebuffer()
-    : _buffer(NULL), _format(NULL), _pixel_buffer(NULL) {
+    : _buffer(nullptr), _format(nullptr), _pixel_buffer(nullptr) {
 }
 
 Framebuffer::~Framebuffer() {
@@ -62,10 +62,10 @@ Framebuffer::~Framebuffer() {
   if (_fd != -1) {
     close(_fd);
   }
-  if (_format != NULL) {
+  if (_format != nullptr) {
     delete _format;
   }
-  if (_pixel_buffer != NULL) {
+  if (_pixel_buffer != nullptr) {
     delete _pixel_buffer;
   }
 }

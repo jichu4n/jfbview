@@ -26,7 +26,7 @@ OutlineViewer::OutlineViewer(const Document::OutlineItem *outline)
     : _window(newwin(0, 0, 0, 0)), _outline(outline), _selected_index(0),
       _first_index(0) {
   keypad(_window, true);
-  if (_outline != NULL) {
+  if (_outline != nullptr) {
     _expanded_items.insert(_outline);
     Flatten();
   }
@@ -38,8 +38,8 @@ OutlineViewer::~OutlineViewer() {
 }
 
 const Document::OutlineItem *OutlineViewer::Show() {
-  if (_outline == NULL) {
-    return NULL;
+  if (_outline == nullptr) {
+    return nullptr;
   }
 
   wclear(_window);
@@ -47,7 +47,7 @@ const Document::OutlineItem *OutlineViewer::Show() {
 
   // Main loop.
   bool exit = false;
-  const Document::OutlineItem *result = NULL;
+  const Document::OutlineItem *result = nullptr;
   do {
     Render();
     const Document::OutlineItem *selected_item =
@@ -146,7 +146,7 @@ void OutlineViewer::Flatten() {
 
 void OutlineViewer::FlattenRecursive(const Document::OutlineItem *item,
                                      int depth) {
-  if (item == NULL) {
+  if (item == nullptr) {
     return;
   }
 
