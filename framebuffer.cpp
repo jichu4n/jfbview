@@ -26,11 +26,12 @@
 #include <unistd.h>
 #include <cstdio>
 #include <cstring>
+#include <memory>
 
 const char * const Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE = "/dev/fb0";
 
 Framebuffer *Framebuffer::Open(const std::string &device) {
-  Framebuffer *fb = new Framebuffer();
+  std::unique_ptr<Framebuffer> fb(new Framebuffer());
   if ((fb->_fd = open(device.c_str(), O_RDWR)) != -1) {
     if ((ioctl(fb->_fd, FBIOGET_VSCREENINFO, &(fb->_vinfo)) != -1) &&
         (ioctl(fb->_fd, FBIOGET_FSCREENINFO, &(fb->_finfo)) != -1)) {
@@ -40,12 +41,11 @@ Framebuffer *Framebuffer::Open(const std::string &device) {
         fb->_format = new Format(fb->_vinfo);
         fb->_pixel_buffer = new PixelBuffer(
             fb->GetSize(), fb->_format, fb->_buffer);
-        return fb;
+        return fb.release();
       }
     }
   }
 
-  delete fb;
   perror("Error initializing framebuffer");
   return nullptr;
 }
