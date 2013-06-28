@@ -24,9 +24,8 @@
 const int Command::NO_REPEAT = -1;
 
 Registry::~Registry() {
-  for (std::map<int, Command *>::iterator i = _map.begin(); i != _map.end();
-       ++i) {
-    delete i->second;
+  for (auto &i : _map) {
+    delete i.second;
   }
 }
 
@@ -36,7 +35,7 @@ void Registry::Register(int key, Command *command) {
 }
 
 bool Registry::Dispatch(int key, int repeat, State *state) const {
-  std::map<int, Command*>::const_iterator i = _map.find(key);
+  const auto i = _map.find(key);
   if (i == _map.end()) {
     return false;
   }

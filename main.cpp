@@ -42,6 +42,7 @@
 #include <cstdlib>
 #include <getopt.h>
 #include <algorithm>
+#include <memory>
 #include <string>
 
 // Main program state.
@@ -66,20 +67,21 @@ struct State: public Viewer::State {
   // Framebuffer device.
   std::string FramebufferDevice;
   // Document instance.
-  Document *DocumentInst;
+  std::unique_ptr<Document> DocumentInst;
   // Outline viewer instance.
-  OutlineViewer *OutlineViewerInst;
+  std::unique_ptr<OutlineViewer> OutlineViewerInst;
   // Framebuffer instance.
-  Framebuffer *FramebufferInst;
+  std::unique_ptr<Framebuffer> FramebufferInst;
   // Viewer instance.
-  Viewer *ViewerInst;
+  std::unique_ptr<Viewer> ViewerInst;
 
   // Default state.
   State()
       : Viewer::State(), Exit(false), Render(true), DocumentType(AUTO_DETECT),
         RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE), FilePath(""),
         FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
-        OutlineViewerInst(nullptr), FramebufferInst(nullptr), ViewerInst(nullptr) {
+        OutlineViewerInst(nullptr), FramebufferInst(nullptr),
+        ViewerInst(nullptr) {
   }
 };
 
@@ -134,7 +136,7 @@ static bool LoadFile(State *state) {
             state->FilePath.c_str());
     return false;
   }
-  state->DocumentInst = doc;
+  state->DocumentInst.reset(doc);
   return true;
 }
 
@@ -404,12 +406,10 @@ class RestoreStateCommand: public StateCommand {
 class ReloadCommand: public StateCommand {
  public:
   virtual void Execute(int repeat, State *state) {
-    delete state->ViewerInst;
-    delete state->DocumentInst;
     if (LoadFile(state)) {
-      state->ViewerInst = new Viewer(
-        state->DocumentInst, state->FramebufferInst, *state,
-        state->RenderCacheSize);
+      state->ViewerInst.reset(new Viewer(
+        state->DocumentInst.get(), state->FramebufferInst.get(), *state,
+        state->RenderCacheSize));
     } else {
       state->Exit = true;
     }
@@ -622,14 +622,15 @@ int main(int argc, char *argv[]) {
   if (!LoadFile(&state)) {
     exit(EXIT_FAILURE);
   }
-  state.FramebufferInst = Framebuffer::Open(state.FramebufferDevice);
+  state.FramebufferInst.reset(Framebuffer::Open(state.FramebufferDevice));
   if (state.FramebufferInst == nullptr) {
     fprintf(stderr, "Failed to initialize framebuffer device \"%s\".\n",
             state.FramebufferDevice.c_str());
     exit(EXIT_FAILURE);
   }
-  state.ViewerInst = new Viewer(
-      state.DocumentInst, state.FramebufferInst, state, state.RenderCacheSize);
+  state.ViewerInst.reset(new Viewer(
+      state.DocumentInst.get(), state.FramebufferInst.get(), state,
+      state.RenderCacheSize));
   const Registry &registry = BuildRegistry();
 
   initscr();
@@ -642,7 +643,8 @@ int main(int argc, char *argv[]) {
   // to getch().
   refresh();
 
-  state.OutlineViewerInst = new OutlineViewer(state.DocumentInst->GetOutline());
+  state.OutlineViewerInst.reset(
+      new OutlineViewer(state.DocumentInst->GetOutline()));
 
   // 2. Main event loop.
   state.Render = true;
@@ -673,12 +675,8 @@ int main(int argc, char *argv[]) {
 
 
   // 3. Clean up.
-  delete state.OutlineViewerInst;
+  state.OutlineViewerInst.reset();
   endwin();
-
-  delete state.ViewerInst;
-  delete state.FramebufferInst;
-  delete state.DocumentInst;
 
   return EXIT_SUCCESS;
 }
