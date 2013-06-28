@@ -138,6 +138,7 @@ void Cache<K, V>::Prepare(const K &key) {
       // 1. If key is already in the cache or being loaded by another thread, no
       // need to do extra work.
       if (_map.count(key) || _work_set.count(key)) {
+        _condition.notify_all();
         return;
       }
       // 2. Tell other threads we're going to load the key.
