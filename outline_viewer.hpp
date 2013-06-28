@@ -24,6 +24,7 @@
 #include "document.hpp"
 #include <curses.h>
 #include <set>
+#include <memory>
 #include <vector>
 
 // Outline viewer class. This class stores the expansion and focus states
@@ -50,8 +51,8 @@ class OutlineViewer {
 
   // NCURSES window we manage.
   WINDOW *_window;
-  // Handle to the outline we display. Does not have ownership.
-  const Document::OutlineItem *_outline;
+  // Handle to the outline we display.
+  std::unique_ptr<const Document::OutlineItem> _outline;
   // The set of expanded (unfolded) items.
   std::set<const Document::OutlineItem *> _expanded_items;
   // The set of all expandedable items (i.e., those with children). Built by

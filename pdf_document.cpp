@@ -149,31 +149,31 @@ int PDFDocument::PDFOutlineItem::GetDestPage() const {
 PDFDocument::PDFOutlineItem *PDFDocument::PDFOutlineItem::Build(
     fz_context *ctx, fz_outline *src) {
   PDFOutlineItem *root = nullptr;
-  std::vector<OutlineItem *> items;
+  std::vector<std::unique_ptr<OutlineItem>> items;
   BuildRecursive(src, &items);
   fz_free_outline(ctx, src);
   if (items.empty()) {
     return nullptr;
   } else if (items.size() == 1) {
-    root =  dynamic_cast<PDFOutlineItem *>(items[0]);
+    root =  dynamic_cast<PDFOutlineItem *>(items[0].release());
   } else {
     root = new PDFOutlineItem(nullptr);
     root->_title = "TABLE OF CONTENTS";
-    root->_children.insert(root->_children.begin(), items.begin(), items.end());
+    root->_children.swap(items);
   }
   return root;
 }
 
 void PDFDocument::PDFOutlineItem::BuildRecursive(
     fz_outline *src,
-    std::vector<Document::OutlineItem *> *output) {
+    std::vector<std::unique_ptr<Document::OutlineItem>> *output) {
   assert(output != nullptr);
   for (fz_outline *i = src; i != nullptr; i = i->next) {
     PDFOutlineItem *item = new PDFOutlineItem(i);
     if (i->down != nullptr) {
       BuildRecursive(i->down, &(item->_children));
     }
-    output->push_back(item);
+    output->push_back(std::unique_ptr<Document::OutlineItem>(item));
   }
 }
 

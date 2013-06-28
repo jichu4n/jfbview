@@ -23,10 +23,6 @@
 Document::~Document() { }
 
 Document::OutlineItem::~OutlineItem() {
-  for (std::vector<OutlineItem *>::iterator i = _children.begin();
-       i != _children.end(); ++i) {
-    delete *i;
-  }
 }
 
 const std::string &Document::OutlineItem::GetTitle() const {
@@ -38,5 +34,5 @@ int Document::OutlineItem::GetChildrenCount() const {
 }
 
 const Document::OutlineItem *Document::OutlineItem::GetChild(int i) const {
-  return _children[i];
+  return _children[i].get();
 }

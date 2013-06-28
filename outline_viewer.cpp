@@ -27,13 +27,12 @@ OutlineViewer::OutlineViewer(const Document::OutlineItem *outline)
       _first_index(0) {
   keypad(_window, true);
   if (_outline != nullptr) {
-    _expanded_items.insert(_outline);
+    _expanded_items.insert(_outline.get());
     Flatten();
   }
 }
 
 OutlineViewer::~OutlineViewer() {
-  delete _outline;
   delwin(_window);
 }
 
@@ -102,7 +101,7 @@ const Document::OutlineItem *OutlineViewer::Show() {
        case 'M':
        case 'm':
         _expanded_items.clear();
-        _expanded_items.insert(_outline);
+        _expanded_items.insert(_outline.get());
         Flatten();
         break;
        default:
@@ -141,7 +140,7 @@ const Document::OutlineItem *OutlineViewer::Show() {
 
 void OutlineViewer::Flatten() {
   _lines.clear();
-  FlattenRecursive(_outline, 0);
+  FlattenRecursive(_outline.get(), 0);
 }
 
 void OutlineViewer::FlattenRecursive(const Document::OutlineItem *item,

@@ -70,7 +70,7 @@ class PDFDocument: public Document {
     PDFOutlineItem(fz_outline *src);
     // Recursive construction, called by Build().
     static void BuildRecursive(fz_outline *src,
-                               std::vector<OutlineItem *> *output);
+                               std::vector<std::unique_ptr<OutlineItem>> *output);
   };
   // Cache for pdf_page.
   class PDFPageCache: public Cache<int, pdf_page *> {

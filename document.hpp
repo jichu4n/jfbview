@@ -22,6 +22,7 @@
 #define DOCUMENT_HPP
 
 #include <string>
+#include <memory>
 #include <vector>
 
 // An abstraction for a document.
@@ -59,7 +60,7 @@ class Document {
 
    protected:
     std::string _title;
-    std::vector<OutlineItem *> _children;
+    std::vector<std::unique_ptr<OutlineItem>> _children;
   };
 
   virtual ~Document();
