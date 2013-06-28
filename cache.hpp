@@ -58,7 +58,8 @@ class Cache {
   // Returns the size of the cache.
   int GetSize() const;
   // Clears the cache, calling Discard() on all existing elements. Waits for
-  // background loading threads to terminate first.
+  // background loading threads to terminate first. MUST BE CALLED from the
+  // destructor of a child class.
   void Clear();
 
  protected:
