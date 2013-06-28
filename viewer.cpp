@@ -84,9 +84,14 @@ void Viewer::Render() {
   }
   assert(zoom >= 0.0f);
   zoom = std::max(MIN_ZOOM, std::min(MAX_ZOOM, zoom));
-  const PixelBuffer::Size &screen_size = _fb->GetSize();
-  const Document::PageSize &page_size =
-      _doc->GetPageSize(page, zoom, _state.Rotation);
+
+  // 2. Render page to buffer.
+  PixelBuffer *buffer =
+      _render_cache.Get(RenderCacheKey(page, zoom, _state.Rotation));
+
+  // 3. Compute the area actually visible on screen.
+  const PixelBuffer::Size &screen_size = _fb->GetSize(),
+                          &page_size = buffer->GetSize();
   PixelBuffer::Rect src_rect;
   src_rect.X = std::max(0, std::min(page_size.Width - screen_size.Width - 1,
                                     _state.XOffset));
@@ -95,14 +100,10 @@ void Viewer::Render() {
   src_rect.Width = std::min(screen_size.Width, page_size.Width - src_rect.X);
   src_rect.Height = std::min(screen_size.Height, page_size.Height - src_rect.Y);
 
-  // 2. Render page to buffer.
-  PixelBuffer *buffer =
-      _render_cache.Get(RenderCacheKey(page, zoom, _state.Rotation));
-
-  // 3. Blit buffer.
+  // 4. Blit visible area to framebuffer.
   _fb->Render(*buffer, src_rect);
 
-  // 4. Store corrected state.
+  // 5. Store corrected state.
   _state.Page = page;
   _state.PageCount = _doc->GetPageCount();
   if ((_state.Zoom != ZOOM_TO_WIDTH) && (_state.Zoom != ZOOM_TO_FIT)) {
@@ -116,7 +117,7 @@ void Viewer::Render() {
   _state.ScreenWidth = screen_size.Width;
   _state.ScreenHeight = screen_size.Height;
 
-  // 5. Preload.
+  // 6. Preload.
   if ((_render_cache.GetSize() > 1) && (page < _doc->GetPageCount() - 1)) {
     _render_cache.Prepare(RenderCacheKey(page + 1, zoom, _state.Rotation));
   }
@@ -146,10 +147,15 @@ bool Viewer::RenderCacheKey::operator < (
   if (Page != other.Page) {
     return Page < other.Page;
   }
+  const int rotation_mod = Rotation % 360,
+            other_rotation_mod = other.Rotation % 360;
+  if (rotation_mod != other_rotation_mod) {
+    return rotation_mod < other_rotation_mod;
+  }
   if (fabs(Zoom / other.Zoom - 1.0f) >= 0.1f) {
     return Zoom < other.Zoom;
   }
-  return (Rotation % 360) < (other.Rotation % 360);
+  return false;
 }
 
 Viewer::RenderCache::RenderCache(Viewer *parent, int size)
