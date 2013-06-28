@@ -102,31 +102,31 @@ Cache<K, V>::~Cache() {
 template <typename K, typename V>
 V Cache<K, V>::Get(const K &key) {
   for (;;) {
-    {
-      std::unique_lock<std::mutex> lock(_mutex);
+    std::unique_lock<std::mutex> lock(_mutex);
 
-      // 1. If key is already loaded, return the corresponding value.
-      auto i = _map.find(key);
-      if (i != _map.end()) {
-        return i->second;
-      }
+    // 1. If key is already loaded, return the corresponding value.
+    auto i = _map.find(key);
+    if (i != _map.end()) {
+      return i->second;
     }
 
-    // 2. Otherwise, call Prepare() and wait for a notification.
+    // 2. Otherwise, schedule loading and wait for a notification. Since the
+    // loading thread requires locking _mutex, it will not actually start
+    // running until after we release the lock in the following call to
+    // _condition.wait(). This is important because otherwise the loading might
+    // finish and notify before we start waiting, in which case we would end up
+    // waiting forever.
     Prepare(key);
 
-    {
-      std::unique_lock<std::mutex> lock(_mutex);
-
-      // 3. Wait for notification.
-      _condition.wait(lock);
-    }
-
-    // 4. The notification could have come from the thread that is responsible
-    // for loading our key or another thread. Additionally, our key could have
-    // been evicted before we could acquire a lock and return its value. Either
-    // way, we go back to 1.
+    // 3. Wait for notification. This releases the mutex, which allows the
+    // loading thread to start.
+    _condition.wait(lock);
   }
+
+  // 4. The notification could have come from the thread that is responsible
+  // for loading our key or another thread. Additionally, our key could have
+  // been evicted before we could acquire a lock and return its value. Either
+  // way, we go back to 1.
 }
 
 template <typename K, typename V>
