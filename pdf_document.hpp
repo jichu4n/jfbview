@@ -69,8 +69,8 @@ class PDFDocument: public Document {
     // We disallow constructors; use the factory method Build() instead.
     PDFOutlineItem(fz_outline *src);
     // Recursive construction, called by Build().
-    static void BuildRecursive(fz_outline *src,
-                               std::vector<std::unique_ptr<OutlineItem>> *output);
+    static void BuildRecursive(
+        fz_outline *src, std::vector<std::unique_ptr<OutlineItem>> *output);
   };
   // Cache for pdf_page.
   class PDFPageCache: public Cache<int, pdf_page *> {

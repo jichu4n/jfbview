@@ -87,7 +87,8 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   const fz_matrix &m = Transform(zoom, rotation);
   pdf_page *page_struct = GetPage(page);
   const fz_irect &bbox = GetBoundingBox(page_struct, m);
-  fz_pixmap *pixmap = fz_new_pixmap_with_bbox(_fz_context, fz_device_rgb, &bbox);
+  fz_pixmap *pixmap = fz_new_pixmap_with_bbox(
+      _fz_context, fz_device_rgb, &bbox);
   fz_device *dev = fz_new_draw_device(_fz_context, pixmap);
 
   // 2. Render page.
@@ -209,7 +210,8 @@ fz_matrix PDFDocument::Transform(float zoom, int rotation) {
   return transformation_matrix;
 }
 
-fz_irect PDFDocument::GetBoundingBox(pdf_page *page_struct, const fz_matrix &m) {
+fz_irect PDFDocument::GetBoundingBox(pdf_page *page_struct,
+                                     const fz_matrix &m) {
   assert(page_struct != nullptr);
   fz_rect bbox;
   fz_irect ibbox;
