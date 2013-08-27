@@ -19,6 +19,9 @@
 // This file defines PDFDocument, an implementation of the Document abstraction
 // using MuPDF.
 
+extern "C" {
+#include <mupdf/pdf.h>
+}
 #include "pdf_document.hpp"
 #include "multithreading.hpp"
 #include <cassert>
@@ -34,7 +37,9 @@ Document *PDFDocument::Open(const std::string &path,
   fz_try(context) {
     raw_pdf_document = pdf_open_document(context, path.c_str());
     if ((raw_pdf_document == nullptr) || (!pdf_count_pages(raw_pdf_document))) {
-      fz_throw(context, const_cast<char *>("Cannot open document \"%s\""),
+      fz_throw(context,
+               FZ_ERROR_GENERIC,
+               const_cast<char *>("Cannot open document \"%s\""),
                path.c_str());
     }
   } fz_catch(context) {
@@ -88,7 +93,7 @@ void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
   pdf_page *page_struct = GetPage(page);
   const fz_irect &bbox = GetBoundingBox(page_struct, m);
   fz_pixmap *pixmap = fz_new_pixmap_with_bbox(
-      _fz_context, fz_device_rgb, &bbox);
+      _fz_context, fz_device_rgb(_fz_context), &bbox);
   fz_device *dev = fz_new_draw_device(_fz_context, pixmap);
 
   // 2. Render page.

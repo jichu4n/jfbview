@@ -1,5 +1,5 @@
 CXXFLAGS := -Wall -O3 -std=c++11
-LIBS := -lpthread -lncurses -lfitz -lfreetype -ljbig2dec -ljpeg -lz -lopenjpeg
+LIBS := -lpthread -lncurses -lfreetype -ljbig2dec -ljpeg -lz -lopenjp2 -lmupdf -lmupdf-js-none
 JFBVIEW_LIBS := $(LIBS) -lImlib2
 
 SRCS := $(wildcard *.cpp)

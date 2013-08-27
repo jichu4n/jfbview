@@ -24,11 +24,25 @@
 
 #include "cache.hpp"
 #include "document.hpp"
-extern "C" {
-#include <mupdf.h>
-}
 #include <memory>
 #include <mutex>
+// HACK ALERT: MuPDF is in written C, and due to a stupid incompatibility with
+// struct declaration syntax between C and C++, including <mupdf/pdf.h> causes a
+// link error. So, what we do is the following:
+//   1. Only include <mupdf/fitz.h> in pdf_document.hpp, so any other files that
+//      include this header will not get <mupdf/pdf.h>. Types defined in
+//      <mupdf/pdf.h> will be forward-declared in pdf_document.hpp.
+//   2. pdf_document.cpp will include <mupdf/pdf.h> first before including
+//      pdf_document.hpp. pdf_document.hpp will detect this fact and not
+//      forward-declare the types defined there, as doing so will cause a
+//      compile error.
+extern "C" {
+#include <mupdf/fitz.h>
+#ifndef MUPDF_PDF_H
+  struct pdf_document;
+  struct pdf_page;
+#endif
+}
 
 // Document implementation using MuPDF.
 class PDFDocument: public Document {
