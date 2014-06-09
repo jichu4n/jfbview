@@ -10,6 +10,10 @@ has a number of advanced and unique features including:
   * Asynchronous background rendering of the next page.
   * Customizable multi-threaded caching.
 
+The home page of JFBView is at http://seasonofcode.com/pages/jfbview.html.
+Please refer to the home page for more information, including installation
+instructions.
+
 BUILDING
 --------
 
@@ -17,22 +21,26 @@ JFBView depends on MuPDF 1.x for PDF rendering and Imlib2 for image rendering.
 Note that the 1.x MuPDF API is incompatible with the pre-1.0 MuPDF API, wich
 means you cannot build JFBView against a pre-1.0 MuPDF library.
 
-To build JFBView, just run 'make'.
+JFBView makes use of C++11 features where available, so you will need a
+compatible C++ compiler (GCC 4.8+, Clang 3.3+) to build it.
+
+To build JFBView, just run `make`.
 
 It is also possible to build a variant of JFBView without support for images and
 without dependency on Imlib2, which has a rather large list of dependencies
-itself. This target is called JFBPDF. To build, run 'make jfbpdf'.
+itself. This target is called JFBPDF. To build, run `make jfbpdf`.
 
 KEYS AND OPTIONS
 ----------------
 
 The key bindings and command line options available are described in the man
-page of JFBView. To view it, do `man jfbview'.
+page of JFBView. To view it, do `man jfbview`, or check out the
+[http://seasonofcode.com/assets/files/jfbview.html](online version).
 
 ABOUT
 -----
 
-JFBView is written by Chuan Ji <jichuan89 AT gmail DOT com>, and is distributed
+JFBView is written by Chuan Ji \<cji AT seasonofcode DOT com>, and is distributed
 under the Apache License v2.
 
 HISTORY
