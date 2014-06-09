@@ -11,7 +11,7 @@ has a number of advanced and unique features including:
   * Customizable multi-threaded caching.
 
 BUILDING
-========
+--------
 
 JFBView depends on MuPDF 1.x for PDF rendering and Imlib2 for image rendering.
 Note that the 1.x MuPDF API is incompatible with the pre-1.0 MuPDF API, wich
@@ -24,19 +24,19 @@ without dependency on Imlib2, which has a rather large list of dependencies
 itself. This target is called JFBPDF. To build, run 'make jfbpdf'.
 
 KEYS AND OPTIONS
-================
+----------------
 
 The key bindings and command line options available are described in the man
 page of JFBView. To view it, do `man jfbview'.
 
 ABOUT
-=====
+-----
 
 JFBView is written by Chuan Ji <jichuan89 AT gmail DOT com>, and is distributed
 under the Apache License v2.
 
 HISTORY
-=======
+-------
 
 JFBView started as a fork of FBPDF by Ali Gholami Rudi with improvements and bug
 fixes, and was named JFBPDF. The JFBPDF code (in C) grew steadily more
