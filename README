@@ -11,6 +11,7 @@ has a number of advanced and unique features including:
   * Customizable multi-threaded caching.
 
 The home page of JFBView is at http://seasonofcode.com/pages/jfbview.html.
+
 Please refer to the home page for more information, including installation
 instructions.
 
@@ -35,7 +36,7 @@ KEYS AND OPTIONS
 
 The key bindings and command line options available are described in the man
 page of JFBView. To view it, do `man jfbview`, or check out the
-[http://seasonofcode.com/assets/files/jfbview.html](online version).
+[online version](http://seasonofcode.com/assets/files/jfbview.html).
 
 ABOUT
 -----
