@@ -19,6 +19,7 @@
 // Implementation for methods declared in document.hpp.
 
 #include "document.hpp"
+#include <string>
 
 Document::~Document() { }
 

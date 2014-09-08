@@ -20,12 +20,12 @@
 // Document page on top of Framebuffer.
 
 #include "viewer.hpp"
-#include "document.hpp"
-#include "framebuffer.hpp"
 #include <unistd.h>
 #include <cassert>
 #include <cmath>
 #include <algorithm>
+#include "document.hpp"
+#include "framebuffer.hpp"
 
 const float Viewer::MAX_ZOOM = 10.0f;
 const float Viewer::MIN_ZOOM = 0.1f;
@@ -36,10 +36,10 @@ namespace {
 // stored as three consecutive ints representing the r, g, and b values.
 class PixelBufferWriter: public Document::PixelWriter {
  public:
-   // Constructs a BufferPixel writer with the given settings. buffer_width
-   // gives the number of pixels in a row in the buffer. buffer is the target
-   // buffer.
-  PixelBufferWriter(PixelBuffer *buffer)
+  // Constructs a BufferPixel writer with the given settings. buffer_width
+  // gives the number of pixels in a row in the buffer. buffer is the target
+  // buffer.
+  explicit PixelBufferWriter(PixelBuffer *buffer)
       : _buffer(buffer) {
   }
   // See PixelWriter.

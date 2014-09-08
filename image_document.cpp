@@ -23,13 +23,14 @@
 #ifndef JFBVIEW_NO_IMLIB2
 
 #include "image_document.hpp"
-#include "multithreading.hpp"
+#include <stdint.h>
 // For the M_PI constant.
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <cassert>
-#include <stdint.h>
 #include <algorithm>
+#include <string>
+#include "multithreading.hpp"
 
 // Converts degree angles to radian.
 static inline double ToRadians(int degrees) {
@@ -40,7 +41,7 @@ static inline double ToRadians(int degrees) {
 struct Point {
   double X, Y;
 
-  Point(double x = 0.0, double y = 0.0)
+  explicit Point(double x = 0.0, double y = 0.0)
       : X(x), Y(y) {
   }
 };
@@ -86,8 +87,6 @@ Rect ProjectRect(int width, int height, float zoom, int rotation) {
       Rotate(Point(width - 1, height - 1) - origin, rotation) * zoom;
   return result;
 }
-
-// Given a rectangle starting at (0, 0) and extending to (x, y), returns 
 
 Document *ImageDocument::Open(const std::string &path) {
   Imlib_Image image = imlib_load_image_without_cache(path.c_str());

@@ -31,6 +31,7 @@
 #include <queue>
 #include <set>
 #include <thread>
+#include <vector>
 
 // A generic cache that stores <key, value> pairs. The semantics for Load() and
 // Discard() are implemented in implementing child classes. Supports
@@ -43,7 +44,7 @@ template <typename K, typename V>
 class Cache {
  public:
   // Create a cache with the given maximum size.
-  Cache(int size);
+  explicit Cache(int size);
   // DOES NOT CLEAR CACHE because it cannot call the virtual function Discard.
   // Child classes MUST call Clear() in their destructors. Waits for background
   // loading threads to terminate first.

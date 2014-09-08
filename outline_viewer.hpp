@@ -21,11 +21,12 @@
 #ifndef OUTLINE_VIEWER_HPP
 #define OUTLINE_VIEWER_HPP
 
-#include "document.hpp"
 #include <curses.h>
 #include <set>
 #include <memory>
+#include <string>
 #include <vector>
+#include "document.hpp"
 
 // Outline viewer class. This class stores the expansion and focus states
 // between invocations.
@@ -33,7 +34,7 @@ class OutlineViewer {
  public:
   // Constructs an instance of OutlineViewer that displays the given Outline.
   // Takes ownership of the outline object.
-  OutlineViewer(const Document::OutlineItem *outline);
+  explicit OutlineViewer(const Document::OutlineItem *outline);
   // Cleans up NCURSES state.
   ~OutlineViewer();
   // Displays the outline view and enter the event loop. If the user selected a

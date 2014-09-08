@@ -21,11 +21,11 @@
 #ifndef FRAMEBUFFER_HPP
 #define FRAMEBUFFER_HPP
 
-#include "pixel_buffer.hpp"
-#include <linux/fb.h>
 #include <stdint.h>
+#include <linux/fb.h>
 #include <memory>
 #include <string>
+#include "pixel_buffer.hpp"
 
 // An abstraction for a framebuffer device.
 class Framebuffer {
@@ -55,7 +55,7 @@ class Framebuffer {
   class Format: public PixelBuffer::Format {
    public:
     // Grab settings from a fb_var_screeninfo.
-    Format(const fb_var_screeninfo &vinfo);
+    explicit Format(const fb_var_screeninfo &vinfo);
     // See PixelBuffer::Format.
     virtual int GetDepth() const;
     // See PixelBuffer::Format.

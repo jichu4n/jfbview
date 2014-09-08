@@ -17,12 +17,12 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "multithreading.hpp"
-#include <cassert>
 #include <unistd.h>
+#include <cassert>
 #include <thread>
 #include <vector>
 
-void ExecuteInParallel(const std::function<void (int, int)> &f,
+void ExecuteInParallel(const std::function<void(int, int)> &f,
                        int num_threads) {
   // 1. Set default value for num_threads if needed.
   assert(num_threads >= 0);

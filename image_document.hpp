@@ -25,13 +25,13 @@
 #ifndef IMAGE_DOCUMENT_HPP
 #define IMAGE_DOCUMENT_HPP
 
+#include <string>
+#include "Imlib2.h"
 #include "document.hpp"
-#include <Imlib2.h>
 
 // Document implementation using Imlib2.
 class ImageDocument: public Document {
  public:
-
   virtual ~ImageDocument();
   // Factory method to construct an instance of ImageDocument. path gives the
   // path to an image file. Returns nullptr if the file cannot be opened.
@@ -60,9 +60,9 @@ class ImageDocument: public Document {
   PageSize _src_size;
 
   // We disallow the constructor; use the factory method Open() instead.
-  ImageDocument(Imlib_Image image);
+  explicit ImageDocument(Imlib_Image image);
   // We disallow copying because we store lots of heap allocated state.
-  ImageDocument(const ImageDocument &other);
+  explicit ImageDocument(const ImageDocument &other);
   ImageDocument &operator = (const ImageDocument &other);
 };
 

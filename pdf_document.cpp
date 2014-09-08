@@ -19,16 +19,17 @@
 // This file defines PDFDocument, an implementation of the Document abstraction
 // using MuPDF.
 
+#include <stdint.h>
+#include <cassert>
+#include <cstring>
+#include <algorithm>
+#include <string>
+#include <vector>
 extern "C" {
-#include <mupdf/pdf.h>
+#include "mupdf/pdf.h"
 }
 #include "pdf_document.hpp"
 #include "multithreading.hpp"
-#include <cassert>
-#include <cstring>
-#include <stdint.h>
-#include <algorithm>
-#include <vector>
 
 Document *PDFDocument::Open(const std::string &path,
                                int page_cache_size) {

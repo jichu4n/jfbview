@@ -27,6 +27,7 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <string>
 
 const char * const Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE = "/dev/fb0";
 

@@ -53,7 +53,7 @@ class PixelBuffer {
     // Size of the rect.
     int Width, Height;
 
-    Rect(int x = 0, int y = 0, int width = 0, int height = 0)
+    explicit Rect(int x = 0, int y = 0, int width = 0, int height = 0)
         : X(x), Y(y), Width(width), Height(height) {
     }
   };

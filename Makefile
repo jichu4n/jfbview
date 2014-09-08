@@ -7,6 +7,13 @@ SRCS := $(wildcard *.cpp)
 
 all: jfbview
 
+.PHONY: lint
+lint:
+	cpplint \
+	    --extensions=hpp,cpp \
+	    --filter=-build/c++11 \
+	    *.{h,c}pp
+
 .PHONY: clean
 clean:
 	-rm -f *.o *.d jfbview jfbpdf

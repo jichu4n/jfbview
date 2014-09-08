@@ -33,7 +33,7 @@ class Document {
     int Width;
     int Height;
 
-    PageSize(int width = -1, int height = -1)
+    explicit PageSize(int width = -1, int height = -1)
         : Width(width), Height(height) {
     }
   };
@@ -70,7 +70,7 @@ class Document {
   // fraction, e.g., 1.5 = 150%. rotation is the desired rotation in clockwise
   // degrees.
   virtual const PageSize GetPageSize(
-      int page, float zoom=1.0f, int rotation=0) = 0;
+      int page, float zoom = 1.0f, int rotation = 0) = 0;
   // Renders the given page to a buffer. Page numbers are 0-based. zoom gives
   // the zoom ratio as a fraction, e.g., 1.5 = 150%. rotation is the desired
   // rotation in clockwise degrees. For every rendered pixel, pw will be invoked

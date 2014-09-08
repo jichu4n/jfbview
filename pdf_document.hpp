@@ -22,10 +22,12 @@
 #ifndef PDF_DOCUMENT_HPP
 #define PDF_DOCUMENT_HPP
 
-#include "cache.hpp"
-#include "document.hpp"
 #include <memory>
 #include <mutex>
+#include <string>
+#include <vector>
+#include "cache.hpp"
+#include "document.hpp"
 // HACK ALERT: MuPDF is in written C, and due to a stupid incompatibility with
 // struct declaration syntax between C and C++, including <mupdf/pdf.h> causes a
 // link error. So, what we do is the following:
@@ -37,7 +39,7 @@
 //      forward-declare the types defined there, as doing so will cause a
 //      compile error.
 extern "C" {
-#include <mupdf/fitz.h>
+#include "mupdf/fitz.h"
 #ifndef MUPDF_PDF_H
   struct pdf_document;
   struct pdf_page;
@@ -66,6 +68,7 @@ class PDFDocument: public Document {
   virtual const OutlineItem *GetOutline();
   // See Document.
   virtual int Lookup(const OutlineItem *item);
+
  private:
   // Actual outline item implementation.
   class PDFOutlineItem: public OutlineItem {
@@ -81,7 +84,7 @@ class PDFDocument: public Document {
     // Destination page number.
     int _dest_page;
     // We disallow constructors; use the factory method Build() instead.
-    PDFOutlineItem(fz_outline *src);
+    explicit PDFOutlineItem(fz_outline *src);
     // Recursive construction, called by Build().
     static void BuildRecursive(
         fz_outline *src, std::vector<std::unique_ptr<OutlineItem>> *output);
@@ -111,7 +114,7 @@ class PDFDocument: public Document {
   std::mutex _render_mutex;
 
   // We disallow the constructor; use the factory method Open() instead.
-  PDFDocument(int page_cache_size);
+  explicit PDFDocument(int page_cache_size);
   // We disallow copying because we store lots of heap allocated state.
   PDFDocument(const PDFDocument &other);
   PDFDocument &operator = (const PDFDocument &other);

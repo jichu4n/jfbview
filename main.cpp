@@ -28,22 +28,23 @@
 #define JFBVIEW_BINARY_NAME "jfbview"
 #endif
 
+#include <curses.h>
+#include <getopt.h>
+#include <cctype>
+#include <climits>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
 #include "command.hpp"
 #include "framebuffer.hpp"
 #include "image_document.hpp"
 #include "outline_viewer.hpp"
 #include "pdf_document.hpp"
 #include "viewer.hpp"
-#include <curses.h>
-#include <cctype>
-#include <climits>
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <getopt.h>
-#include <algorithm>
-#include <memory>
-#include <string>
 
 // Main program state.
 struct State: public Viewer::State {
@@ -120,16 +121,16 @@ static bool LoadFile(State *state) {
   }
   Document *doc = nullptr;
   switch (state->DocumentType) {
-   case State::PDF:
-    doc = PDFDocument::Open(state->FilePath);
-    break;
+    case State::PDF:
+      doc = PDFDocument::Open(state->FilePath);
+      break;
 #ifndef JFBVIEW_NO_IMLIB2
-   case State::IMAGE:
-    doc = ImageDocument::Open(state->FilePath);
-    break;
+    case State::IMAGE:
+      doc = ImageDocument::Open(state->FilePath);
+      break;
 #endif
-   default:
-    abort();
+    default:
+      abort();
   }
   if (doc == nullptr) {
     fprintf(stderr, "Failed to open document \"%s\".\n",
@@ -310,7 +311,7 @@ class SetRotationCommand: public Command {
 
 class RotateCommand: public Command {
  public:
-  RotateCommand(int increment)
+  explicit RotateCommand(int increment)
       : _increment(increment) {
   }
 
@@ -346,7 +347,7 @@ class ZoomToWidthCommand: public ZoomCommand {
 
 class GoToPageCommand: public Command {
  public:
-  GoToPageCommand(int default_page)
+  explicit GoToPageCommand(int default_page)
       : _default_page(default_page) {}
   virtual void Execute(int repeat, State *state) {
     int page = (std::max(1, std::min(state->NumPages,
@@ -670,7 +671,6 @@ int main(int argc, char *argv[]) {
 
     // 2.3. Run command.
     registry.Dispatch(c, repeat, &state);
-
   } while (!state.Exit);
 
 

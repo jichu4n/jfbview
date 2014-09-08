@@ -20,12 +20,12 @@
 // matrix of pixels.
 
 #include "pixel_buffer.hpp"
-#include "multithreading.hpp"
+#include <unistd.h>
 #include <cassert>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <unistd.h>
+#include "multithreading.hpp"
 
 PixelBuffer::PixelBuffer(const PixelBuffer::Size &size,
                          const PixelBuffer::Format *format)
@@ -127,25 +127,25 @@ void PixelBuffer::Init() {
   bool little_endian = (reinterpret_cast<uint8_t *>(&x))[0];
   // Set up writer impl.
   switch (_format->GetDepth()) {
-   case 1:
-    _pixel_writer_impl = &_pixel_writer_impl_1;
-    break;
-   case 2:
-    _pixel_writer_impl = &_pixel_writer_impl_2;
-    break;
-   case 3:
-    if (little_endian) {
-      _pixel_writer_impl = &_pixel_writer_impl_3_little_endian;
-    } else {
-      _pixel_writer_impl = &_pixel_writer_impl_3_big_endian;
-    }
-    break;
-   case 4:
-    _pixel_writer_impl = &_pixel_writer_impl_4;
-    break;
-   default:
-    fprintf(stderr, "Unsupported color depth %d", _format->GetDepth());
-    abort();
+    case 1:
+      _pixel_writer_impl = &_pixel_writer_impl_1;
+      break;
+    case 2:
+      _pixel_writer_impl = &_pixel_writer_impl_2;
+      break;
+    case 3:
+      if (little_endian) {
+        _pixel_writer_impl = &_pixel_writer_impl_3_little_endian;
+      } else {
+        _pixel_writer_impl = &_pixel_writer_impl_3_big_endian;
+      }
+      break;
+    case 4:
+      _pixel_writer_impl = &_pixel_writer_impl_4;
+      break;
+    default:
+      fprintf(stderr, "Unsupported color depth %d", _format->GetDepth());
+      abort();
   }
 }
 
