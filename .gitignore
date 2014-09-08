@@ -1,6 +1,7 @@
 .*.swp
 *.o
 *.d
+*.pyc
 tags
 jfbview
 jfbpdf
