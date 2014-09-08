@@ -89,8 +89,11 @@ class Viewer {
 
   // Constructs a new Viewer object. Does not take ownership of the document or
   // the framebuffer object.
-  Viewer(Document *doc, Framebuffer *fb, const State &state = State(),
-         int render_cache_size = DEFAULT_RENDER_CACHE_SIZE);
+  Viewer(
+      Document *doc,
+      Framebuffer *fb,
+      const State &state = State(),
+      int render_cache_size = DEFAULT_RENDER_CACHE_SIZE);
   virtual ~Viewer();
 
   // Renders the present view to the framebuffer.
