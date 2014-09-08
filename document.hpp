@@ -54,7 +54,7 @@ class Document {
     // Returns the display text of this item.
     const std::string &GetTitle() const;
     // Returns the number of children items contained within this item.
-    int GetChildrenCount() const;
+    int GetNumChildren() const;
     // Returns a const pointer to the i-th child of this item.
     const OutlineItem *GetChild(int i) const;
 
@@ -65,12 +65,12 @@ class Document {
 
   virtual ~Document();
   // Returns the number of pages in the document.
-  virtual int GetPageCount() = 0;
+  virtual int GetNumPages() = 0;
   // Returns the size of a page, in pixels. zoom gives the zoom ratio as a
   // fraction, e.g., 1.5 = 150%. rotation is the desired rotation in clockwise
   // degrees.
-  virtual const PageSize GetPageSize(int page, float zoom=1.0f,
-                                     int rotation=0) = 0;
+  virtual const PageSize GetPageSize(
+      int page, float zoom=1.0f, int rotation=0) = 0;
   // Renders the given page to a buffer. Page numbers are 0-based. zoom gives
   // the zoom ratio as a fraction, e.g., 1.5 = 150%. rotation is the desired
   // rotation in clockwise degrees. For every rendered pixel, pw will be invoked

@@ -75,7 +75,7 @@ const Document::OutlineItem *OutlineViewer::Show() {
       _selected_index -= getmaxy(_window);
       break;
      case ' ':
-      if (selected_item->GetChildrenCount()) {
+      if (selected_item->GetNumChildren()) {
         if (_expanded_items.count(selected_item)) {
           _expanded_items.erase(selected_item);
         } else {
@@ -156,11 +156,11 @@ void OutlineViewer::FlattenRecursive(const Document::OutlineItem *item,
   for (int i = 0; i < depth; ++i) {
     _lines[line_num].Label += "| ";
   }
-  if (item->GetChildrenCount()) {
+  if (item->GetNumChildren()) {
     _all_expandable_items.insert(item);
     if (_expanded_items.count(item)) {
       _lines[line_num].Label += '+';
-      for (int i = 0; i < item->GetChildrenCount(); ++i) {
+      for (int i = 0; i < item->GetNumChildren(); ++i) {
         FlattenRecursive(item->GetChild(i), depth + 1);
       }
     } else {

@@ -170,7 +170,7 @@ class MoveDownCommand: public MoveCommand {
     state->YOffset += RepeatOrDefault(repeat, 1) * GetMoveSize(state, false);
     if (state->YOffset + state->ScreenHeight >=
             state->PageHeight - 1 + GetMoveSize(state, false)) {
-      if (++(state->Page) < state->PageCount) {
+      if (++(state->Page) < state->NumPages) {
         state->YOffset = 0;
       }
     }
@@ -209,7 +209,7 @@ class ScreenDownCommand: public Command {
     state->YOffset += RepeatOrDefault(repeat, 1) * state->ScreenHeight;
     if (state->YOffset + state->ScreenHeight >=
             state->PageHeight - 1 + state->ScreenHeight) {
-      if (++(state->Page) < state->PageCount) {
+      if (++(state->Page) < state->NumPages) {
         state->YOffset = 0;
       }
     }
@@ -349,7 +349,7 @@ class GoToPageCommand: public Command {
   GoToPageCommand(int default_page)
       : _default_page(default_page) {}
   virtual void Execute(int repeat, State *state) {
-    int page = (std::max(1, std::min(state->PageCount,
+    int page = (std::max(1, std::min(state->NumPages,
         RepeatOrDefault(repeat, _default_page)))) - 1;
     if (page != state->Page) {
       state->Page = page;

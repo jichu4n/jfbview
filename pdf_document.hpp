@@ -57,7 +57,7 @@ class PDFDocument: public Document {
   static Document *Open(const std::string &path,
                         int page_cache_size = DEFAULT_PAGE_CACHE_SIZE);
   // See Document.
-  virtual int GetPageCount();
+  virtual int GetNumPages();
   // See Document.
   virtual const PageSize GetPageSize(int page, float zoom, int rotation);
   // See Document. Thread-safe.

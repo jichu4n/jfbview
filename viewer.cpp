@@ -67,7 +67,7 @@ Viewer::~Viewer() {
 
 void Viewer::Render() {
   // 1. Process state.
-  int page = std::max(0, std::min(_doc->GetPageCount() - 1, _state.Page));
+  int page = std::max(0, std::min(_doc->GetNumPages() - 1, _state.Page));
   float zoom = _state.Zoom;
   if (zoom == ZOOM_TO_WIDTH) {
     zoom = static_cast<float>(_fb->GetSize().Width) /
@@ -105,7 +105,7 @@ void Viewer::Render() {
 
   // 5. Store corrected state.
   _state.Page = page;
-  _state.PageCount = _doc->GetPageCount();
+  _state.NumPages = _doc->GetNumPages();
   if ((_state.Zoom != ZOOM_TO_WIDTH) && (_state.Zoom != ZOOM_TO_FIT)) {
     _state.Zoom = zoom;
   }
@@ -118,14 +118,14 @@ void Viewer::Render() {
   _state.ScreenHeight = screen_size.Height;
 
   // 6. Preload.
-  if ((_render_cache.GetSize() > 1) && (page < _doc->GetPageCount() - 1)) {
+  if ((_render_cache.GetSize() > 1) && (page < _doc->GetNumPages() - 1)) {
     _render_cache.Prepare(RenderCacheKey(page + 1, zoom, _state.Rotation));
   }
 }
 
 void Viewer::GetState(Viewer::State *state) const {
   state->Page = _state.Page;
-  state->PageCount = _state.PageCount;
+  state->NumPages = _state.NumPages;
   state->Zoom = _state.Zoom;
   state->ActualZoom = _state.ActualZoom;
   state->Rotation = _state.Rotation;

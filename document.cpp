@@ -29,7 +29,7 @@ const std::string &Document::OutlineItem::GetTitle() const {
   return _title;
 }
 
-int Document::OutlineItem::GetChildrenCount() const {
+int Document::OutlineItem::GetNumChildren() const {
   return _children.size();
 }
 

@@ -37,7 +37,7 @@ class ImageDocument: public Document {
   // path to an image file. Returns nullptr if the file cannot be opened.
   static Document *Open(const std::string &path);
   // See Document.
-  virtual int GetPageCount() {
+  virtual int GetNumPages() {
     return 1;
   }
   // See Document.

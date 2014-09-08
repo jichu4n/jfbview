@@ -70,13 +70,13 @@ PDFDocument::~PDFDocument() {
   fz_free_context(_fz_context);
 }
 
-int PDFDocument::GetPageCount() {
+int PDFDocument::GetNumPages() {
   return pdf_count_pages(_pdf_document);
 }
 
 const Document::PageSize PDFDocument::GetPageSize(
     int page, float zoom, int rotation) {
-  assert((page >= 0) && (page < GetPageCount()));
+  assert((page >= 0) && (page < GetNumPages()));
   const fz_irect &bbox = GetBoundingBox(
       GetPage(page), Transform(zoom, rotation));
   return PageSize(bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
@@ -84,7 +84,7 @@ const Document::PageSize PDFDocument::GetPageSize(
 
 void PDFDocument::Render(Document::PixelWriter *pw, int page, float zoom,
                          int rotation) {
-  assert((page >= 0) && (page < GetPageCount()));
+  assert((page >= 0) && (page < GetNumPages()));
 
   std::unique_lock<std::mutex> lock(_render_mutex);
 
@@ -203,7 +203,7 @@ void PDFDocument::PDFPageCache::Discard(const int &page,
 }
 
 pdf_page *PDFDocument::GetPage(int page) {
-  assert((page >= 0) && (page < GetPageCount()));
+  assert((page >= 0) && (page < GetNumPages()));
   return _page_cache->Get(page);
 }
 
