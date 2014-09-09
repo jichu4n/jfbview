@@ -27,16 +27,16 @@
 #include <string>
 #include <vector>
 #include "document.hpp"
+#include "ui_view.hpp"
 
 // Outline viewer class. This class stores the expansion and focus states
 // between invocations.
-class OutlineViewer {
+class OutlineViewer : public UIView {
  public:
   // Constructs an instance of OutlineViewer that displays the given Outline.
   // Takes ownership of the outline object.
   explicit OutlineViewer(const Document::OutlineItem* outline);
-  // Cleans up NCURSES state.
-  ~OutlineViewer();
+  virtual ~OutlineViewer();
   // Displays the outline view and enter the event loop. If the user selected a
   // page to jump to, returns the selected outline item. Otherwise returns
   // nullptr.
@@ -51,8 +51,6 @@ class OutlineViewer {
     std::string Label;
   };
 
-  // NCURSES window we manage.
-  WINDOW* _window;
   // Handle to the outline we display.
   std::unique_ptr<const Document::OutlineItem> _outline;
   // The set of expanded (unfolded) items.

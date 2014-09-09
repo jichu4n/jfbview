@@ -23,26 +23,23 @@
 #include <algorithm>
 
 OutlineViewer::OutlineViewer(const Document::OutlineItem* outline)
-    : _window(newwin(0, 0, 0, 0)), _outline(outline), _selected_index(0),
+    : _outline(outline), _selected_index(0),
       _first_index(0) {
-  keypad(_window, true);
   if (_outline != nullptr) {
     _expanded_items.insert(_outline.get());
     Flatten();
   }
 }
 
-OutlineViewer::~OutlineViewer() {
-  delwin(_window);
-}
+OutlineViewer::~OutlineViewer() {}
 
 const Document::OutlineItem* OutlineViewer::Show() {
   if (_outline == nullptr) {
     return nullptr;
   }
 
-  wclear(_window);
-  wrefresh(_window);
+  wclear(GetWindow());
+  wrefresh(GetWindow());
 
   // Main loop.
   bool exit = false;
@@ -54,7 +51,7 @@ const Document::OutlineItem* OutlineViewer::Show() {
     const Document::OutlineItem* first_item =
         _lines[_first_index].OutlineItem;
 
-    switch (wgetch(_window)) {
+    switch (wgetch(GetWindow())) {
      case '\t':
      case 'q':
      case 27:
@@ -69,10 +66,10 @@ const Document::OutlineItem* OutlineViewer::Show() {
       --_selected_index;
       break;
      case KEY_NPAGE:
-      _selected_index += getmaxy(_window);
+      _selected_index += getmaxy(GetWindow());
       break;
      case KEY_PPAGE:
-      _selected_index -= getmaxy(_window);
+      _selected_index -= getmaxy(GetWindow());
       break;
      case ' ':
       if (selected_item->GetNumChildren()) {
@@ -92,7 +89,7 @@ const Document::OutlineItem* OutlineViewer::Show() {
       result = selected_item;
       break;
      case 'z':
-      switch (wgetch(_window)) {
+      switch (wgetch(GetWindow())) {
        case 'R':
        case 'r':
         _expanded_items = _all_expandable_items;
@@ -130,8 +127,8 @@ const Document::OutlineItem* OutlineViewer::Show() {
         _selected_index));
     if (_selected_index < _first_index) {
       _first_index = _selected_index;
-    } else if (_selected_index >= _first_index + getmaxy(_window)) {
-      _first_index = _selected_index - getmaxy(_window) + 1;
+    } else if (_selected_index >= _first_index + getmaxy(GetWindow())) {
+      _first_index = _selected_index - getmaxy(GetWindow()) + 1;
     }
   } while (!exit);
 
@@ -175,19 +172,19 @@ void OutlineViewer::FlattenRecursive(
 
 void OutlineViewer::Render() const {
   const int num_lines_to_display = std::min(
-      getmaxy(_window), static_cast<int>(_lines.size() - _first_index));
+      getmaxy(GetWindow()), static_cast<int>(_lines.size() - _first_index));
   for (int y = 0; y < num_lines_to_display; ++y) {
     const int line = _first_index + y;
     if (line == _selected_index) {
-      wattron(_window, A_STANDOUT);
+      wattron(GetWindow(), A_STANDOUT);
     }
-    mvwaddstr(_window, y, 0, _lines[line].Label.c_str());
-    wclrtoeol(_window);
+    mvwaddstr(GetWindow(), y, 0, _lines[line].Label.c_str());
+    wclrtoeol(GetWindow());
     if (line == _selected_index) {
-      wattroff(_window, A_STANDOUT);
+      wattroff(GetWindow(), A_STANDOUT);
     }
   }
-  wclrtobot(_window);
-  wrefresh(_window);
+  wclrtobot(GetWindow());
+  wrefresh(GetWindow());
 }
 
