@@ -28,6 +28,9 @@ jfbview: $(SRCS:.cpp=.o)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
 
 jfbpdf: $(SRCS)
-	$(CXX) -DJFBVIEW_NO_IMLIB2 -DJFBVIEW_PROGRAM_NAME=\"JFBPDF\" \
-	  -DJFBVIEW_BINARY_NAME=\"$@\" $(CXXFLAGS) -o $@ $^ \
-	  $(LDLIBS) $(LIBS)
+	$(CXX) \
+	    -DJFBVIEW_NO_IMLIB2 \
+	    -DJFBVIEW_PROGRAM_NAME=\"JFBPDF\" \
+	    -DJFBVIEW_BINARY_NAME=\"$@\" \
+	    $(CXXFLAGS) -o $@ $^ \
+	    $(LDLIBS) $(LIBS)
