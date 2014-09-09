@@ -37,7 +37,7 @@ void ExecuteInParallel(const std::function<void(int, int)> &f,
   }
 
   // 3. Wait for threads to exit.
-  for (std::thread &thread : threads) {
+  for (std::thread& thread : threads) {
     thread.join();
   }
 }

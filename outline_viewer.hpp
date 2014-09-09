@@ -34,25 +34,25 @@ class OutlineViewer {
  public:
   // Constructs an instance of OutlineViewer that displays the given Outline.
   // Takes ownership of the outline object.
-  explicit OutlineViewer(const Document::OutlineItem *outline);
+  explicit OutlineViewer(const Document::OutlineItem* outline);
   // Cleans up NCURSES state.
   ~OutlineViewer();
   // Displays the outline view and enter the event loop. If the user selected a
   // page to jump to, returns the selected outline item. Otherwise returns
   // nullptr.
-  const Document::OutlineItem *Show();
+  const Document::OutlineItem* Show();
 
  private:
   // An outline item with display related annotation.
   struct Line {
     // The outline item this display item represents.
-    const Document::OutlineItem *OutlineItem;
+    const Document::OutlineItem* OutlineItem;
     // The displayed string.
     std::string Label;
   };
 
   // NCURSES window we manage.
-  WINDOW *_window;
+  WINDOW* _window;
   // Handle to the outline we display.
   std::unique_ptr<const Document::OutlineItem> _outline;
   // The set of expanded (unfolded) items.
@@ -70,7 +70,7 @@ class OutlineViewer {
   // Flatten out _outline to _lines, according to _expanded_items.
   void Flatten();
   // Recursively flatten the outline item using preorder traversal.
-  void FlattenRecursive(const Document::OutlineItem *item, int depth);
+  void FlattenRecursive(const Document::OutlineItem* item, int depth);
   // Renders the viewer to the screen.
   void Render() const;
 };

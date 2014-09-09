@@ -27,17 +27,19 @@
 #include <cstring>
 #include "multithreading.hpp"
 
-PixelBuffer::PixelBuffer(const PixelBuffer::Size &size,
-                         const PixelBuffer::Format *format)
+PixelBuffer::PixelBuffer(
+    const PixelBuffer::Size& size,
+    const PixelBuffer::Format* format)
     : _size(size), _format(format), _has_ownership(true) {
   assert(_format != nullptr);
   _buffer = new uint8_t[GetBufferSize()];
   Init();
 }
 
-PixelBuffer::PixelBuffer(const PixelBuffer::Size &size,
-                         const PixelBuffer::Format *format,
-                         uint8_t *buffer)
+PixelBuffer::PixelBuffer(
+    const PixelBuffer::Size& size,
+    const PixelBuffer::Format* format,
+    uint8_t* buffer)
     : _size(size), _format(format), _buffer(buffer), _has_ownership(false) {
   assert(_format != nullptr);
   assert(_buffer != nullptr);
@@ -62,9 +64,10 @@ void PixelBuffer::WritePixel(int x, int y, int r, int g, int b) {
   _pixel_writer_impl->WritePixel(_format->Pack(r, g, b), GetPixelAddress(x, y));
 }
 
-void PixelBuffer::Copy(const PixelBuffer::Rect &src_rect,
-                       const PixelBuffer::Rect &dest_rect,
-                       PixelBuffer *dest) const {
+void PixelBuffer::Copy(
+    const PixelBuffer::Rect& src_rect,
+    const PixelBuffer::Rect& dest_rect,
+    PixelBuffer* dest) const {
   assert(dest_rect.Width >= src_rect.Width);
   assert(dest_rect.Height >= src_rect.Height);
   assert(_format->GetDepth() == dest->_format->GetDepth());
@@ -114,8 +117,8 @@ void PixelBuffer::Copy(const PixelBuffer::Rect &src_rect,
                0, margin_right * dest->_format->GetDepth());
       }
       // 2. Copy row content.
-      void *src_row = GetPixelAddress(src_rect.X, src_y);
-      void *dest_row = dest->GetPixelAddress(dest_rect.X + margin_left, dest_y);
+      void* src_row = GetPixelAddress(src_rect.X, src_y);
+      void* dest_row = dest->GetPixelAddress(dest_rect.X + margin_left, dest_y);
       memcpy(dest_row, src_row, src_row_size);
     }
   });
@@ -124,7 +127,7 @@ void PixelBuffer::Copy(const PixelBuffer::Rect &src_rect,
 void PixelBuffer::Init() {
   // Detect endian-ness.
   uint16_t x = 1;
-  bool little_endian = (reinterpret_cast<uint8_t *>(&x))[0];
+  bool little_endian = (reinterpret_cast<uint8_t*>(&x))[0];
   // Set up writer impl.
   switch (_format->GetDepth()) {
     case 1:
@@ -149,41 +152,41 @@ void PixelBuffer::Init() {
   }
 }
 
-void PixelBuffer::PixelWriterImpl1::WritePixel(uint32_t value, void *dest) {
-  *(reinterpret_cast<uint8_t *>(dest)) =
+void PixelBuffer::PixelWriterImpl1::WritePixel(uint32_t value, void* dest) {
+  *(reinterpret_cast<uint8_t*>(dest)) =
       static_cast<uint8_t>(value);
 }
 
-void PixelBuffer::PixelWriterImpl2::WritePixel(uint32_t value, void *dest) {
-  *(reinterpret_cast<uint16_t *>(dest)) =
+void PixelBuffer::PixelWriterImpl2::WritePixel(uint32_t value, void* dest) {
+  *(reinterpret_cast<uint16_t*>(dest)) =
       static_cast<uint16_t>(value);
 }
 
-void PixelBuffer::PixelWriterImpl3LittleEndian::WritePixel(uint32_t value,
-                                                           void *dest) {
-  *(reinterpret_cast<uint16_t *>(dest)) =
+void PixelBuffer::PixelWriterImpl3LittleEndian::WritePixel(
+    uint32_t value, void* dest) {
+  *(reinterpret_cast<uint16_t*>(dest)) =
       static_cast<uint16_t>(value);
-  *(reinterpret_cast<uint8_t *>(dest) + 2) =
+  *(reinterpret_cast<uint8_t*>(dest) + 2) =
       static_cast<uint8_t>(value >> 16);
 }
 
-void PixelBuffer::PixelWriterImpl3BigEndian::WritePixel(uint32_t value,
-                                                        void *dest) {
-  *(reinterpret_cast<uint16_t *>(dest)) =
+void PixelBuffer::PixelWriterImpl3BigEndian::WritePixel(
+    uint32_t value, void* dest) {
+  *(reinterpret_cast<uint16_t*>(dest)) =
       static_cast<uint16_t>(value >> 8);
-  *(reinterpret_cast<uint8_t *>(dest) + 2) =
+  *(reinterpret_cast<uint8_t*>(dest) + 2) =
       static_cast<uint8_t>(value);
 }
 
-void PixelBuffer::PixelWriterImpl4::WritePixel(uint32_t value, void *dest) {
-  *(reinterpret_cast<uint32_t *>(dest)) = static_cast<uint32_t>(value);
+void PixelBuffer::PixelWriterImpl4::WritePixel(uint32_t value, void* dest) {
+  *(reinterpret_cast<uint32_t*>(dest)) = static_cast<uint32_t>(value);
 }
 
 int PixelBuffer::GetBufferSize() const {
   return _size.Width * _size.Height * _format->GetDepth();
 }
 
-uint8_t *PixelBuffer::GetPixelAddress(int x, int y) const {
+uint8_t* PixelBuffer::GetPixelAddress(int x, int y) const {
   assert((x >= 0) && (x < _size.Width));
   assert((y >= 0) && (y < _size.Height));
   return _buffer + (y * _size.Width + x) * _format->GetDepth();

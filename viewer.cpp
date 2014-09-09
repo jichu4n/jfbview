@@ -39,7 +39,7 @@ class PixelBufferWriter: public Document::PixelWriter {
   // Constructs a BufferPixel writer with the given settings. buffer_width
   // gives the number of pixels in a row in the buffer. buffer is the target
   // buffer.
-  explicit PixelBufferWriter(PixelBuffer *buffer)
+  explicit PixelBufferWriter(PixelBuffer* buffer)
       : _buffer(buffer) {
   }
   // See PixelWriter.
@@ -48,13 +48,13 @@ class PixelBufferWriter: public Document::PixelWriter {
   }
  private:
   // The destination buffer.
-  PixelBuffer *_buffer;
+  PixelBuffer* _buffer;
 };
 
 }  // namespace
 
 
-Viewer::Viewer(Document *doc, Framebuffer *fb, const Viewer::State &state,
+Viewer::Viewer(Document* doc, Framebuffer* fb, const Viewer::State& state,
                int render_cache_size)
     : _doc(doc), _fb(fb), _state(state),
       _render_cache(this, render_cache_size) {
@@ -74,8 +74,8 @@ void Viewer::Render() {
            static_cast<float>(
                _doc->GetPageSize(page, 1.0f, _state.Rotation).Width);
   } else if (zoom == ZOOM_TO_FIT) {
-    const PixelBuffer::Size &screen_size = _fb->GetSize();
-    const Document::PageSize &page_size =
+    const PixelBuffer::Size& screen_size = _fb->GetSize();
+    const Document::PageSize& page_size =
         _doc->GetPageSize(page, 1.0f, _state.Rotation);
     zoom = std::min(static_cast<float>(screen_size.Width) /
                         static_cast<float>(page_size.Width),
@@ -86,11 +86,11 @@ void Viewer::Render() {
   zoom = std::max(MIN_ZOOM, std::min(MAX_ZOOM, zoom));
 
   // 2. Render page to buffer.
-  PixelBuffer *buffer =
+  PixelBuffer* buffer =
       _render_cache.Get(RenderCacheKey(page, zoom, _state.Rotation));
 
   // 3. Compute the area actually visible on screen.
-  const PixelBuffer::Size &screen_size = _fb->GetSize(),
+  const PixelBuffer::Size& screen_size = _fb->GetSize(),
                           &page_size = buffer->GetSize();
   PixelBuffer::Rect src_rect;
   src_rect.X = std::max(0, std::min(page_size.Width - screen_size.Width - 1,
@@ -123,7 +123,7 @@ void Viewer::Render() {
   }
 }
 
-void Viewer::GetState(Viewer::State *state) const {
+void Viewer::GetState(Viewer::State* state) const {
   state->Page = _state.Page;
   state->NumPages = _state.NumPages;
   state->Zoom = _state.Zoom;
@@ -137,13 +137,13 @@ void Viewer::GetState(Viewer::State *state) const {
   state->ScreenHeight = _state.ScreenHeight;
 }
 
-void Viewer::SetState(const State &state) {
+void Viewer::SetState(const State& state) {
   _state = state;
 }
 
 
 bool Viewer::RenderCacheKey::operator < (
-    const Viewer::RenderCacheKey &other) const {
+    const Viewer::RenderCacheKey& other) const {
   if (Page != other.Page) {
     return Page < other.Page;
   }
@@ -158,19 +158,19 @@ bool Viewer::RenderCacheKey::operator < (
   return false;
 }
 
-Viewer::RenderCache::RenderCache(Viewer *parent, int size)
-    : Cache<RenderCacheKey, PixelBuffer *>(size), _parent(parent) {
+Viewer::RenderCache::RenderCache(Viewer* parent, int size)
+    : Cache<RenderCacheKey, PixelBuffer*>(size), _parent(parent) {
 }
 
 Viewer::RenderCache::~RenderCache() {
   Clear();
 }
 
-PixelBuffer *Viewer::RenderCache::Load(const RenderCacheKey &key) {
-  const Document::PageSize &page_size =
+PixelBuffer* Viewer::RenderCache::Load(const RenderCacheKey& key) {
+  const Document::PageSize& page_size =
       _parent->_doc->GetPageSize(key.Page, key.Zoom, key.Rotation);
 
-  PixelBuffer *buffer = _parent->_fb->NewPixelBuffer(PixelBuffer::Size(
+  PixelBuffer* buffer = _parent->_fb->NewPixelBuffer(PixelBuffer::Size(
       page_size.Width, page_size.Height));
   PixelBufferWriter writer(buffer);
   _parent->_doc->Render(&writer, key.Page, key.Zoom, key.Rotation);
@@ -178,8 +178,8 @@ PixelBuffer *Viewer::RenderCache::Load(const RenderCacheKey &key) {
   return buffer;
 }
 
-void Viewer::RenderCache::Discard(const RenderCacheKey &key,
-                                  PixelBuffer * const &value) {
+void Viewer::RenderCache::Discard(
+    const RenderCacheKey& key, PixelBuffer* const& value) {
   delete value;
 }
 

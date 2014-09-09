@@ -26,7 +26,7 @@ Document::~Document() { }
 Document::OutlineItem::~OutlineItem() {
 }
 
-const std::string &Document::OutlineItem::GetTitle() const {
+const std::string& Document::OutlineItem::GetTitle() const {
   return _title;
 }
 
@@ -34,6 +34,6 @@ int Document::OutlineItem::GetNumChildren() const {
   return _children.size();
 }
 
-const Document::OutlineItem *Document::OutlineItem::GetChild(int i) const {
+const Document::OutlineItem* Document::OutlineItem::GetChild(int i) const {
   return _children[i].get();
 }

@@ -60,10 +60,10 @@ class PixelBuffer {
 
   // Constructs a new PixelBuffer object, and allocate memory. Will take
   // ownership of allocated memory. Does NOT take ownership of format.
-  PixelBuffer(const Size &size, const Format *format);
+  PixelBuffer(const Size& size, const Format* format);
   // Constructs a new PixelBuffer object, using a pre-allocated buffer. Will NOT
   // take ownership of the buffer. Does NOT take ownership of format.
-  PixelBuffer(const Size &size, const Format *format, uint8_t *buffer);
+  PixelBuffer(const Size& size, const Format* format, uint8_t* buffer);
   // Will free buffer if _has_ownship is true.
   ~PixelBuffer();
 
@@ -79,64 +79,64 @@ class PixelBuffer {
   // destination region must be at least as large in both dimensions than the
   // source region. The source region is centered if the destination region is
   // larger, and the unaffected areas are set to black. This is multi-threaded.
-  void Copy(const Rect &src_rect, const Rect &dest_rect,
-            PixelBuffer *dest) const;
+  void Copy(
+      const Rect& src_rect, const Rect& dest_rect, PixelBuffer* dest) const;
 
  private:
   // Prototype for a method that writes a pixel value to a location.
   class PixelWriterImpl {
    public:
-    virtual void WritePixel(uint32_t value, void *dest) = 0;
+    virtual void WritePixel(uint32_t value, void* dest) = 0;
   };
   // A pixel writer impl for depth = 1.
   class PixelWriterImpl1: public PixelWriterImpl {
    public:
-    void WritePixel(uint32_t value, void *dest) override;
+    void WritePixel(uint32_t value, void* dest) override;
   } _pixel_writer_impl_1;
   // A pixel writer impl for depth = 2.
   class PixelWriterImpl2: public PixelWriterImpl {
    public:
-    void WritePixel(uint32_t value, void *dest) override;
+    void WritePixel(uint32_t value, void* dest) override;
   } _pixel_writer_impl_2;
   // A pixel writer impl for depth = 3.
   class PixelWriterImpl3LittleEndian: public PixelWriterImpl {
    public:
-    void WritePixel(uint32_t value, void *dest) override;
+    void WritePixel(uint32_t value, void* dest) override;
   } _pixel_writer_impl_3_little_endian;
   // A pixel writer impl for depth = 3.
   class PixelWriterImpl3BigEndian: public PixelWriterImpl {
    public:
-    void WritePixel(uint32_t value, void *dest) override;
+    void WritePixel(uint32_t value, void* dest) override;
   } _pixel_writer_impl_3_big_endian;
   // A pixel writer impl for depth = 4.
   class PixelWriterImpl4: public PixelWriterImpl {
    public:
-    void WritePixel(uint32_t value, void *dest) override;
+    void WritePixel(uint32_t value, void* dest) override;
   } _pixel_writer_impl_4;
 
   // Size of the buffer.
   Size _size;
   // Format of current buffer.
-  const Format *_format;
+  const Format* _format;
   // Pointer to buffer memory. Whether we own this memory depends on the
   // _has_ownership flag.
-  uint8_t *_buffer;
+  uint8_t* _buffer;
   // Whether we own _buffer.
   bool _has_ownership;
   // Pixel writer implementation for current buffer. One of
   // _pixel_writer_impl_*.
-  PixelWriterImpl *_pixel_writer_impl;
+  PixelWriterImpl* _pixel_writer_impl;
 
   // Common initialization called by both constructors.
   void Init();
   // Returns the size of the buffer in bytes.
   int GetBufferSize() const;
   // Returns the address in memory corresponding to the pixel (x, y).
-  uint8_t *GetPixelAddress(int x, int y) const;
+  uint8_t* GetPixelAddress(int x, int y) const;
 
   // Disable copy and assign.
-  PixelBuffer(const PixelBuffer &);
-  PixelBuffer &operator = (const PixelBuffer &);
+  PixelBuffer(const PixelBuffer&);
+  PixelBuffer& operator = (const PixelBuffer&);
 };
 
 #endif

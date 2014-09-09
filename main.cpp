@@ -87,7 +87,7 @@ struct State: public Viewer::State {
 };
 
 // Returns the all lowercase version of a string.
-static std::string ToLower(const std::string &s) {
+static std::string ToLower(const std::string& s) {
   std::string r(s);
   std::transform(r.begin(), r.end(), r.begin(), &tolower);
   return r;
@@ -95,7 +95,7 @@ static std::string ToLower(const std::string &s) {
 
 // Returns the file extension of a path, or the empty string. The extension is
 // converted to lower case.
-static std::string GetFileExtension(const std::string &path) {
+static std::string GetFileExtension(const std::string& path) {
   int path_len = path.length();
   if ((path_len >= 4) && (path[path_len - 4] == '.')) {
     return ToLower(path.substr(path_len - 3));
@@ -105,7 +105,7 @@ static std::string GetFileExtension(const std::string &path) {
 
 // Loads the file specified in a state. Returns true if the file has been
 // loaded.
-static bool LoadFile(State *state) {
+static bool LoadFile(State* state) {
   if (state->DocumentType == State::AUTO_DETECT) {
     if (GetFileExtension(state->FilePath) == "pdf") {
       state->DocumentType = State::PDF;
@@ -119,7 +119,7 @@ static bool LoadFile(State *state) {
 #endif
     }
   }
-  Document *doc = nullptr;
+  Document* doc = nullptr;
   switch (state->DocumentType) {
     case State::PDF:
       doc = PDFDocument::Open(state->FilePath);
@@ -148,7 +148,7 @@ static bool LoadFile(State *state) {
 
 class ExitCommand: public Command {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->Exit = true;
   }
 };
@@ -157,7 +157,7 @@ class ExitCommand: public Command {
 class MoveCommand: public Command {
  protected:
   // Returns how much to move by in a direction.
-  int GetMoveSize(const State *state, bool horizontal) const {
+  int GetMoveSize(const State* state, bool horizontal) const {
     if (horizontal) {
       return state->ScreenWidth / 10;
     }
@@ -167,7 +167,7 @@ class MoveCommand: public Command {
 
 class MoveDownCommand: public MoveCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->YOffset += RepeatOrDefault(repeat, 1) * GetMoveSize(state, false);
     if (state->YOffset + state->ScreenHeight >=
             state->PageHeight - 1 + GetMoveSize(state, false)) {
@@ -180,7 +180,7 @@ class MoveDownCommand: public MoveCommand {
 
 class MoveUpCommand: public MoveCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->YOffset -= RepeatOrDefault(repeat, 1) * GetMoveSize(state, false);
     if (state->YOffset <= -GetMoveSize(state, false)) {
       if (--(state->Page) >= 0) {
@@ -192,21 +192,21 @@ class MoveUpCommand: public MoveCommand {
 
 class MoveLeftCommand: public MoveCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->XOffset -= RepeatOrDefault(repeat, 1) * GetMoveSize(state, true);
   }
 };
 
 class MoveRightCommand: public MoveCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->XOffset += RepeatOrDefault(repeat, 1) * GetMoveSize(state, true);
   }
 };
 
 class ScreenDownCommand: public Command {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->YOffset += RepeatOrDefault(repeat, 1) * state->ScreenHeight;
     if (state->YOffset + state->ScreenHeight >=
             state->PageHeight - 1 + state->ScreenHeight) {
@@ -219,7 +219,7 @@ class ScreenDownCommand: public Command {
 
 class ScreenUpCommand: public Command {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->YOffset -= RepeatOrDefault(repeat, 1) * state->ScreenHeight;
     if (state->YOffset <= -state->ScreenHeight) {
       if (--(state->Page) >= 0) {
@@ -231,14 +231,14 @@ class ScreenUpCommand: public Command {
 
 class PageDownCommand: public Command {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->Page += RepeatOrDefault(repeat, 1);
   }
 };
 
 class PageUpCommand: public Command {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->Page -= RepeatOrDefault(repeat, 1);
   }
 };
@@ -249,7 +249,7 @@ class ZoomCommand: public Command {
   // How much to zoom in/out by each time.
   static const float ZOOM_COEFFICIENT;
   // Sets zoom, preserving original screen center.
-  void SetZoom(float zoom, State *state) {
+  void SetZoom(float zoom, State* state) {
     // Position in page of screen center, as fraction of page size.
     const float center_ratio_x =
         static_cast<float>(state->XOffset + state->ScreenWidth / 2) /
@@ -280,7 +280,7 @@ const float ZoomCommand::ZOOM_COEFFICIENT = 1.2f;
 
 class ZoomInCommand: public ZoomCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     SetZoom(state->ActualZoom * RepeatOrDefault(repeat, 1) * ZOOM_COEFFICIENT,
             state);
   }
@@ -288,7 +288,7 @@ class ZoomInCommand: public ZoomCommand {
 
 class ZoomOutCommand: public ZoomCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     SetZoom(state->ActualZoom * RepeatOrDefault(repeat, 1) / ZOOM_COEFFICIENT,
             state);
   }
@@ -296,7 +296,7 @@ class ZoomOutCommand: public ZoomCommand {
 
 class SetZoomCommand: public ZoomCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     SetZoom(static_cast<float>(RepeatOrDefault(repeat, 100)) / 100.0f,
             state);
   }
@@ -304,7 +304,7 @@ class SetZoomCommand: public ZoomCommand {
 
 class SetRotationCommand: public Command {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->Rotation = RepeatOrDefault(repeat, 0);
   }
 };
@@ -315,7 +315,7 @@ class RotateCommand: public Command {
       : _increment(increment) {
   }
 
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->Rotation += RepeatOrDefault(repeat, 1) * _increment;
   }
 
@@ -325,14 +325,14 @@ class RotateCommand: public Command {
 
 class ZoomToFitCommand: public Command {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->Zoom = Viewer::ZOOM_TO_FIT;
   }
 };
 
 class ZoomToWidthCommand: public ZoomCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     // Estimate page width at 100%.
     const float orig_page_width =
         static_cast<float>(state->PageWidth) / state->ActualZoom;
@@ -351,7 +351,7 @@ class GoToPageCommand: public Command {
   explicit GoToPageCommand(int default_page)
       : _default_page(default_page) {}
 
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     int page = (std::max(1, std::min(state->NumPages,
         RepeatOrDefault(repeat, _default_page)))) - 1;
     if (page != state->Page) {
@@ -367,8 +367,8 @@ class GoToPageCommand: public Command {
 
 class ShowOutlineViewerCommand: public Command {
  public:
-  void Execute(int repeat, State *state) override {
-    const Document::OutlineItem *dest = state->OutlineViewerInst->Show();
+  void Execute(int repeat, State* state) override {
+    const Document::OutlineItem* dest = state->OutlineViewerInst->Show();
     if (dest == nullptr) {
       return;
     }
@@ -390,7 +390,7 @@ std::map<int, Viewer::State> StateCommand::_saved_states;
 
 class SaveStateCommand: public StateCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     state->ViewerInst->GetState(
         &(_saved_states[RepeatOrDefault(repeat, 0)]));
     state->Render = false;
@@ -399,7 +399,7 @@ class SaveStateCommand: public StateCommand {
 
 class RestoreStateCommand: public StateCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     const int n = RepeatOrDefault(repeat, 0);
     if (_saved_states.count(n)) {
       state->ViewerInst->SetState(_saved_states[n]);
@@ -410,7 +410,7 @@ class RestoreStateCommand: public StateCommand {
 
 class ReloadCommand: public StateCommand {
  public:
-  void Execute(int repeat, State *state) override {
+  void Execute(int repeat, State* state) override {
     if (LoadFile(state)) {
       state->ViewerInst.reset(new Viewer(
         state->DocumentInst.get(), state->FramebufferInst.get(), *state,
@@ -427,7 +427,7 @@ class ReloadCommand: public StateCommand {
 
 
 // Help text printed by --help or -h.
-static const char *HELP_STRING =
+static const char* HELP_STRING =
     JFBVIEW_PROGRAM_NAME " v0.2\n"
     "Copyright (C) 2012 Chuan Ji <jichuan89@gmail.com>\n"
     "\n"
@@ -470,7 +470,7 @@ static const char *HELP_STRING =
 
 // Parses the command line, and stores settings in state. Crashes the program if
 // the commnad line contains errors.
-void ParseCommandLine(int argc, char *argv[], State *state) {
+void ParseCommandLine(int argc, char* argv[], State* state) {
   // Tags for long options that don't have short option chars.
   enum {
     RENDER_CACHE_SIZE = 0x1000,
@@ -491,7 +491,7 @@ void ParseCommandLine(int argc, char *argv[], State *state) {
       { "format", true, nullptr, 'f' },
       { 0, 0, 0, 0 },
   };
-  static const char *ShortFlags = "hp:z:r:f:";
+  static const char* ShortFlags = "hp:z:r:f:";
 
   for (;;) {
     int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, nullptr);
@@ -617,7 +617,7 @@ Registry BuildRegistry() {
   return registry;
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
   // Main program state.
   State state;
 
@@ -636,7 +636,7 @@ int main(int argc, char *argv[]) {
   state.ViewerInst.reset(new Viewer(
       state.DocumentInst.get(), state.FramebufferInst.get(), state,
       state.RenderCacheSize));
-  const Registry &registry = BuildRegistry();
+  const Registry& registry = BuildRegistry();
 
   initscr();
   keypad(stdscr, true);

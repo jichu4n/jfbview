@@ -52,11 +52,11 @@ class Document {
     virtual ~OutlineItem();
 
     // Returns the display text of this item.
-    const std::string &GetTitle() const;
+    const std::string& GetTitle() const;
     // Returns the number of children items contained within this item.
     int GetNumChildren() const;
     // Returns a const pointer to the i-th child of this item.
-    const OutlineItem *GetChild(int i) const;
+    const OutlineItem* GetChild(int i) const;
 
    protected:
     std::string _title;
@@ -75,14 +75,14 @@ class Document {
   // the zoom ratio as a fraction, e.g., 1.5 = 150%. rotation is the desired
   // rotation in clockwise degrees. For every rendered pixel, pw will be invoked
   // to store that pixel value somewhere.
-  virtual void Render(PixelWriter *pw, int page, float zoom, int rotation) = 0;
+  virtual void Render(PixelWriter* pw, int page, float zoom, int rotation) = 0;
   // Returns the outline of this document. The returned item represents the
   // top-level element in the outline, and is owned by the caller. If the
   // document does not have an outline, return nullptr.
-  virtual const OutlineItem *GetOutline() = 0;
+  virtual const OutlineItem* GetOutline() = 0;
   // Returns the page number referred to by an outline item. If not available,
   // returns -1.
-  virtual int Lookup(const OutlineItem *item) = 0;
+  virtual int Lookup(const OutlineItem* item) = 0;
 };
 
 #endif

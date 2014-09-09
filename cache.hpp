@@ -51,11 +51,11 @@ class Cache {
   virtual ~Cache();
   // Retrieves an item. If the item is in the cache, simply returns it. If
   // not, loads it using the Load() function defined in an implementation.
-  V Get(const K &key);
+  V Get(const K& key);
   // Starts a new thread to load an item into the cache. Note that this puts a
   // lock on this cache object, and calls to Get() while the asynchronous
   // loading is in progress will block.
-  void Prepare(const K &key);
+  void Prepare(const K& key);
   // Returns the size of the cache.
   int GetSize() const;
   // Clears the cache, calling Discard() on all existing elements. Waits for
@@ -66,10 +66,10 @@ class Cache {
  protected:
   // Loads a new element. This should be overridden in child classes. MUST BE
   // THREAD-SAFE.
-  virtual V Load(const K &key) = 0;
+  virtual V Load(const K& key) = 0;
   // Frees an element that has been evicted from the cache. This should be
   // overridden in child classes. MUST BE THREAD-SAFE.
-  virtual void Discard(const K &key, const V &value) = 0;
+  virtual void Discard(const K& key, const V& value) = 0;
 
  private:
   // A lock on this object. Calls to Get() and Prepare() will block for access.
@@ -101,7 +101,7 @@ Cache<K, V>::~Cache() {
 }
 
 template <typename K, typename V>
-V Cache<K, V>::Get(const K &key) {
+V Cache<K, V>::Get(const K& key) {
   for (;;) {
     std::unique_lock<std::mutex> lock(_mutex);
 
@@ -131,8 +131,8 @@ V Cache<K, V>::Get(const K &key) {
 }
 
 template <typename K, typename V>
-void Cache<K, V>::Prepare(const K &key) {
-  std::thread thread([=] (const K &key) {
+void Cache<K, V>::Prepare(const K& key) {
+  std::thread thread([=] (const K& key) {
     {
       std::unique_lock<std::mutex> lock(_mutex);
 
@@ -203,7 +203,7 @@ void Cache<K, V>::Clear() {
       _queue.pop();
     }
     // 3. Clear cache and start a thread to call Discard() on each entry.
-    for (auto &i : _map) {
+    for (auto& i : _map) {
       K key = i.first;
       V value = i.second;
       discard_threads.push_back(std::thread([=] {
@@ -212,7 +212,7 @@ void Cache<K, V>::Clear() {
     }
   }
   // 4. Wait for all Discard() calls to complete.
-  for (std::thread &discard_thread : discard_threads) {
+  for (std::thread& discard_thread : discard_threads) {
     discard_thread.join();
   }
 }

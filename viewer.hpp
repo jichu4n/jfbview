@@ -90,9 +90,9 @@ class Viewer {
   // Constructs a new Viewer object. Does not take ownership of the document or
   // the framebuffer object.
   Viewer(
-      Document *doc,
-      Framebuffer *fb,
-      const State &state = State(),
+      Document* doc,
+      Framebuffer* fb,
+      const State& state = State(),
       int render_cache_size = DEFAULT_RENDER_CACHE_SIZE);
   virtual ~Viewer();
 
@@ -101,16 +101,16 @@ class Viewer {
 
   // Stores the current state in the given pointer. Must be called AFTER at
   // least one call to Render().
-  void GetState(State *state) const;
+  void GetState(State* state) const;
   // Sets the current settings. Will use minimum and maximum legal values to
   // replace illegal values. Has no effect until Render() is called.
-  void SetState(const State &state);
+  void SetState(const State& state);
 
  private:
   // The current document.
-  Document *_doc;
+  Document* _doc;
   // The framebuffer device.
-  Framebuffer *_fb;
+  Framebuffer* _fb;
   // Settings.
   State _state;
 
@@ -129,19 +129,19 @@ class Viewer {
     }
 
     // This is required as this class will be inserted into a map.
-    bool operator < (const RenderCacheKey &other) const;
+    bool operator < (const RenderCacheKey& other) const;
   };
   // Render cache class.
-  class RenderCache: public Cache<RenderCacheKey, PixelBuffer *> {
+  class RenderCache : public Cache<RenderCacheKey, PixelBuffer*> {
    public:
-    RenderCache(Viewer *parent, int size);
+    RenderCache(Viewer* parent, int size);
     virtual ~RenderCache();
    protected:
-    PixelBuffer *Load(const RenderCacheKey &key) override;
+    PixelBuffer* Load(const RenderCacheKey& key) override;
     void Discard(
-        const RenderCacheKey &key, PixelBuffer * const &value) override;
+        const RenderCacheKey& key, PixelBuffer* const& value) override;
    private:
-    Viewer *_parent;
+    Viewer* _parent;
   };
   // Render cache.
   RenderCache _render_cache;

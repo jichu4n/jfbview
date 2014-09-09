@@ -36,7 +36,7 @@ class Command {
   // Executes a command. Repeat is an integer specifying how many times the
   // command should be repeated. If the user did not specify a number, NO_REPEAT
   // is passed. state is a handle to the program state (defined in main.cpp).
-  virtual void Execute(int repeat, State *state) = 0;
+  virtual void Execute(int repeat, State* state) = 0;
   // A handy shortcut for (repeat == NO_REPEAT ? x : repeat).
   int RepeatOrDefault(int repeat, int default_repeat) const {
     return (repeat == NO_REPEAT) ? default_repeat : repeat;
@@ -53,15 +53,15 @@ class Registry {
   ~Registry();
   // Associates a command with a key. The key must not have been already in use.
   // Takes ownership of the command object.
-  void Register(int key, Command *command);
+  void Register(int key, Command* command);
   // Executes the command associated with a key, with the given repeat argument.
   // If no command is associated with the key, returns false. Otherwise returns
   // true.
-  bool Dispatch(int key, int repeat, State *state) const;
+  bool Dispatch(int key, int repeat, State* state) const;
 
  private:
   // Maintains the mapping.
-  std::map<int, Command *> _map;
+  std::map<int, Command*> _map;
 };
 
 #endif

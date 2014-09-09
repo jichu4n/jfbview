@@ -29,24 +29,35 @@
 #include <memory>
 #include <string>
 
-const char * const Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE = "/dev/fb0";
+const char* const Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE = "/dev/fb0";
 
-Framebuffer *Framebuffer::Open(const std::string &device) {
+Framebuffer* Framebuffer::Open(const std::string& device) {
   std::unique_ptr<Framebuffer> fb(new Framebuffer());
-  if ((fb->_fd = open(device.c_str(), O_RDWR)) != -1) {
-    if ((ioctl(fb->_fd, FBIOGET_VSCREENINFO, &(fb->_vinfo)) != -1) &&
-        (ioctl(fb->_fd, FBIOGET_FSCREENINFO, &(fb->_finfo)) != -1)) {
-      if ((fb->_buffer = reinterpret_cast<uint8_t *> (
-              mmap(nullptr, fb->GetBufferSize(), PROT_READ | PROT_WRITE,
-                   MAP_SHARED, fb->_fd, 0))) != MAP_FAILED) {
-        fb->_format.reset(new Format(fb->_vinfo));
-        fb->_pixel_buffer.reset(new PixelBuffer(
-            fb->GetSize(), fb->_format.get(), fb->_buffer));
-        return fb.release();
-      }
-    }
+
+  if ((fb->_fd = open(device.c_str(), O_RDWR)) == -1) {
+    goto error;
+  }
+  if ((ioctl(fb->_fd, FBIOGET_VSCREENINFO, &(fb->_vinfo)) == -1) ||
+      (ioctl(fb->_fd, FBIOGET_FSCREENINFO, &(fb->_finfo)) == -1)) {
+    goto error;
+  }
+  fb->_buffer = reinterpret_cast<uint8_t*>(mmap(
+        nullptr,
+        fb->GetBufferSize(),
+        PROT_READ | PROT_WRITE,
+        MAP_SHARED,
+        fb->_fd,
+        0));
+  if (fb->_buffer == MAP_FAILED) {
+    goto error;
   }
 
+  fb->_format.reset(new Format(fb->_vinfo));
+  fb->_pixel_buffer.reset(new PixelBuffer(
+      fb->GetSize(), fb->_format.get(), fb->_buffer));
+  return fb.release();
+
+error:
   perror("Error initializing framebuffer");
   return nullptr;
 }
@@ -65,7 +76,7 @@ Framebuffer::~Framebuffer() {
   }
 }
 
-PixelBuffer *Framebuffer::NewPixelBuffer(const PixelBuffer::Size &size) {
+PixelBuffer* Framebuffer::NewPixelBuffer(const PixelBuffer::Size& size) {
   return new PixelBuffer(size, _format.get());
 }
 
@@ -77,12 +88,12 @@ PixelBuffer::Size Framebuffer::GetSize() const {
   return PixelBuffer::Size(_vinfo.xres, _vinfo.yres);
 }
 
-void Framebuffer::Render(const PixelBuffer &src,
-                         const PixelBuffer::Rect &rect) {
+void Framebuffer::Render(
+    const PixelBuffer& src, const PixelBuffer::Rect& rect) {
   src.Copy(rect, _pixel_buffer->GetRect(), _pixel_buffer.get());
 }
 
-Framebuffer::Format::Format(const fb_var_screeninfo &vinfo)
+Framebuffer::Format::Format(const fb_var_screeninfo& vinfo)
     : _vinfo(vinfo) {
 }
 
@@ -91,9 +102,8 @@ int Framebuffer::Format::GetDepth() const {
 }
 
 uint32_t Framebuffer::Format::Pack(int r, int g, int b) const {
-  uint32_t v = ((r >> (8 - _vinfo.red.length)) << _vinfo.red.offset) |
-               ((g >> (8 - _vinfo.green.length)) << _vinfo.green.offset) |
-               ((b >> (8 - _vinfo.blue.length)) << _vinfo.blue.offset);
-  return v;
+  return ((r >> (8 - _vinfo.red.length)) << _vinfo.red.offset) |
+         ((g >> (8 - _vinfo.green.length)) << _vinfo.green.offset) |
+         ((b >> (8 - _vinfo.blue.length)) << _vinfo.blue.offset);
 }
 

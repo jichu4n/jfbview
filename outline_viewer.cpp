@@ -22,7 +22,7 @@
 #include <cassert>
 #include <algorithm>
 
-OutlineViewer::OutlineViewer(const Document::OutlineItem *outline)
+OutlineViewer::OutlineViewer(const Document::OutlineItem* outline)
     : _window(newwin(0, 0, 0, 0)), _outline(outline), _selected_index(0),
       _first_index(0) {
   keypad(_window, true);
@@ -36,7 +36,7 @@ OutlineViewer::~OutlineViewer() {
   delwin(_window);
 }
 
-const Document::OutlineItem *OutlineViewer::Show() {
+const Document::OutlineItem* OutlineViewer::Show() {
   if (_outline == nullptr) {
     return nullptr;
   }
@@ -46,12 +46,12 @@ const Document::OutlineItem *OutlineViewer::Show() {
 
   // Main loop.
   bool exit = false;
-  const Document::OutlineItem *result = nullptr;
+  const Document::OutlineItem* result = nullptr;
   do {
     Render();
-    const Document::OutlineItem *selected_item =
+    const Document::OutlineItem* selected_item =
         _lines[_selected_index].OutlineItem;
-    const Document::OutlineItem *first_item =
+    const Document::OutlineItem* first_item =
         _lines[_first_index].OutlineItem;
 
     switch (wgetch(_window)) {
@@ -143,8 +143,8 @@ void OutlineViewer::Flatten() {
   FlattenRecursive(_outline.get(), 0);
 }
 
-void OutlineViewer::FlattenRecursive(const Document::OutlineItem *item,
-                                     int depth) {
+void OutlineViewer::FlattenRecursive(
+    const Document::OutlineItem* item, int depth) {
   if (item == nullptr) {
     return;
   }

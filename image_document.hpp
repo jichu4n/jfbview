@@ -35,7 +35,7 @@ class ImageDocument: public Document {
   virtual ~ImageDocument();
   // Factory method to construct an instance of ImageDocument. path gives the
   // path to an image file. Returns nullptr if the file cannot be opened.
-  static Document *Open(const std::string &path);
+  static Document* Open(const std::string& path);
   // See Document.
   int GetNumPages() override {
     return 1;
@@ -43,13 +43,13 @@ class ImageDocument: public Document {
   // See Document.
   const PageSize GetPageSize(int page, float zoom, int rotation) override;
   // See Document. Thread-safe.
-  void Render(PixelWriter *pw, int page, float zoom, int rotation) override;
+  void Render(PixelWriter* pw, int page, float zoom, int rotation) override;
   // See Document.
-  const OutlineItem *GetOutline()  override {
+  const OutlineItem* GetOutline()  override {
     return nullptr;
   }
   // See Document.
-  int Lookup(const OutlineItem *item)  override {
+  int Lookup(const OutlineItem* item)  override {
     return -1;
   }
 
@@ -62,8 +62,8 @@ class ImageDocument: public Document {
   // We disallow the constructor; use the factory method Open() instead.
   explicit ImageDocument(Imlib_Image image);
   // We disallow copying because we store lots of heap allocated state.
-  explicit ImageDocument(const ImageDocument &other);
-  ImageDocument &operator = (const ImageDocument &other);
+  explicit ImageDocument(const ImageDocument& other);
+  ImageDocument& operator = (const ImageDocument& other);
 };
 
 #endif

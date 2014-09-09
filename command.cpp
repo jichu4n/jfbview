@@ -24,17 +24,17 @@
 const int Command::NO_REPEAT = -1;
 
 Registry::~Registry() {
-  for (auto &i : _map) {
+  for (auto& i : _map) {
     delete i.second;
   }
 }
 
-void Registry::Register(int key, Command *command) {
+void Registry::Register(int key, Command* command) {
   assert(!_map.count(key));
   _map[key] = command;
 }
 
-bool Registry::Dispatch(int key, int repeat, State *state) const {
+bool Registry::Dispatch(int key, int repeat, State* state) const {
   const auto i = _map.find(key);
   if (i == _map.end()) {
     return false;
