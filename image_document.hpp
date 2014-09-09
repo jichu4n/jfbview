@@ -37,19 +37,19 @@ class ImageDocument: public Document {
   // path to an image file. Returns nullptr if the file cannot be opened.
   static Document *Open(const std::string &path);
   // See Document.
-  virtual int GetNumPages() {
+  int GetNumPages() override {
     return 1;
   }
   // See Document.
-  virtual const PageSize GetPageSize(int page, float zoom, int rotation);
+  const PageSize GetPageSize(int page, float zoom, int rotation) override;
   // See Document. Thread-safe.
-  virtual void Render(PixelWriter *pw, int page, float zoom, int rotation);
+  void Render(PixelWriter *pw, int page, float zoom, int rotation) override;
   // See Document.
-  virtual const OutlineItem *GetOutline() {
+  const OutlineItem *GetOutline()  override {
     return nullptr;
   }
   // See Document.
-  virtual int Lookup(const OutlineItem *item) {
+  int Lookup(const OutlineItem *item)  override {
     return -1;
   }
 

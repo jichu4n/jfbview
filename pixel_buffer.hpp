@@ -91,27 +91,27 @@ class PixelBuffer {
   // A pixel writer impl for depth = 1.
   class PixelWriterImpl1: public PixelWriterImpl {
    public:
-    virtual void WritePixel(uint32_t value, void *dest);
+    void WritePixel(uint32_t value, void *dest) override;
   } _pixel_writer_impl_1;
   // A pixel writer impl for depth = 2.
   class PixelWriterImpl2: public PixelWriterImpl {
    public:
-    virtual void WritePixel(uint32_t value, void *dest);
+    void WritePixel(uint32_t value, void *dest) override;
   } _pixel_writer_impl_2;
   // A pixel writer impl for depth = 3.
   class PixelWriterImpl3LittleEndian: public PixelWriterImpl {
    public:
-    virtual void WritePixel(uint32_t value, void *dest);
+    void WritePixel(uint32_t value, void *dest) override;
   } _pixel_writer_impl_3_little_endian;
   // A pixel writer impl for depth = 3.
   class PixelWriterImpl3BigEndian: public PixelWriterImpl {
    public:
-    virtual void WritePixel(uint32_t value, void *dest);
+    void WritePixel(uint32_t value, void *dest) override;
   } _pixel_writer_impl_3_big_endian;
   // A pixel writer impl for depth = 4.
   class PixelWriterImpl4: public PixelWriterImpl {
    public:
-    virtual void WritePixel(uint32_t value, void *dest);
+    void WritePixel(uint32_t value, void *dest) override;
   } _pixel_writer_impl_4;
 
   // Size of the buffer.

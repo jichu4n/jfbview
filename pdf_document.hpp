@@ -59,15 +59,15 @@ class PDFDocument: public Document {
   static Document *Open(const std::string &path,
                         int page_cache_size = DEFAULT_PAGE_CACHE_SIZE);
   // See Document.
-  virtual int GetNumPages();
+  int GetNumPages() override;
   // See Document.
-  virtual const PageSize GetPageSize(int page, float zoom, int rotation);
+  const PageSize GetPageSize(int page, float zoom, int rotation) override;
   // See Document. Thread-safe.
-  virtual void Render(PixelWriter *pw, int page, float zoom, int rotation);
+  void Render(PixelWriter *pw, int page, float zoom, int rotation) override;
   // See Document.
-  virtual const OutlineItem *GetOutline();
+  const OutlineItem *GetOutline() override;
   // See Document.
-  virtual int Lookup(const OutlineItem *item);
+  int Lookup(const OutlineItem *item) override;
 
  private:
   // Actual outline item implementation.
@@ -95,8 +95,8 @@ class PDFDocument: public Document {
     PDFPageCache(int cache_size, PDFDocument *parent);
     virtual ~PDFPageCache();
    protected:
-    virtual pdf_page *Load(const int &page);
-    virtual void Discard(const int &page, pdf_page * const &page_struct);
+    pdf_page *Load(const int &page) override;
+    void Discard(const int &page, pdf_page * const &page_struct) override;
    private:
     // PDF document we belong to.
     PDFDocument *_parent;

@@ -137,8 +137,9 @@ class Viewer {
     RenderCache(Viewer *parent, int size);
     virtual ~RenderCache();
    protected:
-    virtual PixelBuffer *Load(const RenderCacheKey &key);
-    virtual void Discard(const RenderCacheKey &key, PixelBuffer * const &value);
+    PixelBuffer *Load(const RenderCacheKey &key) override;
+    void Discard(
+        const RenderCacheKey &key, PixelBuffer * const &value) override;
    private:
     Viewer *_parent;
   };

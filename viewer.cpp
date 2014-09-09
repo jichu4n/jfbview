@@ -43,7 +43,7 @@ class PixelBufferWriter: public Document::PixelWriter {
       : _buffer(buffer) {
   }
   // See PixelWriter.
-  virtual void Write(int x, int y, int r, int g, int b) {
+  void Write(int x, int y, int r, int g, int b) override {
     _buffer->WritePixel(x, y, r, g, b);
   }
  private:

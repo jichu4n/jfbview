@@ -56,12 +56,12 @@ class Framebuffer {
    public:
     // Grab settings from a fb_var_screeninfo.
     explicit Format(const fb_var_screeninfo &vinfo);
-    // See PixelBuffer::Format.
-    virtual int GetDepth() const;
-    // See PixelBuffer::Format.
-    virtual uint32_t Pack(int r, int g, int b) const;
     // This is required to keep C++ happy.
     virtual ~Format() {}
+    // See PixelBuffer::Format.
+    int GetDepth() const override;
+    // See PixelBuffer::Format.
+    uint32_t Pack(int r, int g, int b) const override;
    private:
     fb_var_screeninfo _vinfo;
   };

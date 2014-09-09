@@ -148,7 +148,7 @@ static bool LoadFile(State *state) {
 
 class ExitCommand: public Command {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->Exit = true;
   }
 };
@@ -167,7 +167,7 @@ class MoveCommand: public Command {
 
 class MoveDownCommand: public MoveCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->YOffset += RepeatOrDefault(repeat, 1) * GetMoveSize(state, false);
     if (state->YOffset + state->ScreenHeight >=
             state->PageHeight - 1 + GetMoveSize(state, false)) {
@@ -180,7 +180,7 @@ class MoveDownCommand: public MoveCommand {
 
 class MoveUpCommand: public MoveCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->YOffset -= RepeatOrDefault(repeat, 1) * GetMoveSize(state, false);
     if (state->YOffset <= -GetMoveSize(state, false)) {
       if (--(state->Page) >= 0) {
@@ -192,21 +192,21 @@ class MoveUpCommand: public MoveCommand {
 
 class MoveLeftCommand: public MoveCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->XOffset -= RepeatOrDefault(repeat, 1) * GetMoveSize(state, true);
   }
 };
 
 class MoveRightCommand: public MoveCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->XOffset += RepeatOrDefault(repeat, 1) * GetMoveSize(state, true);
   }
 };
 
 class ScreenDownCommand: public Command {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->YOffset += RepeatOrDefault(repeat, 1) * state->ScreenHeight;
     if (state->YOffset + state->ScreenHeight >=
             state->PageHeight - 1 + state->ScreenHeight) {
@@ -219,7 +219,7 @@ class ScreenDownCommand: public Command {
 
 class ScreenUpCommand: public Command {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->YOffset -= RepeatOrDefault(repeat, 1) * state->ScreenHeight;
     if (state->YOffset <= -state->ScreenHeight) {
       if (--(state->Page) >= 0) {
@@ -231,14 +231,14 @@ class ScreenUpCommand: public Command {
 
 class PageDownCommand: public Command {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->Page += RepeatOrDefault(repeat, 1);
   }
 };
 
 class PageUpCommand: public Command {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->Page -= RepeatOrDefault(repeat, 1);
   }
 };
@@ -280,7 +280,7 @@ const float ZoomCommand::ZOOM_COEFFICIENT = 1.2f;
 
 class ZoomInCommand: public ZoomCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     SetZoom(state->ActualZoom * RepeatOrDefault(repeat, 1) * ZOOM_COEFFICIENT,
             state);
   }
@@ -288,7 +288,7 @@ class ZoomInCommand: public ZoomCommand {
 
 class ZoomOutCommand: public ZoomCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     SetZoom(state->ActualZoom * RepeatOrDefault(repeat, 1) / ZOOM_COEFFICIENT,
             state);
   }
@@ -296,7 +296,7 @@ class ZoomOutCommand: public ZoomCommand {
 
 class SetZoomCommand: public ZoomCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     SetZoom(static_cast<float>(RepeatOrDefault(repeat, 100)) / 100.0f,
             state);
   }
@@ -304,7 +304,7 @@ class SetZoomCommand: public ZoomCommand {
 
 class SetRotationCommand: public Command {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->Rotation = RepeatOrDefault(repeat, 0);
   }
 };
@@ -315,23 +315,24 @@ class RotateCommand: public Command {
       : _increment(increment) {
   }
 
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->Rotation += RepeatOrDefault(repeat, 1) * _increment;
   }
+
  private:
   int _increment;
 };
 
 class ZoomToFitCommand: public Command {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->Zoom = Viewer::ZOOM_TO_FIT;
   }
 };
 
 class ZoomToWidthCommand: public ZoomCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     // Estimate page width at 100%.
     const float orig_page_width =
         static_cast<float>(state->PageWidth) / state->ActualZoom;
@@ -349,7 +350,8 @@ class GoToPageCommand: public Command {
  public:
   explicit GoToPageCommand(int default_page)
       : _default_page(default_page) {}
-  virtual void Execute(int repeat, State *state) {
+
+  void Execute(int repeat, State *state) override {
     int page = (std::max(1, std::min(state->NumPages,
         RepeatOrDefault(repeat, _default_page)))) - 1;
     if (page != state->Page) {
@@ -358,20 +360,22 @@ class GoToPageCommand: public Command {
       state->YOffset = 0;
     }
   }
+
  private:
   int _default_page;
 };
 
 class ShowOutlineViewerCommand: public Command {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     const Document::OutlineItem *dest = state->OutlineViewerInst->Show();
-    if (dest != nullptr) {
-      int dest_page = state->DocumentInst->Lookup(dest);
-      if (dest_page >= 0) {
-        GoToPageCommand c(0);
-        c.Execute(dest_page + 1, state);
-      }
+    if (dest == nullptr) {
+      return;
+    }
+    const int dest_page = state->DocumentInst->Lookup(dest);
+    if (dest_page >= 0) {
+      GoToPageCommand c(0);
+      c.Execute(dest_page + 1, state);
     }
   }
 };
@@ -386,7 +390,7 @@ std::map<int, Viewer::State> StateCommand::_saved_states;
 
 class SaveStateCommand: public StateCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     state->ViewerInst->GetState(
         &(_saved_states[RepeatOrDefault(repeat, 0)]));
     state->Render = false;
@@ -395,8 +399,8 @@ class SaveStateCommand: public StateCommand {
 
 class RestoreStateCommand: public StateCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
-    int n = RepeatOrDefault(repeat, 0);
+  void Execute(int repeat, State *state) override {
+    const int n = RepeatOrDefault(repeat, 0);
     if (_saved_states.count(n)) {
       state->ViewerInst->SetState(_saved_states[n]);
       state->ViewerInst->GetState(state);
@@ -406,7 +410,7 @@ class RestoreStateCommand: public StateCommand {
 
 class ReloadCommand: public StateCommand {
  public:
-  virtual void Execute(int repeat, State *state) {
+  void Execute(int repeat, State *state) override {
     if (LoadFile(state)) {
       state->ViewerInst.reset(new Viewer(
         state->DocumentInst.get(), state->FramebufferInst.get(), *state,
