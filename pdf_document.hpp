@@ -47,7 +47,7 @@ extern "C" {
 }
 
 // Document implementation using MuPDF.
-class PDFDocument: public Document {
+class PDFDocument : public Document {
  public:
   // Default size of page cache.
   enum { DEFAULT_PAGE_CACHE_SIZE = 5 };
@@ -71,7 +71,7 @@ class PDFDocument: public Document {
 
  private:
   // Actual outline item implementation.
-  class PDFOutlineItem: public OutlineItem {
+  class PDFOutlineItem : public OutlineItem {
    public:
     virtual ~PDFOutlineItem();
     // See Document::OutlineItem.
@@ -90,7 +90,7 @@ class PDFDocument: public Document {
         fz_outline* src, std::vector<std::unique_ptr<OutlineItem>> *output);
   };
   // Cache for pdf_page.
-  class PDFPageCache: public Cache<int, pdf_page *> {
+  class PDFPageCache : public Cache<int, pdf_page *> {
    public:
     PDFPageCache(int cache_size, PDFDocument* parent);
     virtual ~PDFPageCache();

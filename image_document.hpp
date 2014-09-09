@@ -30,7 +30,7 @@
 #include "document.hpp"
 
 // Document implementation using Imlib2.
-class ImageDocument: public Document {
+class ImageDocument : public Document {
  public:
   virtual ~ImageDocument();
   // Factory method to construct an instance of ImageDocument. path gives the

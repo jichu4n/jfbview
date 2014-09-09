@@ -34,7 +34,7 @@ namespace {
 
 // A PixelWriter that writes pixel values to a in-memory buffer. Each pixel is
 // stored as three consecutive ints representing the r, g, and b values.
-class PixelBufferWriter: public Document::PixelWriter {
+class PixelBufferWriter : public Document::PixelWriter {
  public:
   // Constructs a BufferPixel writer with the given settings. buffer_width
   // gives the number of pixels in a row in the buffer. buffer is the target

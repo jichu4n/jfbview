@@ -52,7 +52,7 @@ class Framebuffer {
 
  private:
   // Color format of the framebuffer.
-  class Format: public PixelBuffer::Format {
+  class Format : public PixelBuffer::Format {
    public:
     // Grab settings from a fb_var_screeninfo.
     explicit Format(const fb_var_screeninfo& vinfo);
