@@ -56,7 +56,7 @@ class OutlineViewer : public UIView {
   };
 
   // The current key processing mode.
-  enum {
+  enum class KeyProcessingMode {
     REGULAR,   // Regular mode.
     FOLD,      // Processing the next character after a 'z'.
   } _key_processing_mode;

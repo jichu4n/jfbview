@@ -39,7 +39,7 @@ const Document::OutlineItem* OutlineViewer::Run() {
   }
 
   _selected_item = nullptr;
-  _key_processing_mode = REGULAR;
+  _key_processing_mode = KeyProcessingMode::REGULAR;
 
   EventLoop();
 
@@ -103,12 +103,13 @@ void OutlineViewer::Render() {
 }
 
 void OutlineViewer::ProcessKey(int key) {
+  WINDOW* const window = GetWindow();
   const Document::OutlineItem* selected_item =
       _lines[_selected_index].OutlineItem;
   const Document::OutlineItem* first_item =
       _lines[_first_index].OutlineItem;
 
-  if (_key_processing_mode == REGULAR) {
+  if (_key_processing_mode == KeyProcessingMode::REGULAR) {
     switch (key) {
       case '\t':
       case 'q':
@@ -124,10 +125,10 @@ void OutlineViewer::ProcessKey(int key) {
         --_selected_index;
         break;
       case KEY_NPAGE:
-        _selected_index += getmaxy(GetWindow());
+        _selected_index += getmaxy(window);
         break;
       case KEY_PPAGE:
-        _selected_index -= getmaxy(GetWindow());
+        _selected_index -= getmaxy(window);
         break;
       case ' ':
         if (selected_item->GetNumChildren()) {
@@ -147,12 +148,12 @@ void OutlineViewer::ProcessKey(int key) {
         ExitEventLoop();
         break;
       case 'z':
-        _key_processing_mode = FOLD;
+        _key_processing_mode = KeyProcessingMode::FOLD;
         break;
       default:
         break;
     }
-  } else if (_key_processing_mode == FOLD) {
+  } else if (_key_processing_mode == KeyProcessingMode::FOLD) {
     switch (key) {
       case 'R':
       case 'r':
@@ -182,17 +183,19 @@ void OutlineViewer::ProcessKey(int key) {
         break;
       }
     }
-    _key_processing_mode = REGULAR;
+    _key_processing_mode = KeyProcessingMode::REGULAR;
   } else {
     // Undefined processing mode.
-    assert(_key_processing_mode == REGULAR || _key_processing_mode == FOLD);
+    assert(
+        _key_processing_mode == KeyProcessingMode::REGULAR ||
+        _key_processing_mode == KeyProcessingMode::FOLD);
   }
 
   _selected_index = std::max(0, std::min(static_cast<int>(_lines.size() - 1),
       _selected_index));
   if (_selected_index < _first_index) {
     _first_index = _selected_index;
-  } else if (_selected_index >= _first_index + getmaxy(GetWindow())) {
-    _first_index = _selected_index - getmaxy(GetWindow()) + 1;
+  } else if (_selected_index >= _first_index + getmaxy(window)) {
+    _first_index = _selected_index - getmaxy(window) + 1;
   }
 }
