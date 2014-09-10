@@ -40,7 +40,11 @@ class OutlineViewer : public UIView {
   // Displays the outline view and enter the event loop. If the user selected a
   // page to jump to, returns the selected outline item. Otherwise returns
   // nullptr.
-  const Document::OutlineItem* Show();
+  const Document::OutlineItem* Run();
+
+ protected:
+  void Render() override;
+  void ProcessKey(int key) override;
 
  private:
   // An outline item with display related annotation.
@@ -50,6 +54,12 @@ class OutlineViewer : public UIView {
     // The displayed string.
     std::string Label;
   };
+
+  // The current key processing mode.
+  enum {
+    REGULAR,   // Regular mode.
+    FOLD,      // Processing the next character after a 'z'.
+  } _key_processing_mode;
 
   // Handle to the outline we display.
   std::unique_ptr<const Document::OutlineItem> _outline;
@@ -64,13 +74,13 @@ class OutlineViewer : public UIView {
   int _selected_index;
   // Index in _lines of the first displayed item.
   int _first_index;
+  // The selected outline item.
+  const Document::OutlineItem* _selected_item;
 
   // Flatten out _outline to _lines, according to _expanded_items.
   void Flatten();
   // Recursively flatten the outline item using preorder traversal.
   void FlattenRecursive(const Document::OutlineItem* item, int depth);
-  // Renders the viewer to the screen.
-  void Render() const;
 };
 
 #endif

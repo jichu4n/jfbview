@@ -47,3 +47,20 @@ UIView::~UIView() {
   }
   _window = nullptr;
 }
+
+void UIView::EventLoop() {
+  assert(_window != nullptr);
+  wclear(_window);
+  wrefresh(_window);
+
+  _exit_event_loop = false;
+
+  do {
+    Render();
+    ProcessKey(wgetch(_window));
+  } while (!_exit_event_loop);
+}
+
+void UIView::ExitEventLoop() {
+  _exit_event_loop = true;
+}

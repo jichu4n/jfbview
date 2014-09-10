@@ -368,7 +368,7 @@ class GoToPageCommand : public Command {
 class ShowOutlineViewerCommand : public Command {
  public:
   void Execute(int repeat, State* state) override {
-    const Document::OutlineItem* dest = state->OutlineViewerInst->Show();
+    const Document::OutlineItem* dest = state->OutlineViewerInst->Run();
     if (dest == nullptr) {
       return;
     }

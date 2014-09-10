@@ -33,107 +33,20 @@ OutlineViewer::OutlineViewer(const Document::OutlineItem* outline)
 
 OutlineViewer::~OutlineViewer() {}
 
-const Document::OutlineItem* OutlineViewer::Show() {
+const Document::OutlineItem* OutlineViewer::Run() {
   if (_outline == nullptr) {
     return nullptr;
   }
 
-  wclear(GetWindow());
-  wrefresh(GetWindow());
+  _selected_item = nullptr;
+  _key_processing_mode = REGULAR;
 
-  // Main loop.
-  bool exit = false;
-  const Document::OutlineItem* result = nullptr;
-  do {
-    Render();
-    const Document::OutlineItem* selected_item =
-        _lines[_selected_index].OutlineItem;
-    const Document::OutlineItem* first_item =
-        _lines[_first_index].OutlineItem;
+  EventLoop();
 
-    switch (wgetch(GetWindow())) {
-     case '\t':
-     case 'q':
-     case 27:
-      exit = true;
-      break;
-     case 'j':
-     case KEY_DOWN:
-      ++_selected_index;
-      break;
-     case 'k':
-     case KEY_UP:
-      --_selected_index;
-      break;
-     case KEY_NPAGE:
-      _selected_index += getmaxy(GetWindow());
-      break;
-     case KEY_PPAGE:
-      _selected_index -= getmaxy(GetWindow());
-      break;
-     case ' ':
-      if (selected_item->GetNumChildren()) {
-        if (_expanded_items.count(selected_item)) {
-          _expanded_items.erase(selected_item);
-        } else {
-          _expanded_items.insert(selected_item);
-        }
-        Flatten();
-      }
-      break;
-     case '\n':
-     case '\r':
-     case KEY_ENTER:
-     case 'g':
-      exit = true;
-      result = selected_item;
-      break;
-     case 'z':
-      switch (wgetch(GetWindow())) {
-       case 'R':
-       case 'r':
-        _expanded_items = _all_expandable_items;
-        Flatten();
-        break;
-       case 'M':
-       case 'm':
-        _expanded_items.clear();
-        _expanded_items.insert(_outline.get());
-        Flatten();
-        break;
-       default:
-        break;
-      }
-      _selected_index = 0;
-      for (unsigned int i = 0; i < _lines.size(); ++i) {
-        if (_lines[i].OutlineItem == selected_item) {
-          _selected_index = i;
-          break;
-        }
-      }
-      _first_index = 0;
-      for (unsigned int i = 0; i < _lines.size(); ++i) {
-        if (_lines[i].OutlineItem == first_item) {
-          _first_index = i;
-          break;
-        }
-      }
-      break;
-     default:
-      break;
-    }
-
-    _selected_index = std::max(0, std::min(static_cast<int>(_lines.size() - 1),
-        _selected_index));
-    if (_selected_index < _first_index) {
-      _first_index = _selected_index;
-    } else if (_selected_index >= _first_index + getmaxy(GetWindow())) {
-      _first_index = _selected_index - getmaxy(GetWindow()) + 1;
-    }
-  } while (!exit);
-
-  return result;
+  return _selected_item;
 }
+
+
 
 void OutlineViewer::Flatten() {
   _lines.clear();
@@ -170,21 +83,116 @@ void OutlineViewer::FlattenRecursive(
   _lines[line_num].Label += item->GetTitle();
 }
 
-void OutlineViewer::Render() const {
+void OutlineViewer::Render() {
+  WINDOW* const window = GetWindow();
   const int num_lines_to_display = std::min(
-      getmaxy(GetWindow()), static_cast<int>(_lines.size() - _first_index));
+      getmaxy(window), static_cast<int>(_lines.size() - _first_index));
   for (int y = 0; y < num_lines_to_display; ++y) {
     const int line = _first_index + y;
     if (line == _selected_index) {
-      wattron(GetWindow(), A_STANDOUT);
+      wattron(window, A_STANDOUT);
     }
-    mvwaddstr(GetWindow(), y, 0, _lines[line].Label.c_str());
-    wclrtoeol(GetWindow());
+    mvwaddstr(window, y, 0, _lines[line].Label.c_str());
+    wclrtoeol(window);
     if (line == _selected_index) {
-      wattroff(GetWindow(), A_STANDOUT);
+      wattroff(window, A_STANDOUT);
     }
   }
-  wclrtobot(GetWindow());
-  wrefresh(GetWindow());
+  wclrtobot(window);
+  wrefresh(window);
 }
 
+void OutlineViewer::ProcessKey(int key) {
+  const Document::OutlineItem* selected_item =
+      _lines[_selected_index].OutlineItem;
+  const Document::OutlineItem* first_item =
+      _lines[_first_index].OutlineItem;
+
+  if (_key_processing_mode == REGULAR) {
+    switch (key) {
+      case '\t':
+      case 'q':
+      case 27:
+        ExitEventLoop();
+        break;
+      case 'j':
+      case KEY_DOWN:
+        ++_selected_index;
+        break;
+      case 'k':
+      case KEY_UP:
+        --_selected_index;
+        break;
+      case KEY_NPAGE:
+        _selected_index += getmaxy(GetWindow());
+        break;
+      case KEY_PPAGE:
+        _selected_index -= getmaxy(GetWindow());
+        break;
+      case ' ':
+        if (selected_item->GetNumChildren()) {
+          if (_expanded_items.count(selected_item)) {
+            _expanded_items.erase(selected_item);
+          } else {
+            _expanded_items.insert(selected_item);
+          }
+          Flatten();
+        }
+        break;
+      case '\n':
+      case '\r':
+      case KEY_ENTER:
+      case 'g':
+        _selected_item = selected_item;
+        ExitEventLoop();
+        break;
+      case 'z':
+        _key_processing_mode = FOLD;
+        break;
+      default:
+        break;
+    }
+  } else if (_key_processing_mode == FOLD) {
+    switch (key) {
+      case 'R':
+      case 'r':
+        _expanded_items = _all_expandable_items;
+        Flatten();
+        break;
+      case 'M':
+      case 'm':
+        _expanded_items.clear();
+        _expanded_items.insert(_outline.get());
+        Flatten();
+        break;
+      default:
+        break;
+    }
+    _selected_index = 0;
+    for (unsigned int i = 0; i < _lines.size(); ++i) {
+      if (_lines[i].OutlineItem == selected_item) {
+        _selected_index = i;
+        break;
+      }
+    }
+    _first_index = 0;
+    for (unsigned int i = 0; i < _lines.size(); ++i) {
+      if (_lines[i].OutlineItem == first_item) {
+        _first_index = i;
+        break;
+      }
+    }
+    _key_processing_mode = REGULAR;
+  } else {
+    // Undefined processing mode.
+    assert(_key_processing_mode == REGULAR || _key_processing_mode == FOLD);
+  }
+
+  _selected_index = std::max(0, std::min(static_cast<int>(_lines.size() - 1),
+      _selected_index));
+  if (_selected_index < _first_index) {
+    _first_index = _selected_index;
+  } else if (_selected_index >= _first_index + getmaxy(GetWindow())) {
+    _first_index = _selected_index - getmaxy(GetWindow()) + 1;
+  }
+}

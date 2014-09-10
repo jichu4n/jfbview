@@ -41,6 +41,19 @@ class UIView {
   virtual ~UIView();
 
  protected:
+  // Renders the current UI. This should be implemented by derived classes.
+  virtual void Render() = 0;
+  // This will be invoked to process a keyboard event during EventLoop().
+  virtual void ProcessKey(int key) = 0;
+
+  // Starts the event loop. This will repeatedly call fetch the next keyboard
+  // event, invoke ProcessKey(), and Render(). Will exit the loop when
+  // ExitEventLoop() is invoked.
+  void EventLoop();
+  // Causes the event loop to exit.
+  void ExitEventLoop();
+
+  // Returns the full-screen NCURSES window.
   WINDOW* GetWindow() const { return _window; }
 
  private:
@@ -51,6 +64,8 @@ class UIView {
   static int _num_instances;
   // The NCURSES WINDOW. Will be nullptr if uninitialized. Protected by _mutex.
   static WINDOW* _window;
+  // Whether to exit the event loop.
+  bool _exit_event_loop;
 };
 
 #endif
