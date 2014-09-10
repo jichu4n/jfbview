@@ -16,13 +16,13 @@
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// This file defines the document outline viewer.
+// This file defines the document outline view.
 
-#include "outline_viewer.hpp"
+#include "outline_view.hpp"
 #include <cassert>
 #include <algorithm>
 
-OutlineViewer::OutlineViewer(const Document::OutlineItem* outline)
+OutlineView::OutlineView(const Document::OutlineItem* outline)
     : _outline(outline), _selected_index(0),
       _first_index(0) {
   if (_outline != nullptr) {
@@ -31,9 +31,9 @@ OutlineViewer::OutlineViewer(const Document::OutlineItem* outline)
   }
 }
 
-OutlineViewer::~OutlineViewer() {}
+OutlineView::~OutlineView() {}
 
-const Document::OutlineItem* OutlineViewer::Run() {
+const Document::OutlineItem* OutlineView::Run() {
   if (_outline == nullptr) {
     return nullptr;
   }
@@ -48,12 +48,12 @@ const Document::OutlineItem* OutlineViewer::Run() {
 
 
 
-void OutlineViewer::Flatten() {
+void OutlineView::Flatten() {
   _lines.clear();
   FlattenRecursive(_outline.get(), 0);
 }
 
-void OutlineViewer::FlattenRecursive(
+void OutlineView::FlattenRecursive(
     const Document::OutlineItem* item, int depth) {
   if (item == nullptr) {
     return;
@@ -83,7 +83,7 @@ void OutlineViewer::FlattenRecursive(
   _lines[line_num].Label += item->GetTitle();
 }
 
-void OutlineViewer::Render() {
+void OutlineView::Render() {
   WINDOW* const window = GetWindow();
   const int num_lines_to_display = std::min(
       getmaxy(window), static_cast<int>(_lines.size() - _first_index));
@@ -102,7 +102,7 @@ void OutlineViewer::Render() {
   wrefresh(window);
 }
 
-void OutlineViewer::ProcessKey(int key) {
+void OutlineView::ProcessKey(int key) {
   WINDOW* const window = GetWindow();
   const Document::OutlineItem* selected_item =
       _lines[_selected_index].OutlineItem;

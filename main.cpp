@@ -42,7 +42,7 @@
 #include "command.hpp"
 #include "framebuffer.hpp"
 #include "image_document.hpp"
-#include "outline_viewer.hpp"
+#include "outline_view.hpp"
 #include "pdf_document.hpp"
 #include "viewer.hpp"
 
@@ -69,8 +69,8 @@ struct State : public Viewer::State {
   std::string FramebufferDevice;
   // Document instance.
   std::unique_ptr<Document> DocumentInst;
-  // Outline viewer instance.
-  std::unique_ptr<OutlineViewer> OutlineViewerInst;
+  // Outline view instance.
+  std::unique_ptr<OutlineView> OutlineViewInst;
   // Framebuffer instance.
   std::unique_ptr<Framebuffer> FramebufferInst;
   // Viewer instance.
@@ -81,7 +81,7 @@ struct State : public Viewer::State {
       : Viewer::State(), Exit(false), Render(true), DocumentType(AUTO_DETECT),
         RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE), FilePath(""),
         FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
-        OutlineViewerInst(nullptr), FramebufferInst(nullptr),
+        OutlineViewInst(nullptr), FramebufferInst(nullptr),
         ViewerInst(nullptr) {
   }
 };
@@ -365,10 +365,10 @@ class GoToPageCommand : public Command {
   int _default_page;
 };
 
-class ShowOutlineViewerCommand : public Command {
+class ShowOutlineViewCommand : public Command {
  public:
   void Execute(int repeat, State* state) override {
-    const Document::OutlineItem* dest = state->OutlineViewerInst->Run();
+    const Document::OutlineItem* dest = state->OutlineViewInst->Run();
     if (dest == nullptr) {
       return;
     }
@@ -607,7 +607,7 @@ Registry BuildRegistry() {
   registry.Register('G', new GoToPageCommand(INT_MAX));
   registry.Register(KEY_END, new GoToPageCommand(INT_MAX));
 
-  registry.Register('\t', new ShowOutlineViewerCommand());
+  registry.Register('\t', new ShowOutlineViewCommand());
 
   registry.Register('m', new SaveStateCommand());
   registry.Register('`', new RestoreStateCommand());
@@ -648,8 +648,8 @@ int main(int argc, char* argv[]) {
   // to getch().
   refresh();
 
-  state.OutlineViewerInst.reset(
-      new OutlineViewer(state.DocumentInst->GetOutline()));
+  state.OutlineViewInst.reset(
+      new OutlineView(state.DocumentInst->GetOutline()));
 
   // 2. Main event loop.
   state.Render = true;
@@ -679,7 +679,7 @@ int main(int argc, char* argv[]) {
 
 
   // 3. Clean up.
-  state.OutlineViewerInst.reset();
+  state.OutlineViewInst.reset();
   endwin();
 
   return EXIT_SUCCESS;

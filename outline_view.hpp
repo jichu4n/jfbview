@@ -16,7 +16,7 @@
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// This file declares the document outline viewer.
+// This file declares the document outline view.
 
 #ifndef OUTLINE_VIEWER_HPP
 #define OUTLINE_VIEWER_HPP
@@ -29,14 +29,14 @@
 #include "document.hpp"
 #include "ui_view.hpp"
 
-// Outline viewer class. This class stores the expansion and focus states
+// Outline view class. This class stores the expansion and focus states
 // between invocations.
-class OutlineViewer : public UIView {
+class OutlineView : public UIView {
  public:
-  // Constructs an instance of OutlineViewer that displays the given Outline.
+  // Constructs an instance of OutlineView that displays the given Outline.
   // Takes ownership of the outline object.
-  explicit OutlineViewer(const Document::OutlineItem* outline);
-  virtual ~OutlineViewer();
+  explicit OutlineView(const Document::OutlineItem* outline);
+  virtual ~OutlineView();
   // Displays the outline view and enter the event loop. If the user selected a
   // page to jump to, returns the selected outline item. Otherwise returns
   // nullptr.
