@@ -26,6 +26,7 @@
 #define IMAGE_DOCUMENT_HPP
 
 #include <string>
+#include <vector>
 #include "Imlib2.h"
 #include "document.hpp"
 

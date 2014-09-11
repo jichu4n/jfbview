@@ -58,7 +58,7 @@ all: jfbview
 lint:
 	cpplint \
 	    --extensions=hpp,cpp \
-	    --filter=-build/c++11 \
+	    --filter=-build/c++11,-readability/streams \
 	    *.{h,c}pp
 
 .PHONY: clean

@@ -53,11 +53,11 @@ int main(int argc, char* argv[]) {
       }
       pages.push_back(page);
     }
- } else {
-   for (int i = 0; i < document->GetNumPages(); ++i) {
-     pages.push_back(i);
-   }
- }
+  } else {
+    for (int i = 0; i < document->GetNumPages(); ++i) {
+      pages.push_back(i);
+    }
+  }
 
   for (int page : pages) {
     const std::string& page_text = document->GetPageText(page);
