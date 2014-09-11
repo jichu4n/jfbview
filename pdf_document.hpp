@@ -73,8 +73,8 @@ class PDFDocument : public Document {
   std::string GetPageText(int page, int line_sep = '\n');
 
  protected:
-  std::vector<SearchResult> SearchOnPage(
-      const std::string& search_string, int page) override;
+  std::vector<SearchHit> SearchOnPage(
+      const std::string& search_string, int page, int context_length) override;
 
  private:
   // Default root outline item title.

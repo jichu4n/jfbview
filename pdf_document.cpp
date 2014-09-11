@@ -141,10 +141,24 @@ int PDFDocument::Lookup(const OutlineItem* item) {
   return (dynamic_cast<const PDFOutlineItem*>(item))->GetDestPage();
 }
 
-std::vector<Document::SearchResult> PDFDocument::SearchOnPage(
-    const std::string& search_string, int page) {
-  std::vector<SearchResult> search_results;
-  return search_results;
+std::vector<Document::SearchHit> PDFDocument::SearchOnPage(
+    const std::string& search_string, int page, int context_length) {
+  const size_t margin = 
+      context_length > search_string.length() ?
+      (context_length - search_string.length() + 1) / 2 :
+      0;
+
+  std::vector<SearchHit> search_hits;
+  const std::string& page_text = GetPageText(page, ' ');
+  for (size_t pos = 0; ; ++pos) {
+    if ((pos = page_text.find(search_string, pos)) == std::string::npos) {
+      break;
+    }
+    const size_t context_start_pos = pos >= margin ?  pos - margin : 0;
+    search_hits.emplace_back(
+        page, page_text.substr(context_start_pos, context_length));
+  }
+  return search_hits;
 }
 
 std::string PDFDocument::GetPageText(int page, int line_sep) {

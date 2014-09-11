@@ -39,18 +39,19 @@ const Document::OutlineItem* Document::OutlineItem::GetChild(int i) const {
   return _children[i].get();
 }
 
-std::vector<Document::SearchResult> Document::Search(
+std::vector<Document::SearchHit> Document::Search(
     const std::string& search_string,
     int start_page,
-    int max_num_search_results) {
-  std::vector<SearchResult> results;
-  for (int page = start_page; results.size() < max_num_search_results; ++page) {
-    const std::vector<SearchResult>& results_on_page = SearchOnPage(
-        search_string, page);
-    results.insert(
-        results.end(),
-        results_on_page.begin(),
-        results_on_page.end());
+    int context_length,
+    int max_num_search_hits) {
+  std::vector<SearchHit> hits;
+  for (int page = start_page; hits.size() < max_num_search_hits; ++page) {
+    const std::vector<SearchHit>& hits_on_page = SearchOnPage(
+        search_string, page, context_length);
+    hits.insert(
+        hits.end(),
+        hits_on_page.begin(),
+        hits_on_page.end());
   }
-  return results;
+  return hits;
 }

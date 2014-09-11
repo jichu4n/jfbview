@@ -151,7 +151,7 @@ void SearchView::ProcessKeySearchStringFieldMode(int key) {
       }
       break;
     case KEY_RIGHT:
-      if (cursor_x < search_string.size()) {
+      if (cursor_x < search_string.length()) {
         form_driver(_search_form, REQ_NEXT_CHAR);
       }
       break;

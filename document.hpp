@@ -63,12 +63,17 @@ class Document {
     std::vector<std::unique_ptr<OutlineItem>> _children;
   };
 
-  // A text search result.
-  struct SearchResult {
-    // The page number where the search result occurred.
+  // A text search hit.
+  struct SearchHit {
+    // The page number where the search hit occurred.
     int Page;
     // Context text.
     std::string ContextText;
+
+    explicit SearchHit(
+        int page = -1, const std::string& context_text = std::string())
+        : Page(page), ContextText(context_text) {
+    }
   };
 
   virtual ~Document();
@@ -97,19 +102,20 @@ class Document {
   // returns -1.
   virtual int Lookup(const OutlineItem* item) = 0;
 
-  // Default maximum number of search results to return per search.
-  enum { DEFAULT_MAX_NUM_SEARCH_RESULTS = 500 };
-  // Searches the text of the document. Will return up to max_num_search_results
-  // search results starting from the given page.
-  std::vector<SearchResult> Search(
+  // Default maximum number of search hits to return per search.
+  enum { DEFAULT_MAX_NUM_SEARCH_HITS = 500 };
+  // Searches the text of the document. Will return up to max_num_search_hits
+  // search hits starting from the given page.
+  std::vector<SearchHit> Search(
       const std::string& search_string,
       int start_page,
-      int max_num_search_results = DEFAULT_MAX_NUM_SEARCH_RESULTS);
+      int context_length,
+      int max_num_search_hits = DEFAULT_MAX_NUM_SEARCH_HITS);
 
  protected:
   // Performs a text search on a given page.
-  virtual std::vector<SearchResult> SearchOnPage(
-      const std::string& search_string, int page) = 0;
+  virtual std::vector<SearchHit> SearchOnPage(
+      const std::string& search_string, int page, int context_length) = 0;
 };
 
 #endif

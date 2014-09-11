@@ -56,9 +56,9 @@ class ImageDocument : public Document {
 
  protected:
   // See Document.
-  std::vector<SearchResult> SearchOnPage(
-      const std::string& search_string, int page) override {
-    return std::vector<SearchResult>();
+  std::vector<SearchHit> SearchOnPage(
+      const std::string& search_string, int page, int context_length) override {
+    return std::vector<SearchHit>();
   }
 
  private:
