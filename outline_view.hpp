@@ -44,7 +44,6 @@ class OutlineView : public UIView {
  protected:
   // See UIView.
   void Render() override;
-  void ProcessKey(int key) override;
 
  private:
   // An outline item with display related annotation.
@@ -54,12 +53,6 @@ class OutlineView : public UIView {
     // The displayed string.
     std::string Label;
   };
-
-  // The current key processing mode.
-  enum class KeyProcessingMode {
-    REGULAR,   // Regular mode.
-    FOLD,      // Processing the next character after a 'z'.
-  } _key_processing_mode;
 
   // Handle to the outline we display.
   std::unique_ptr<const Document::OutlineItem> _outline;
@@ -76,6 +69,18 @@ class OutlineView : public UIView {
   int _first_index;
   // The selected outline item.
   const Document::OutlineItem* _selected_item;
+
+  // Key processing modes.
+  enum KeyProcessingMode {
+    REGULAR_MODE,   // Regular mode.
+    FOLD_MODE,      // Processing the next character after a 'z'.
+  };
+  // Key processors.
+  void ProcessKeyRegularMode(int key);
+  void ProcessKeyFoldMode(int key);
+
+  // Ensures that the selected item is within bounds and is visible.
+  void UpdateForSelectedIndex();
 
   // Flatten out _outline to _lines, according to _expanded_items.
   void Flatten();

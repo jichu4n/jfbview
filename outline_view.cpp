@@ -21,9 +21,20 @@
 #include "outline_view.hpp"
 #include <cassert>
 #include <algorithm>
+#include <functional>
+
+using std::placeholders::_1;
 
 OutlineView::OutlineView(const Document::OutlineItem* outline)
-    : _outline(outline), _selected_index(0),
+    : UIView({{
+          REGULAR_MODE,
+          std::bind(&OutlineView::ProcessKeyRegularMode, this, _1),
+      }, {
+          FOLD_MODE,
+          std::bind(&OutlineView::ProcessKeyFoldMode, this, _1),
+      }}),
+      _outline(outline),
+      _selected_index(0),
       _first_index(0) {
   if (_outline != nullptr) {
     _expanded_items.insert(_outline.get());
@@ -42,9 +53,8 @@ const Document::OutlineItem* OutlineView::Run() {
   wclear(window);
 
   _selected_item = nullptr;
-  _key_processing_mode = KeyProcessingMode::REGULAR;
 
-  EventLoop();
+  EventLoop(REGULAR_MODE);
 
   return _selected_item;
 }
@@ -103,94 +113,99 @@ void OutlineView::Render() {
   wrefresh(window);
 }
 
-void OutlineView::ProcessKey(int key) {
+void OutlineView::ProcessKeyRegularMode(int key) {
   WINDOW* const window = GetWindow();
+  const Document::OutlineItem* selected_item =
+      _lines[_selected_index].OutlineItem;
+
+  switch (key) {
+    case '\t':
+    case 'q':
+    case 27:
+      ExitEventLoop();
+      break;
+    case 'j':
+    case KEY_DOWN:
+      ++_selected_index;
+      break;
+    case 'k':
+    case KEY_UP:
+      --_selected_index;
+      break;
+    case KEY_NPAGE:
+      _selected_index += getmaxy(window);
+      break;
+    case KEY_PPAGE:
+      _selected_index -= getmaxy(window);
+      break;
+    case ' ':
+      if (selected_item->GetNumChildren()) {
+        if (_expanded_items.count(selected_item)) {
+          _expanded_items.erase(selected_item);
+        } else {
+          _expanded_items.insert(selected_item);
+        }
+        Flatten();
+      }
+      break;
+    case '\n':
+    case '\r':
+    case KEY_ENTER:
+    case 'g':
+      _selected_item = selected_item;
+      ExitEventLoop();
+      break;
+    case 'z':
+      SwitchKeyProcessingMode(FOLD_MODE);
+      break;
+    default:
+      break;
+  }
+  UpdateForSelectedIndex();
+}
+
+void OutlineView::ProcessKeyFoldMode(int key) {
   const Document::OutlineItem* selected_item =
       _lines[_selected_index].OutlineItem;
   const Document::OutlineItem* first_item =
       _lines[_first_index].OutlineItem;
 
-  if (_key_processing_mode == KeyProcessingMode::REGULAR) {
-    switch (key) {
-      case '\t':
-      case 'q':
-      case 27:
-        ExitEventLoop();
-        break;
-      case 'j':
-      case KEY_DOWN:
-        ++_selected_index;
-        break;
-      case 'k':
-      case KEY_UP:
-        --_selected_index;
-        break;
-      case KEY_NPAGE:
-        _selected_index += getmaxy(window);
-        break;
-      case KEY_PPAGE:
-        _selected_index -= getmaxy(window);
-        break;
-      case ' ':
-        if (selected_item->GetNumChildren()) {
-          if (_expanded_items.count(selected_item)) {
-            _expanded_items.erase(selected_item);
-          } else {
-            _expanded_items.insert(selected_item);
-          }
-          Flatten();
-        }
-        break;
-      case '\n':
-      case '\r':
-      case KEY_ENTER:
-      case 'g':
-        _selected_item = selected_item;
-        ExitEventLoop();
-        break;
-      case 'z':
-        _key_processing_mode = KeyProcessingMode::FOLD;
-        break;
-      default:
-        break;
-    }
-  } else if (_key_processing_mode == KeyProcessingMode::FOLD) {
-    switch (key) {
-      case 'R':
-      case 'r':
-        _expanded_items = _all_expandable_items;
-        Flatten();
-        break;
-      case 'M':
-      case 'm':
-        _expanded_items.clear();
-        _expanded_items.insert(_outline.get());
-        Flatten();
-        break;
-      default:
-        break;
-    }
-    _selected_index = 0;
-    for (unsigned int i = 0; i < _lines.size(); ++i) {
-      if (_lines[i].OutlineItem == selected_item) {
-        _selected_index = i;
-        break;
-      }
-    }
-    _first_index = 0;
-    for (unsigned int i = 0; i < _lines.size(); ++i) {
-      if (_lines[i].OutlineItem == first_item) {
-        _first_index = i;
-        break;
-      }
-    }
-    _key_processing_mode = KeyProcessingMode::REGULAR;
-  } else {
-    // Undefined processing mode.
-    assert(
-        _key_processing_mode == KeyProcessingMode::REGULAR ||
-        _key_processing_mode == KeyProcessingMode::FOLD);
+  switch (key) {
+    case 'R':
+    case 'r':
+      _expanded_items = _all_expandable_items;
+      Flatten();
+      break;
+    case 'M':
+    case 'm':
+      _expanded_items.clear();
+      _expanded_items.insert(_outline.get());
+      Flatten();
+      break;
+    default:
+      break;
   }
+  _selected_index = 0;
+  for (unsigned int i = 0; i < _lines.size(); ++i) {
+    if (_lines[i].OutlineItem == selected_item) {
+      _selected_index = i;
+      break;
+    }
+  }
+  _first_index = 0;
+  for (unsigned int i = 0; i < _lines.size(); ++i) {
+    if (_lines[i].OutlineItem == first_item) {
+      _first_index = i;
+      break;
+    }
+  }
+
+  SwitchKeyProcessingMode(REGULAR_MODE);
+  UpdateForSelectedIndex();
+}
+
+void OutlineView::UpdateForSelectedIndex() {
+  WINDOW* const window = GetWindow();
 
   _selected_index = std::max(0, std::min(static_cast<int>(_lines.size() - 1),
       _selected_index));

@@ -23,7 +23,8 @@ std::mutex UIView::_mutex;
 WINDOW* UIView::_window = nullptr;
 int UIView::_num_instances = 0;
 
-UIView::UIView() {
+UIView::UIView(const UIView::KeyProcessingModeMap& key_processing_mode_map)
+    : _key_processing_mode_map(key_processing_mode_map) {
   std::unique_lock<std::mutex> lock(_mutex);
 
   // Initialize NCURSES if this is the first instance of UIView.
@@ -48,16 +49,24 @@ UIView::~UIView() {
   _window = nullptr;
 }
 
-void UIView::EventLoop() {
+void UIView::EventLoop(int initial_key_processing_mode) {
+  _key_processing_mode = initial_key_processing_mode;
   _exit_event_loop = false;
   do {
     Render();
-    ProcessKey(wgetch(_window));
+
+    const KeyProcessor& key_processor = _key_processing_mode_map.at(
+        _key_processing_mode);
+    key_processor(wgetch(_window));
   } while (!_exit_event_loop);
 }
 
 void UIView::ExitEventLoop() {
   _exit_event_loop = true;
+}
+
+void UIView::SwitchKeyProcessingMode(int new_key_processing_mode) {
+  _key_processing_mode = new_key_processing_mode;
 }
 
 WINDOW* UIView::GetWindow() const {

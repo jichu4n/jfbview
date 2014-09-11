@@ -23,35 +23,44 @@
 #define UI_VIEW_HPP
 
 #include <curses.h>
+#include <functional>
 #include <mutex>
+#include <unordered_map>
 
 // Base class for NCURSES-based interactive full-screen UIs. Implements
-//   - Static NCURSES initialization on first construction of any derived
+//   - Static NCURSES window initialization on first construction of any derived
 //     instances;
-//   - Static NCURSES clean up upon destruction on last destruction of any
-//     derived instances;
+//   - Static NCURSES window clean up upon destruction on last destruction of
+//     any derived instances;
 //   - Main event loop.
 class UIView {
  public:
-  // Statically initializes NCURSES on first construction of any derived
-  // instances.
-  UIView();
-  // Statically cleans up NCURSES upon last destruction of any derived
+  // A function that handles key events.
+  typedef std::function<void(int)> KeyProcessor;
+  // A map that maps key processing modes (as ints) to key processing methods.
+  typedef std::unordered_map<int, KeyProcessor> KeyProcessingModeMap;
+
+  // Statically initializes an NCURSES window on first construction of any
+  // derived instances.
+  explicit UIView(const KeyProcessingModeMap& key_processing_mode_map);
+
+  // Statically cleans up an NCURSES window upon last destruction of any derived
   // instances.
   virtual ~UIView();
 
  protected:
   // Renders the current UI. This should be implemented by derived classes.
   virtual void Render() = 0;
-  // This will be invoked to process a keyboard event during EventLoop().
-  virtual void ProcessKey(int key) = 0;
 
   // Starts the event loop. This will repeatedly call fetch the next keyboard
   // event, invoke ProcessKey(), and Render(). Will exit the loop when
-  // ExitEventLoop() is invoked.
-  void EventLoop();
+  // ExitEventLoop() is invoked. initial_mode specifies the initial key
+  // processing mode.
+  void EventLoop(int initial_key_processing_mode);
   // Causes the event loop to exit.
   void ExitEventLoop();
+  // Switches key processing mode.
+  void SwitchKeyProcessingMode(int new_key_processing_mode);
 
   // Returns the full-screen NCURSES window.
   WINDOW* GetWindow() const;
@@ -64,6 +73,10 @@ class UIView {
   static int _num_instances;
   // The NCURSES WINDOW. Will be nullptr if uninitialized. Protected by _mutex.
   static WINDOW* _window;
+  // Maps key processing modes to the actual handler.
+  const KeyProcessingModeMap _key_processing_mode_map;
+  // The current key processing mode.
+  int _key_processing_mode;
   // Whether to exit the event loop.
   bool _exit_event_loop;
 };

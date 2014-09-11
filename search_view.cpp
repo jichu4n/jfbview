@@ -28,6 +28,8 @@
 #include <cstring>
 #include <sstream>
 
+using std::placeholders::_1;
+
 namespace {
 
 // Trim leading whitespace.
@@ -56,7 +58,14 @@ std::string rtrim(const std::string& s) {
 const char* const SearchView::_SEARCH_PROMPT = "Search: ";
 
 SearchView::SearchView(Document* document)
-    : _document(document) {
+    : UIView({{
+          REGULAR_MODE,
+          std::bind(&SearchView::ProcessKeyRegularMode, this, _1),
+      }, {
+          SEARCH_STRING_FIELD_MODE,
+          std::bind(&SearchView::ProcessKeySearchStringFieldMode, this, _1),
+      }}),
+      _document(document) {
   assert(_document != nullptr);
 
   WINDOW* const window = GetWindow();
@@ -79,14 +88,14 @@ SearchView::SearchView(Document* document)
   _fields.push_back(_search_string_field);
 
   _fields.push_back(nullptr);
-  _form = new_form(_fields.data());
-  assert(_form != nullptr);
-  set_form_win(_form, _search_window);
-  set_form_sub(_form, _search_window);
+ _search_form = new_form(_fields.data());
+  assert(_search_form != nullptr);
+  set_form_win(_search_form, _search_window);
+  set_form_sub(_search_form, _search_window);
 }
 
 SearchView::~SearchView() {
-  free_form(_form);
+  free_form(_search_form);
   assert(_fields.back() == nullptr);
   _fields.pop_back();
   for (FIELD* field : _fields) {
@@ -102,13 +111,13 @@ int SearchView::Run() {
 
   mvwaddstr(window, 0, 0, _SEARCH_PROMPT);
 
-  int r = post_form(_form);
+  int r = post_form(_search_form);
   assert(r == E_OK);
-  set_current_field(_form, _search_string_field);
+  set_current_field(_search_form, _search_string_field);
 
-  EventLoop();
+  EventLoop(SEARCH_STRING_FIELD_MODE);
 
-  unpost_form(_form);
+  unpost_form(_search_form);
   curs_set(false);
 
   return -1;
@@ -119,7 +128,7 @@ void SearchView::Render() {
   wrefresh(window);
 }
 
-void SearchView::ProcessKey(int key) {
+void SearchView::ProcessKeySearchStringFieldMode(int key) {
   const std::string& search_string = GetSearchString();
   int cursor_x, cursor_y;
   getyx(_search_window, cursor_y, cursor_x);
@@ -132,29 +141,29 @@ void SearchView::ProcessKey(int key) {
       break;
     case KEY_BACKSPACE:
     case 127:
-      form_driver(_form, REQ_DEL_PREV);
+      form_driver(_search_form, REQ_DEL_PREV);
       break;
     case KEY_LEFT:
       if (cursor_x > 0) {
-        form_driver(_form, REQ_PREV_CHAR);
+        form_driver(_search_form, REQ_PREV_CHAR);
       }
       break;
     case KEY_RIGHT:
       if (cursor_x < search_string.size()) {
-        form_driver(_form, REQ_NEXT_CHAR);
+        form_driver(_search_form, REQ_NEXT_CHAR);
       }
       break;
     case KEY_DC:
-      form_driver(_form, REQ_DEL_CHAR);
+      form_driver(_search_form, REQ_DEL_CHAR);
       break;
     case KEY_HOME:
-      form_driver(_form, REQ_BEG_FIELD);
+      form_driver(_search_form, REQ_BEG_FIELD);
       break;
     case KEY_END:
-      form_driver(_form, REQ_END_FIELD);
+      form_driver(_search_form, REQ_END_FIELD);
       break;
     default:
-      form_driver(_form, key);
+      form_driver(_search_form, key);
       /*
       {
         WINDOW* const window = GetWindow();
@@ -169,10 +178,13 @@ void SearchView::ProcessKey(int key) {
   }
 }
 
+void SearchView::ProcessKeyRegularMode(int key) {
+}
+
 std::string SearchView::GetSearchString() {
   // The value of the buffer a field is not available until we call form_driver
   // with REQ_VALIDATION.
-  form_driver(_form, REQ_VALIDATION);
+  form_driver(_search_form, REQ_VALIDATION);
   // The valued returned will be padded to the width of the field (W.T.F.), so
   // we have to rtrim it.
   return rtrim(field_buffer(_search_string_field, 0));

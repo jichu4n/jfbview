@@ -45,12 +45,8 @@ class SearchView : public UIView {
  protected:
   // See UIView.
   void Render() override;
-  void ProcessKey(int key) override;
 
  private:
-  // Returns the current text in the search string field.
-  std::string GetSearchString();
-
   // Search prompt string.
   static const char* const _SEARCH_PROMPT;
 
@@ -59,11 +55,23 @@ class SearchView : public UIView {
   // NCURSES Window containing the search form.
   WINDOW* _search_window;
   // NCURSES search form.
-  FORM* _form;
+  FORM*_search_form;
   // Search string NCURSES field.
   FIELD* _search_string_field;
   // The list of all NCURSES fields in the form.
   std::vector<FIELD*> _fields;
+
+  // Key processing modes.
+  enum KeyProcessingMode {
+    REGULAR_MODE,              // Regular mode.
+    SEARCH_STRING_FIELD_MODE,  // Focus inside search string field.
+  };
+  // Key processors.
+  void ProcessKeyRegularMode(int key);
+  void ProcessKeySearchStringFieldMode(int key);
+
+  // Returns the current text in the search string field.
+  std::string GetSearchString();
 };
 
 #endif
