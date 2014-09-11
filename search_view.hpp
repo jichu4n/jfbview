@@ -21,6 +21,9 @@
 #ifndef SEARCH_VIEW_HPP
 #define SEARCH_VIEW_HPP
 
+#include <form.h>
+#include <string>
+#include <vector>
 #include "document.hpp"
 #include "ui_view.hpp"
 
@@ -35,10 +38,9 @@ class SearchView : public UIView {
   virtual ~SearchView();
 
   // Displays the search view and enters the event loop. If the user selected a
-  // page to jump to, returns the selected page. Otherwise, returns
-  // NO_SELECTED_PAGE.
+  // page to jump to, returns the selected page. Otherwise, returns a negative
+  // number.
   int Run();
-  enum { NO_SELECTED_PAGE = -1 };
 
  protected:
   // See UIView.
@@ -46,7 +48,22 @@ class SearchView : public UIView {
   void ProcessKey(int key) override;
 
  private:
+  // Returns the current text in the search string field.
+  std::string GetSearchString();
+
+  // Search prompt string.
+  static const char* const _SEARCH_PROMPT;
+
+  // The document to search.
   Document* const _document;
+  // NCURSES Window containing the search form.
+  WINDOW* _search_window;
+  // NCURSES search form.
+  FORM* _form;
+  // Search string NCURSES field.
+  FIELD* _search_string_field;
+  // The list of all NCURSES fields in the form.
+  std::vector<FIELD*> _fields;
 };
 
 #endif

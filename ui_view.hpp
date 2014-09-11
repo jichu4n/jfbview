@@ -54,7 +54,7 @@ class UIView {
   void ExitEventLoop();
 
   // Returns the full-screen NCURSES window.
-  WINDOW* GetWindow() const { return _window; }
+  WINDOW* GetWindow() const;
 
  private:
   // A mutex protecting static members.

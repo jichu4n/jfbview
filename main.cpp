@@ -389,6 +389,17 @@ class ShowOutlineViewCommand : public Command {
   }
 };
 
+class ShowSearchViewCommand : public Command {
+ public:
+  void Execute(int repeat, State* state) override {
+    const int dest_page = state->SearchViewInst->Run();
+    if (dest_page >= 0) {
+      GoToPageCommand c(0);
+      c.Execute(dest_page + 1, state);
+    }
+  }
+};
+
 // Base class for SaveStateCommand and RestoreStateCommand.
 class StateCommand : public Command {
  protected:
@@ -651,6 +662,8 @@ std::unique_ptr<Registry> BuildRegistry() {
 
   registry->Register(
       '\t', std::move(std::make_unique<ShowOutlineViewCommand>()));
+  registry->Register(
+      '/', std::move(std::make_unique<ShowSearchViewCommand>()));
 
   registry->Register(
       'm', std::move(std::make_unique<SaveStateCommand>()));
@@ -687,6 +700,7 @@ int main(int argc, char* argv[]) {
   std::unique_ptr<Registry> registry(BuildRegistry());
 
   initscr();
+  start_color();
   keypad(stdscr, true);
   nonl();
   cbreak();
@@ -696,8 +710,10 @@ int main(int argc, char* argv[]) {
   // to getch().
   refresh();
 
-  state.OutlineViewInst =
-      std::make_unique<OutlineView>(state.DocumentInst->GetOutline());
+  state.OutlineViewInst = std::make_unique<OutlineView>(
+      state.DocumentInst->GetOutline());
+  state.SearchViewInst = std::make_unique<SearchView>(
+      state.DocumentInst.get());
 
   // 2. Main event loop.
   state.Render = true;

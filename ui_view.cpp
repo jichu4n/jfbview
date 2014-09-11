@@ -49,12 +49,7 @@ UIView::~UIView() {
 }
 
 void UIView::EventLoop() {
-  assert(_window != nullptr);
-  wclear(_window);
-  wrefresh(_window);
-
   _exit_event_loop = false;
-
   do {
     Render();
     ProcessKey(wgetch(_window));
@@ -63,4 +58,9 @@ void UIView::EventLoop() {
 
 void UIView::ExitEventLoop() {
   _exit_event_loop = true;
+}
+
+WINDOW* UIView::GetWindow() const {
+  assert(_window != nullptr);
+  return _window;
 }

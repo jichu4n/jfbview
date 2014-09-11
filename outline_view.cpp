@@ -38,6 +38,9 @@ const Document::OutlineItem* OutlineView::Run() {
     return nullptr;
   }
 
+  WINDOW* const window = GetWindow();
+  wclear(window);
+
   _selected_item = nullptr;
   _key_processing_mode = KeyProcessingMode::REGULAR;
 
@@ -45,8 +48,6 @@ const Document::OutlineItem* OutlineView::Run() {
 
   return _selected_item;
 }
-
-
 
 void OutlineView::Flatten() {
   _lines.clear();
