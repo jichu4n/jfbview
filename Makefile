@@ -16,7 +16,7 @@
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-CXXFLAGS := -Wall -O3 -std=c++11
+CXXFLAGS := -Wall -O3 -std=c++1y
 LIBS := -lpthread -lform -lncurses -lfreetype -ljbig2dec -ljpeg -lz -lopenjp2 -lmupdf -lmujs -lssl -lcrypto
 JFBVIEW_LIBS := $(LIBS) -lImlib2
 

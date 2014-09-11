@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012 Chuan Ji <jichuan89@gmail.com>                        *
+ *  Copyright (C) 2012-2014 Chuan Ji <jichuan89@gmail.com>                   *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -16,26 +16,37 @@
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// This file defines abstractions for user commands.
+// This file declares the search view.
 
-#include "command.hpp"
-#include <cassert>
+#ifndef SEARCH_VIEW_HPP
+#define SEARCH_VIEW_HPP
 
-const int Command::NO_REPEAT = -1;
+#include "document.hpp"
+#include "ui_view.hpp"
 
-Registry::~Registry() {}
+// Search view class. This class stores the search string and search results
+// between invocations.
+class SearchView : public UIView {
+ public:
+  // Constructs an instance of SearchView that searches through the given
+  // document. Does not take ownership. The document must be valid throughout
+  // the lifetime of this object.
+  explicit SearchView(Document* document);
+  virtual ~SearchView();
 
-void Registry::Register(int key, std::unique_ptr<Command> command) {
-  assert(!_map.count(key));
-  _map.emplace(key, std::move(command));
-}
+  // Displays the search view and enters the event loop. If the user selected a
+  // page to jump to, returns the selected page. Otherwise, returns
+  // NO_SELECTED_PAGE.
+  int Run();
+  enum { NO_SELECTED_PAGE = -1 };
 
-bool Registry::Dispatch(int key, int repeat, State* state) const {
-  const auto i = _map.find(key);
-  if (i == _map.end()) {
-    return false;
-  }
-  i->second->Execute(repeat, state);
-  return true;
-}
+ protected:
+  // See UIView.
+  void Render() override;
+  void ProcessKey(int key) override;
 
+ private:
+  Document* const _document;
+};
+
+#endif

@@ -21,7 +21,8 @@
 #ifndef COMMAND_HPP
 #define COMMAND_HPP
 
-#include <map>
+#include <unordered_map>
+#include <memory>
 #include <string>
 
 // Program state.
@@ -52,8 +53,7 @@ class Registry {
   // Releases registered commands.
   ~Registry();
   // Associates a command with a key. The key must not have been already in use.
-  // Takes ownership of the command object.
-  void Register(int key, Command* command);
+  void Register(int key, std::unique_ptr<Command> command);
   // Executes the command associated with a key, with the given repeat argument.
   // If no command is associated with the key, returns false. Otherwise returns
   // true.
@@ -61,7 +61,7 @@ class Registry {
 
  private:
   // Maintains the mapping.
-  std::map<int, Command*> _map;
+  std::unordered_map<int, std::unique_ptr<Command>> _map;
 };
 
 #endif

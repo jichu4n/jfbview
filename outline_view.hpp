@@ -21,7 +21,6 @@
 #ifndef OUTLINE_VIEWER_HPP
 #define OUTLINE_VIEWER_HPP
 
-#include <curses.h>
 #include <set>
 #include <memory>
 #include <string>
@@ -37,12 +36,13 @@ class OutlineView : public UIView {
   // Takes ownership of the outline object.
   explicit OutlineView(const Document::OutlineItem* outline);
   virtual ~OutlineView();
-  // Displays the outline view and enter the event loop. If the user selected a
+  // Displays the outline view and enters the event loop. If the user selected a
   // page to jump to, returns the selected outline item. Otherwise returns
   // nullptr.
   const Document::OutlineItem* Run();
 
  protected:
+  // See UIView.
   void Render() override;
   void ProcessKey(int key) override;
 

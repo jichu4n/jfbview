@@ -22,7 +22,7 @@ JFBView depends on MuPDF 1.x for PDF rendering and Imlib2 for image rendering.
 Note that the 1.x MuPDF API is incompatible with the pre-1.0 MuPDF API, wich
 means you cannot build JFBView against a pre-1.0 MuPDF library.
 
-JFBView makes use of C++11 features where available, so you will need a
+JFBView makes use of C++14 features where available, so you will need a
 compatible C++ compiler (GCC 4.8+, Clang 3.3+) to build it.
 
 To build JFBView, just run `make`.

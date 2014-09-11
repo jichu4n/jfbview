@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012 Chuan Ji <jichuan89@gmail.com>                        *
+ *  Copyright (C) 2012-2014 Chuan Ji <jichuan89@gmail.com>                   *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -16,26 +16,26 @@
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// This file defines abstractions for user commands.
+// This file implements the search view.
 
-#include "command.hpp"
+#include "search_view.hpp"
+
+#include <curses.h>
 #include <cassert>
 
-const int Command::NO_REPEAT = -1;
-
-Registry::~Registry() {}
-
-void Registry::Register(int key, std::unique_ptr<Command> command) {
-  assert(!_map.count(key));
-  _map.emplace(key, std::move(command));
+SearchView::SearchView(Document* document)
+    : _document(document) {
+  assert(document != nullptr);
 }
 
-bool Registry::Dispatch(int key, int repeat, State* state) const {
-  const auto i = _map.find(key);
-  if (i == _map.end()) {
-    return false;
-  }
-  i->second->Execute(repeat, state);
-  return true;
+SearchView::~SearchView() {}
+
+int SearchView::Run() {
+  return 0;
 }
 
+void SearchView::Render() {
+}
+
+void SearchView::ProcessKey(int key) {
+}

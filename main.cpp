@@ -43,6 +43,7 @@
 #include "framebuffer.hpp"
 #include "image_document.hpp"
 #include "outline_view.hpp"
+#include "search_view.hpp"
 #include "pdf_document.hpp"
 #include "viewer.hpp"
 
@@ -71,6 +72,8 @@ struct State : public Viewer::State {
   std::unique_ptr<Document> DocumentInst;
   // Outline view instance.
   std::unique_ptr<OutlineView> OutlineViewInst;
+  // Search view instance.
+  std::unique_ptr<SearchView> SearchViewInst;
   // Framebuffer instance.
   std::unique_ptr<Framebuffer> FramebufferInst;
   // Viewer instance.
@@ -78,10 +81,16 @@ struct State : public Viewer::State {
 
   // Default state.
   State()
-      : Viewer::State(), Exit(false), Render(true), DocumentType(AUTO_DETECT),
-        RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE), FilePath(""),
+      : Viewer::State(),
+        Exit(false),
+        Render(true),
+        DocumentType(AUTO_DETECT),
+        RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE),
+        FilePath(""),
         FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
-        OutlineViewInst(nullptr), FramebufferInst(nullptr),
+        OutlineViewInst(nullptr),
+        SearchViewInst(nullptr),
+        FramebufferInst(nullptr),
         ViewerInst(nullptr) {
   }
 };
@@ -412,9 +421,11 @@ class ReloadCommand : public StateCommand {
  public:
   void Execute(int repeat, State* state) override {
     if (LoadFile(state)) {
-      state->ViewerInst.reset(new Viewer(
-        state->DocumentInst.get(), state->FramebufferInst.get(), *state,
-        state->RenderCacheSize));
+      state->ViewerInst = std::make_unique<Viewer>(
+        state->DocumentInst.get(),
+        state->FramebufferInst.get(),
+        *state,
+        state->RenderCacheSize);
     } else {
       state->Exit = true;
     }
@@ -568,51 +579,86 @@ void ParseCommandLine(int argc, char* argv[], State* state) {
 }
 
 // Constructs the command registry.
-Registry BuildRegistry() {
-  Registry registry;
+std::unique_ptr<Registry> BuildRegistry() {
+  std::unique_ptr<Registry> registry = std::make_unique<Registry>();
 
-  registry.Register('q', new ExitCommand());
+  registry->Register(
+      'q', std::move(std::make_unique<ExitCommand>()));
 
-  registry.Register('h', new MoveLeftCommand());
-  registry.Register(KEY_LEFT, new MoveLeftCommand());
-  registry.Register('j', new MoveDownCommand());
-  registry.Register(KEY_DOWN, new MoveDownCommand());
-  registry.Register('k', new MoveUpCommand());
-  registry.Register(KEY_UP, new MoveUpCommand());
-  registry.Register('l', new MoveRightCommand());
-  registry.Register(KEY_RIGHT, new MoveRightCommand());
-  registry.Register(' ', new ScreenDownCommand());
-  registry.Register(6, new ScreenDownCommand());  // ^F
-  registry.Register(2, new ScreenUpCommand());    // ^B
-  registry.Register('J', new PageDownCommand());
-  registry.Register(KEY_NPAGE, new PageDownCommand());
-  registry.Register('K', new PageUpCommand());
-  registry.Register(KEY_PPAGE, new PageUpCommand());
+  registry->Register(
+      'h', std::move(std::make_unique<MoveLeftCommand>()));
+  registry->Register(
+      KEY_LEFT, std::move(std::make_unique<MoveLeftCommand>()));
+  registry->Register(
+      'j', std::move(std::make_unique<MoveDownCommand>()));
+  registry->Register(
+      KEY_DOWN, std::move(std::make_unique<MoveDownCommand>()));
+  registry->Register(
+      'k', std::move(std::make_unique<MoveUpCommand>()));
+  registry->Register(
+      KEY_UP, std::move(std::make_unique<MoveUpCommand>()));
+  registry->Register(
+      'l', std::move(std::make_unique<MoveRightCommand>()));
+  registry->Register(
+      KEY_RIGHT, std::move(std::make_unique<MoveRightCommand>()));
+  registry->Register(
+      ' ', std::move(std::make_unique<ScreenDownCommand>()));
+  registry->Register(
+      6, std::move(std::make_unique<ScreenDownCommand>()));  // ^F
+  registry->Register(
+      2, std::move(std::make_unique<ScreenUpCommand>()));    // ^B
+  registry->Register(
+      'J', std::move(std::make_unique<PageDownCommand>()));
+  registry->Register(
+      KEY_NPAGE, std::move(std::make_unique<PageDownCommand>()));
+  registry->Register(
+      'K', std::move(std::make_unique<PageUpCommand>()));
+  registry->Register(
+      KEY_PPAGE, std::move(std::make_unique<PageUpCommand>()));
 
-  registry.Register('=', new ZoomInCommand());
-  registry.Register('+', new ZoomInCommand());
-  registry.Register('-', new ZoomOutCommand());
-  registry.Register('z', new SetZoomCommand());
-  registry.Register('s', new ZoomToWidthCommand());
-  registry.Register('a', new ZoomToFitCommand());
+  registry->Register(
+      '=', std::move(std::make_unique<ZoomInCommand>()));
+  registry->Register(
+      '+', std::move(std::make_unique<ZoomInCommand>()));
+  registry->Register(
+      '-', std::move(std::make_unique<ZoomOutCommand>()));
+  registry->Register(
+      'z', std::move(std::make_unique<SetZoomCommand>()));
+  registry->Register(
+      's', std::move(std::make_unique<ZoomToWidthCommand>()));
+  registry->Register(
+      'a', std::move(std::make_unique<ZoomToFitCommand>()));
 
-  registry.Register('r', new SetRotationCommand());
-  registry.Register('>', new RotateCommand(90));
-  registry.Register('.', new RotateCommand(90));
-  registry.Register('<', new RotateCommand(-90));
-  registry.Register(',', new RotateCommand(-90));
+  registry->Register(
+      'r', std::move(std::make_unique<SetRotationCommand>()));
+  registry->Register(
+      '>', std::move(std::make_unique<RotateCommand>(90)));
+  registry->Register(
+      '.', std::move(std::make_unique<RotateCommand>(90)));
+  registry->Register(
+      '<', std::move(std::make_unique<RotateCommand>(-90)));
+  registry->Register(
+      ',', std::move(std::make_unique<RotateCommand>(-90)));
 
-  registry.Register('g', new GoToPageCommand(0));
-  registry.Register(KEY_HOME, new GoToPageCommand(0));
-  registry.Register('G', new GoToPageCommand(INT_MAX));
-  registry.Register(KEY_END, new GoToPageCommand(INT_MAX));
+  registry->Register(
+      'g', std::move(std::make_unique<GoToPageCommand>(0)));
+  registry->Register(
+      KEY_HOME, std::move(std::make_unique<GoToPageCommand>(0)));
+  registry->Register(
+      'G', std::move(std::make_unique<GoToPageCommand>(INT_MAX)));
+  registry->Register(
+      KEY_END, std::move(std::make_unique<GoToPageCommand>(INT_MAX)));
 
-  registry.Register('\t', new ShowOutlineViewCommand());
+  registry->Register(
+      '\t', std::move(std::make_unique<ShowOutlineViewCommand>()));
 
-  registry.Register('m', new SaveStateCommand());
-  registry.Register('`', new RestoreStateCommand());
+  registry->Register(
+      'm', std::move(std::make_unique<SaveStateCommand>()));
+  registry->Register(
+      '`', std::move(std::make_unique<RestoreStateCommand>()));
 
-  registry.Register('e', new ReloadCommand());
+  registry->Register(
+      'e', std::move(std::make_unique<ReloadCommand>()));
 
   return registry;
 }
@@ -633,10 +679,12 @@ int main(int argc, char* argv[]) {
             state.FramebufferDevice.c_str());
     exit(EXIT_FAILURE);
   }
-  state.ViewerInst.reset(new Viewer(
-      state.DocumentInst.get(), state.FramebufferInst.get(), state,
-      state.RenderCacheSize));
-  const Registry& registry = BuildRegistry();
+  state.ViewerInst = std::make_unique<Viewer>(
+      state.DocumentInst.get(),
+      state.FramebufferInst.get(),
+      state,
+      state.RenderCacheSize);
+  std::unique_ptr<Registry> registry(BuildRegistry());
 
   initscr();
   keypad(stdscr, true);
@@ -648,8 +696,8 @@ int main(int argc, char* argv[]) {
   // to getch().
   refresh();
 
-  state.OutlineViewInst.reset(
-      new OutlineView(state.DocumentInst->GetOutline()));
+  state.OutlineViewInst =
+      std::make_unique<OutlineView>(state.DocumentInst->GetOutline());
 
   // 2. Main event loop.
   state.Render = true;
@@ -674,7 +722,7 @@ int main(int argc, char* argv[]) {
     }
 
     // 2.3. Run command.
-    registry.Dispatch(c, repeat, &state);
+    registry->Dispatch(c, repeat, &state);
   } while (!state.Exit);
 
 
