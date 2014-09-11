@@ -56,8 +56,8 @@ class PDFDocument : public Document {
   // Factory method to construct an instance of PDFDocument. path gives the path
   // to a PDF file. page_cache_size specifies the maximum number of pages to
   // store in memory. Returns nullptr if the file cannot be opened.
-  static Document* Open(const std::string& path,
-                        int page_cache_size = DEFAULT_PAGE_CACHE_SIZE);
+  static PDFDocument* Open(
+      const std::string& path, int page_cache_size = DEFAULT_PAGE_CACHE_SIZE);
   // See Document.
   int GetNumPages() override;
   // See Document.
@@ -69,7 +69,17 @@ class PDFDocument : public Document {
   // See Document.
   int Lookup(const OutlineItem* item) override;
 
+  // Returns the text content of a page, using line_sep to separate lines.
+  std::string GetPageText(int page, int line_sep = '\n');
+
+ protected:
+  std::vector<SearchResult> SearchOnPage(
+      const std::string& search_string, int page) override;
+
  private:
+  // Default root outline item title.
+  static const char* const DEFAULT_ROOT_OUTLINE_ITEM_TITLE;
+
   // Actual outline item implementation.
   class PDFOutlineItem : public OutlineItem {
    public:
@@ -87,8 +97,9 @@ class PDFDocument : public Document {
     explicit PDFOutlineItem(fz_outline* src);
     // Recursive construction, called by Build().
     static void BuildRecursive(
-        fz_outline* src, std::vector<std::unique_ptr<OutlineItem>> *output);
+        fz_outline* src, std::vector<std::unique_ptr<OutlineItem>>* output);
   };
+
   // Cache for pdf_page.
   class PDFPageCache : public Cache<int, pdf_page*> {
    public:
@@ -123,6 +134,7 @@ class PDFDocument : public Document {
   // is reached, throw out the oldest page. Will also attempt to load the pages
   // before and after specified page. Returns the loaded page.
   pdf_page* GetPage(int page);
+
   // Constructs a transformation matrix from the given parameters.
   fz_matrix Transform(float zoom, int rotation);
   // Returns a bounding box for the given page after applying transformations.

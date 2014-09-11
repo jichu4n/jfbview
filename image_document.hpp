@@ -53,6 +53,13 @@ class ImageDocument : public Document {
     return -1;
   }
 
+ protected:
+  // See Document.
+  std::vector<SearchResult> SearchOnPage(
+      const std::string& search_string, int page) override {
+    return std::vector<SearchResult>();
+  }
+
  private:
   // Handle to the source Imlib2 image, without zoom or rotation.
   Imlib_Image _src;

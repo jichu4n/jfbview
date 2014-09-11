@@ -31,7 +31,10 @@ extern "C" {
 #include "pdf_document.hpp"
 #include "multithreading.hpp"
 
-Document* PDFDocument::Open(const std::string& path,
+const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
+    "TABLE OF CONTENTS";
+
+PDFDocument* PDFDocument::Open(const std::string& path,
                                int page_cache_size) {
   fz_context* context = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
   pdf_document* raw_pdf_document = nullptr;
@@ -138,6 +141,70 @@ int PDFDocument::Lookup(const OutlineItem* item) {
   return (dynamic_cast<const PDFOutlineItem*>(item))->GetDestPage();
 }
 
+std::vector<Document::SearchResult> PDFDocument::SearchOnPage(
+    const std::string& search_string, int page) {
+  std::vector<SearchResult> search_results;
+  return search_results;
+}
+
+std::string PDFDocument::GetPageText(int page, int line_sep) {
+  // 1. Init MuPDF structures.
+  pdf_page* page_struct = GetPage(page);
+  fz_text_sheet* text_sheet = fz_new_text_sheet(_fz_context);
+  fz_text_page* text_page = fz_new_text_page(_fz_context);
+  fz_device* dev = fz_new_text_device(_fz_context, text_sheet, text_page);
+
+  // 2. Render page.
+  //
+  // I've no idea what fz_{begin,end}_page do, but without them pdf_run_page
+  // segfaults :-/
+  fz_begin_page(dev, &fz_infinite_rect, &fz_identity);
+  pdf_run_page(_pdf_document, page_struct, dev, &fz_identity, nullptr);
+  fz_end_page(dev);
+
+  // 3. Build text.
+  std::string r;
+  for (fz_page_block* page_block = text_page->blocks;
+       page_block < text_page->blocks + text_page->len;
+       ++page_block) {
+    assert(page_block != nullptr);
+    if (page_block->type != FZ_PAGE_BLOCK_TEXT) {
+      continue;
+    }
+    fz_text_block* const text_block = page_block->u.text;
+    assert(text_block != nullptr);
+    for (fz_text_line* text_line = text_block->lines;
+         text_line < text_block->lines + text_block->len;
+         ++text_line) {
+      assert(text_line != nullptr);
+      for (fz_text_span* text_span = text_line->first_span;
+           text_span != nullptr;
+           text_span = text_span->next) {
+        for (int i = 0; i < text_span->len; ++i) {
+          const int c = text_span->text[i].c;
+          // A single UTF-8 character cannot take more than 4 bytes, but let's
+          // go for 8.
+          char buffer[8];
+          const int num_bytes = fz_runetochar(buffer, c);
+          assert(num_bytes <= sizeof(buffer));
+          buffer[num_bytes] = '\0';
+          r += buffer;
+        }
+      }
+      if (!isspace(r.back())) {
+        r += line_sep;
+      }
+    }
+  }
+
+  // 4. Clean up.
+  fz_free_device(dev);
+  fz_free_text_page(_fz_context, text_page);
+  fz_free_text_sheet(_fz_context, text_sheet);
+
+  return r;
+}
+
 PDFDocument::PDFOutlineItem::~PDFOutlineItem() {
 }
 
@@ -166,7 +233,7 @@ PDFDocument::PDFOutlineItem* PDFDocument::PDFOutlineItem::Build(
     root =  dynamic_cast<PDFOutlineItem*>(items[0].release());
   } else {
     root = new PDFOutlineItem(nullptr);
-    root->_title = "TABLE OF CONTENTS";
+    root->_title = DEFAULT_ROOT_OUTLINE_ITEM_TITLE;
     root->_children.swap(items);
   }
   return root;
@@ -174,7 +241,7 @@ PDFDocument::PDFOutlineItem* PDFDocument::PDFOutlineItem::Build(
 
 void PDFDocument::PDFOutlineItem::BuildRecursive(
     fz_outline* src,
-    std::vector<std::unique_ptr<Document::OutlineItem>> *output) {
+    std::vector<std::unique_ptr<Document::OutlineItem>>* output) {
   assert(output != nullptr);
   for (fz_outline* i = src; i != nullptr; i = i->next) {
     PDFOutlineItem* item = new PDFOutlineItem(i);

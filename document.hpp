@@ -104,8 +104,7 @@ class Document {
   std::vector<SearchResult> Search(
       const std::string& search_string,
       int start_page,
-      int max_num_search_results = DEFAULT_MAX_NUM_SEARCH_RESULTS,
-      int num_threads = 0);
+      int max_num_search_results = DEFAULT_MAX_NUM_SEARCH_RESULTS);
 
  protected:
   // Performs a text search on a given page.

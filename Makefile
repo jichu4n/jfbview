@@ -16,11 +16,40 @@
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-CXXFLAGS := -Wall -O3 -std=c++14
-LIBS := -lpthread -lform -lncurses -lfreetype -ljbig2dec -ljpeg -lz -lopenjp2 -lmupdf -lmujs -lssl -lcrypto
+CXXFLAGS := -Wall -O3 -std=c++14 -g
+LIBS := \
+    -lpthread \
+    -lform \
+    -lncurses \
+    -lfreetype \
+    -ljbig2dec \
+    -ljpeg \
+    -lz \
+    -lopenjp2 \
+    -lmupdf \
+    -lmujs \
+    -lssl \
+    -lcrypto
 JFBVIEW_LIBS := $(LIBS) -lImlib2
 
-SRCS := $(wildcard *.cpp)
+LIB_SRCS := \
+    command.cpp \
+    document.cpp \
+    framebuffer.cpp \
+    image_document.cpp \
+    multithreading.cpp \
+    outline_view.cpp \
+    pdf_document.cpp \
+    pixel_buffer.cpp \
+    search_view.cpp \
+    ui_view.cpp \
+    viewer.cpp
+
+JFBVIEW_SRCS := $(LIB_SRCS) \
+    main.cpp
+
+JPDFCAT_SRCS := $(LIB_SRCS) \
+    jpdfcat.cpp
 
 
 all: jfbview
@@ -34,7 +63,7 @@ lint:
 
 .PHONY: clean
 clean:
-	-rm -f *.o *.d jfbview jfbpdf
+	-rm -f *.o *.d jfbview jfbpdf jfbcat
 
 %.d: %.cpp
 	@$(SHELL) -ec '$(CXX) -MM $(CXXFLAGS) $< \
@@ -42,13 +71,16 @@ clean:
 	  [ -s $@ ] || rm -f $@'
 -include $(SRCS:.cpp=.d)
 
-jfbview: $(SRCS:.cpp=.o)
+jfbview: $(JFBVIEW_SRCS:.cpp=.o)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
 
-jfbpdf: $(SRCS)
+jfbpdf: $(JFBVIEW_SRCS)
 	$(CXX) \
 	    -DJFBVIEW_NO_IMLIB2 \
 	    -DJFBVIEW_PROGRAM_NAME=\"JFBPDF\" \
 	    -DJFBVIEW_BINARY_NAME=\"$@\" \
 	    $(CXXFLAGS) -o $@ $^ \
 	    $(LDLIBS) $(LIBS)
+
+jpdfcat: $(JPDFCAT_SRCS:.cpp=.o)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
