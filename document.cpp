@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012 Chuan Ji <jichuan89@gmail.com>                        *
+ *  Copyright (C) 2012-2014 Chuan Ji <jichuan89@gmail.com>                   *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -39,19 +39,21 @@ const Document::OutlineItem* Document::OutlineItem::GetChild(int i) const {
   return _children[i].get();
 }
 
-std::vector<Document::SearchHit> Document::Search(
+Document::SearchResult Document::Search(
     const std::string& search_string,
     int start_page,
     int context_length,
     int max_num_search_hits) {
-  std::vector<SearchHit> hits;
-  for (int page = start_page; hits.size() < max_num_search_hits; ++page) {
+  SearchResult result;
+  for (result.LastSearchedPage = start_page;
+       result.SearchHits.size() < max_num_search_hits;
+       ++result.LastSearchedPage) {
     const std::vector<SearchHit>& hits_on_page = SearchOnPage(
-        search_string, page, context_length);
-    hits.insert(
-        hits.end(),
+        search_string, result.LastSearchedPage, context_length);
+    result.SearchHits.insert(
+        result.SearchHits.end(),
         hits_on_page.begin(),
         hits_on_page.end());
   }
-  return hits;
+  return result;
 }

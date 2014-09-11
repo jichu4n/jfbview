@@ -75,6 +75,12 @@ class Document {
         : Page(page), ContextText(context_text) {
     }
   };
+  struct SearchResult {
+    // Last page that was searched.
+    int LastSearchedPage;
+    // Hits.
+    std::vector<SearchHit> SearchHits;
+  };
 
   virtual ~Document();
 
@@ -106,7 +112,7 @@ class Document {
   enum { DEFAULT_MAX_NUM_SEARCH_HITS = 500 };
   // Searches the text of the document. Will return up to max_num_search_hits
   // search hits starting from the given page.
-  std::vector<SearchHit> Search(
+  SearchResult Search(
       const std::string& search_string,
       int start_page,
       int context_length,
