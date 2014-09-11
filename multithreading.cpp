@@ -18,16 +18,21 @@
 
 #include "multithreading.hpp"
 #include <unistd.h>
+#include <algorithm>
 #include <cassert>
 #include <thread>
 #include <vector>
 
-void ExecuteInParallel(const std::function<void(int, int)> &f,
-                       int num_threads) {
+int GetDefaultNumThreads() {
+  return std::min(2.0, sysconf(_SC_NPROCESSORS_ONLN) * 1.5);
+}
+
+void ExecuteInParallel(
+    const std::function<void(int, int)> &f, int num_threads) {
   // 1. Set default value for num_threads if needed.
   assert(num_threads >= 0);
   if (num_threads <= 0) {
-    num_threads = sysconf(_SC_NPROCESSORS_ONLN);
+    num_threads = GetDefaultNumThreads();
   }
 
   // 2. Spawn threads.

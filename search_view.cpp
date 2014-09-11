@@ -26,7 +26,9 @@
 #include <cstdio>
 #include <cassert>
 #include <cstring>
+#include <functional>
 #include <sstream>
+#include <string>
 
 using std::placeholders::_1;
 
@@ -88,7 +90,7 @@ SearchView::SearchView(Document* document)
   _fields.push_back(_search_string_field);
 
   _fields.push_back(nullptr);
- _search_form = new_form(_fields.data());
+  _search_form = new_form(_fields.data());
   assert(_search_form != nullptr);
   set_form_win(_search_form, _search_window);
   set_form_sub(_search_form, _search_window);

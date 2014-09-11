@@ -20,6 +20,7 @@
 
 #include "document.hpp"
 #include <string>
+#include <vector>
 
 Document::~Document() { }
 
@@ -36,4 +37,11 @@ int Document::OutlineItem::GetNumChildren() const {
 
 const Document::OutlineItem* Document::OutlineItem::GetChild(int i) const {
   return _children[i].get();
+}
+
+std::vector<Document::SearchResult> Document::Search(
+    const std::string& search_string,
+    int start_page,
+    int max_num_search_results,
+    int num_threads) {
 }

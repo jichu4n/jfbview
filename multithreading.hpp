@@ -23,6 +23,9 @@
 
 #include <functional>
 
+// Returns the sane default number of threads.
+extern int GetDefaultNumThreads();
+
 // Execute f in parallel. f is invoked with arguments (n, i) where n is the
 // total number of threads, and i is the index of the current thread (0-based).
 // num_threads specifies how many threads to spawn, and defaults to the number

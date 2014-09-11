@@ -63,26 +63,54 @@ class Document {
     std::vector<std::unique_ptr<OutlineItem>> _children;
   };
 
+  // A text search result.
+  struct SearchResult {
+    // The page number where the search result occurred.
+    int Page;
+    // Context text.
+    std::string ContextText;
+  };
+
   virtual ~Document();
+
   // Returns the number of pages in the document.
   virtual int GetNumPages() = 0;
+
   // Returns the size of a page, in pixels. zoom gives the zoom ratio as a
   // fraction, e.g., 1.5 = 150%. rotation is the desired rotation in clockwise
   // degrees.
   virtual const PageSize GetPageSize(
       int page, float zoom = 1.0f, int rotation = 0) = 0;
+
   // Renders the given page to a buffer. Page numbers are 0-based. zoom gives
   // the zoom ratio as a fraction, e.g., 1.5 = 150%. rotation is the desired
   // rotation in clockwise degrees. For every rendered pixel, pw will be invoked
   // to store that pixel value somewhere.
   virtual void Render(PixelWriter* pw, int page, float zoom, int rotation) = 0;
+
   // Returns the outline of this document. The returned item represents the
   // top-level element in the outline, and is owned by the caller. If the
   // document does not have an outline, return nullptr.
   virtual const OutlineItem* GetOutline() = 0;
+
   // Returns the page number referred to by an outline item. If not available,
   // returns -1.
   virtual int Lookup(const OutlineItem* item) = 0;
+
+  // Default maximum number of search results to return per search.
+  enum { DEFAULT_MAX_NUM_SEARCH_RESULTS = 500 };
+  // Searches the text of the document. Will return up to max_num_search_results
+  // search results starting from the given page.
+  std::vector<SearchResult> Search(
+      const std::string& search_string,
+      int start_page,
+      int max_num_search_results = DEFAULT_MAX_NUM_SEARCH_RESULTS,
+      int num_threads = 0);
+
+ protected:
+  // Performs a text search on a given page.
+  virtual std::vector<SearchResult> SearchOnPage(
+      const std::string& search_string, int page) = 0;
 };
 
 #endif

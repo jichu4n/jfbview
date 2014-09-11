@@ -90,7 +90,7 @@ class PDFDocument : public Document {
         fz_outline* src, std::vector<std::unique_ptr<OutlineItem>> *output);
   };
   // Cache for pdf_page.
-  class PDFPageCache : public Cache<int, pdf_page *> {
+  class PDFPageCache : public Cache<int, pdf_page*> {
    public:
     PDFPageCache(int cache_size, PDFDocument* parent);
     virtual ~PDFPageCache();
