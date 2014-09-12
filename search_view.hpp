@@ -95,6 +95,9 @@ class SearchView : public UIView {
   // Currently highlighted search hit index.
   int _selected_index;
 
+  // The page the user desires to go to.
+  int _selected_page;
+
   // Key processing modes.
   enum KeyProcessingMode {
     REGULAR_MODE,              // Regular mode.

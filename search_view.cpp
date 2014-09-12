@@ -114,12 +114,14 @@ int SearchView::Run() {
   // set_current_field(_search_form, _search_string_field);
   SwitchToSearchStringField();
 
+  _selected_page = -1;
+
   EventLoop(SEARCH_STRING_FIELD_MODE);
 
   unpost_form(_search_form);
   curs_set(false);
 
-  return -1;
+  return _selected_page;
 }
 
 void SearchView::Render() {
@@ -226,7 +228,12 @@ void SearchView::ProcessKeySearchStringFieldMode(int key) {
       break;
     case KEY_BACKSPACE:
     case 127:
-      form_driver(_search_form, REQ_DEL_PREV);
+      if ((_search_string_field_cursor_position <= 0) &&
+          search_string.empty()) {
+        ExitEventLoop();
+      } else {
+        form_driver(_search_form, REQ_DEL_PREV);
+      }
       break;
     case KEY_LEFT:
       if (_search_string_field_cursor_position > 0) {
@@ -301,6 +308,18 @@ void SearchView::ProcessKeyRegularMode(int key) {
         --_selected_index;
       } else {
         _selected_index -= std::min(_selected_index, result_window_height);
+      }
+      break;
+    case ' ':
+    case '\n':
+    case '\r':
+    case KEY_ENTER:
+    case 'g':
+      if (_result && !_result->SearchHits.empty()) {
+        assert(_selected_index >= 0);
+        assert(_selected_index < _result->SearchHits.size());
+        _selected_page = _result->SearchHits[_selected_index].Page;
+        ExitEventLoop();
       }
       break;
     default:
