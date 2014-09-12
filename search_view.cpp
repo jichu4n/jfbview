@@ -129,6 +129,7 @@ void SearchView::Render() {
 
   if (_result) {
     if (_result->SearchHits.empty()) {
+      wclear(_result_window);
       mvwaddstr(
           _result_window,
           result_window_height / 2,
@@ -139,7 +140,7 @@ void SearchView::Render() {
       const int last_index = std::min(
           _first_index + result_window_height,
           static_cast<int>(_result->SearchHits.size()) - 1);
-      for (int i = 0; i + _first_index < last_index; ++i) {
+      for (int i = 0; i + _first_index <= last_index; ++i) {
         const Document::SearchHit& hit = _result->SearchHits[i + _first_index];
         const bool is_selected_hit =
             (i + _first_index == _selected_hit_index) &&
@@ -147,6 +148,8 @@ void SearchView::Render() {
         if (is_selected_hit) {
           wattron(_result_window, A_STANDOUT);
         }
+
+        // 1.1. Page number.
         wattron(_result_window, A_BOLD);
         std::ostringstream buffer;
         buffer <<_PAGE_NUMBER_PREFIX
@@ -155,11 +158,21 @@ void SearchView::Render() {
             _result_window,
             i, 0, buffer.str().c_str());
         wattroff(_result_window, A_BOLD);
-        waddnstr(
-            _result_window,
-            hit.ContextText.c_str(),
-            result_window_width - (buffer.str().length()));
+
+        // 1.2. Context.
+        const char* p = hit.ContextText.c_str();
+        waddnstr(_result_window, p, hit.SearchStringPosition);
+        p += hit.SearchStringPosition;
+        wattron(_result_window, A_UNDERLINE);
+        wattron(_result_window, A_BOLD);
+        waddnstr(_result_window, p, _result->SearchString.length());
+        wattroff(_result_window, A_BOLD);
+        wattroff(_result_window, A_UNDERLINE);
+        p += _result->SearchString.length();
+        waddnstr(_result_window, p, -1);
+
         wclrtoeol(_result_window);
+
         if (is_selected_hit) {
           wattroff(_result_window, A_STANDOUT);
         }
@@ -278,6 +291,9 @@ void SearchView::Search() {
   WINDOW* const window = GetWindow();
   int window_width, window_height;
   getmaxyx(window, window_height, window_width);
+  const int result_window_width = getmaxx(_result_window);
+  const int context_text_length =
+      result_window_width - strlen(_PAGE_NUMBER_PREFIX) - _PAGE_NUMBER_WIDTH;
 
   // 0. If the search string hasn't changed, continue last search. Else, start
   // afresh.
@@ -300,7 +316,7 @@ void SearchView::Search() {
 
   std::thread search_thread([&]() {
       result = std::make_unique<Document::SearchResult>(_document->Search(
-          search_string, search_start_page, window_width));
+          search_string, search_start_page, context_text_length));
       std::unique_lock<std::mutex> search_thread_result_lock(result_mutex);
       result_cond.notify_all();
   });
@@ -318,6 +334,7 @@ void SearchView::Search() {
       window,
       progress_window_height, progress_window_width,
       progress_window_y, progress_window_x);
+  wbkgdset(progress_window, A_STANDOUT);
   wclear(progress_window);
   box(progress_window, 0, 0);
   mvwaddstr(
@@ -377,10 +394,6 @@ void SearchView::Search() {
         result->SearchHits.begin(), result->SearchHits.end());
   } else {
     _result = std::move(result);
-  }
-
-  if (_result->SearchHits.empty()) {
-    SwitchToSearchStringField();
   }
 }
 

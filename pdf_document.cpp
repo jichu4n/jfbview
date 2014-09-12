@@ -158,7 +158,9 @@ std::vector<Document::SearchHit> PDFDocument::SearchOnPage(
     }
     const size_t context_start_pos = pos >= margin ?  pos - margin : 0;
     search_hits.emplace_back(
-        page, page_text.substr(context_start_pos, context_length));
+        page,
+        page_text.substr(context_start_pos, context_length),
+        pos - context_start_pos);
   }
   return search_hits;
 }

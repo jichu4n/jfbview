@@ -16,7 +16,7 @@
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-CXXFLAGS := -Wall -O3 -std=c++14 -g
+CXXFLAGS := -Wall -std=c++14 -g
 LIBS := \
     -lpthread \
     -lform \

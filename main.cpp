@@ -29,6 +29,7 @@
 #endif
 
 #include <curses.h>
+#include <locale.h>
 #include <getopt.h>
 #include <cctype>
 #include <climits>
@@ -699,6 +700,7 @@ int main(int argc, char* argv[]) {
       state.RenderCacheSize);
   std::unique_ptr<Registry> registry(BuildRegistry());
 
+  setlocale(LC_CTYPE, "");
   initscr();
   start_color();
   keypad(stdscr, true);

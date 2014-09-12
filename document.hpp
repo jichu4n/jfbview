@@ -69,10 +69,16 @@ class Document {
     int Page;
     // Context text.
     std::string ContextText;
+    // Position of search string in context text.
+    int SearchStringPosition;
 
     explicit SearchHit(
-        int page = -1, const std::string& context_text = std::string())
-        : Page(page), ContextText(context_text) {
+        int page = -1,
+        const std::string& context_text = std::string(),
+        int search_string_position = -1)
+        : Page(page),
+          ContextText(context_text),
+          SearchStringPosition(search_string_position) {
     }
   };
   struct SearchResult {
