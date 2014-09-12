@@ -354,8 +354,9 @@ void SearchView::Search() {
   getmaxyx(_result_window, result_window_height, result_window_width);
   const int context_text_length =
       result_window_width - strlen(_PAGE_NUMBER_PREFIX) - _PAGE_NUMBER_WIDTH;
-  const int max_num_search_hits =
-      result_window_height * _MAX_NUM_SEARCH_HITS_FACTOR;
+  const int max_num_search_hits = std::max(
+      result_window_height * _MAX_NUM_SEARCH_HITS_FACTOR,
+      static_cast<int>(_MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING));
 
   // 0. If the search string hasn't changed, continue last search. Else, start
   // afresh.
