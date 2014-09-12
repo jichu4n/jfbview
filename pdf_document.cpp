@@ -144,7 +144,7 @@ int PDFDocument::Lookup(const OutlineItem* item) {
 
 std::vector<Document::SearchHit> PDFDocument::SearchOnPage(
     const std::string& search_string, int page, int context_length) {
-  const size_t margin = 
+  const size_t margin =
       context_length > search_string.length() ?
       (context_length - search_string.length() + 1) / 2 :
       0;

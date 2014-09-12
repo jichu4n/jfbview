@@ -20,12 +20,12 @@
 
 #include "search_view.hpp"
 
-#include <climits>
 #include <curses.h>
 #include <algorithm>
 #include <cassert>
 #include <cctype>
 #include <chrono>
+#include <climits>
 #include <condition_variable>
 #include <cstdio>
 #include <cstring>
@@ -120,6 +120,7 @@ int SearchView::Run() {
 
   unpost_form(_search_form);
   curs_set(false);
+  wrefresh(window);
 
   return _selected_page;
 }

@@ -22,6 +22,7 @@
 #include <cctype>
 #include <cstring>
 #include <functional>
+#include <string>
 
 namespace {
 
