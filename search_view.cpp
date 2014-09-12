@@ -180,9 +180,22 @@ void SearchView::Render() {
       wclrtobot(_result_window);
 
       // 2. Draw status.
+      const bool searched_all_pages =
+          _result->LastSearchedPage >= _document->GetNumPages() - 1;
       std::ostringstream buffer;
-      buffer << (_selected_hit_index + 1) << " of "
-             << _result->SearchHits.size() << " results";
+      buffer << (_selected_hit_index + 1) << " of ";
+      if (searched_all_pages) {
+        buffer << _result->SearchHits.size();
+      } else {
+        buffer << (
+            (_result->SearchHits.size() /
+             _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING) *
+            _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING) << "+";
+      }
+      buffer << " results";
+      if (!searched_all_pages) {
+        buffer << " (scroll to see all)";
+      }
       mvwaddstr(_status_window, 0, 0, buffer.str().c_str());
       wclrtoeol(_status_window);
     }
@@ -291,9 +304,12 @@ void SearchView::Search() {
   WINDOW* const window = GetWindow();
   int window_width, window_height;
   getmaxyx(window, window_height, window_width);
-  const int result_window_width = getmaxx(_result_window);
+  int result_window_height, result_window_width;
+  getmaxyx(_result_window, result_window_height, result_window_width);
   const int context_text_length =
       result_window_width - strlen(_PAGE_NUMBER_PREFIX) - _PAGE_NUMBER_WIDTH;
+  const int max_num_search_hits =
+      result_window_height * _MAX_NUM_SEARCH_HITS_FACTOR;
 
   // 0. If the search string hasn't changed, continue last search. Else, start
   // afresh.
@@ -316,7 +332,10 @@ void SearchView::Search() {
 
   std::thread search_thread([&]() {
       result = std::make_unique<Document::SearchResult>(_document->Search(
-          search_string, search_start_page, context_text_length));
+          search_string,
+          search_start_page,
+          context_text_length,
+          max_num_search_hits));
       std::unique_lock<std::mutex> search_thread_result_lock(result_mutex);
       result_cond.notify_all();
   });

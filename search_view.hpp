@@ -65,6 +65,12 @@ class SearchView : public UIView {
   enum { _PAGE_NUMBER_WIDTH = 6 };
   // Page number prefix.
   static const char* const _PAGE_NUMBER_PREFIX;
+  // The maxinum number of search results per search is the product of the
+  // result window height and this factor.
+  enum { _MAX_NUM_SEARCH_HITS_FACTOR = 3 };
+  // The maximum number of search results will be rounded for display to
+  // multiples of the following number.
+  enum { _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING = 100 };
 
   // The document to search.
   Document* const _document;

@@ -116,15 +116,13 @@ class Document {
   // returns -1.
   virtual int Lookup(const OutlineItem* item) = 0;
 
-  // Default maximum number of search hits to return per search.
-  enum { DEFAULT_MAX_NUM_SEARCH_HITS = 500 };
   // Searches the text of the document. Will return up to max_num_search_hits
   // search hits starting from the given page.
   SearchResult Search(
       const std::string& search_string,
       int start_page,
       int context_length,
-      int max_num_search_hits = DEFAULT_MAX_NUM_SEARCH_HITS);
+      int max_num_search_hits);
 
  protected:
   // Performs a text search on a given page.
