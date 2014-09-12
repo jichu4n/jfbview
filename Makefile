@@ -42,6 +42,7 @@ LIB_SRCS := \
     pdf_document.cpp \
     pixel_buffer.cpp \
     search_view.cpp \
+    string_utils.cpp \
     ui_view.cpp \
     viewer.cpp
 

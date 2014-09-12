@@ -16,46 +16,26 @@
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// Implementation for methods declared in document.hpp.
+// A collection of string manipulation utilities.
 
-#include "document.hpp"
+#ifndef STRING_UTILS_HPP
+#define STRING_UTILS_HPP
+
 #include <string>
-#include <vector>
 
-Document::~Document() { }
+// Trim leading whitespace.
+extern std::string TrimLeft(const std::string& s);
+// Trim trailing whitespace.
+extern std::string TrimRight(const std::string& s);
+// Trim whitespace on both ends of a string.
+extern std::string Trim(const std::string& s);
 
-Document::OutlineItem::~OutlineItem() {
-}
-
-const std::string& Document::OutlineItem::GetTitle() const {
-  return _title;
-}
-
-int Document::OutlineItem::GetNumChildren() const {
-  return _children.size();
-}
-
-const Document::OutlineItem* Document::OutlineItem::GetChild(int i) const {
-  return _children[i].get();
-}
-
-Document::SearchResult Document::Search(
+// Search for occurrances of a string search_string in s, case insensitive.
+// Returns the first occurrance after the given position, or string::npos if not
+// found.
+extern std::string::size_type CaseInsensitiveSearch(
+    const std::string& s,
     const std::string& search_string,
-    int start_page,
-    int context_length,
-    int max_num_search_hits) {
-  SearchResult result;
-  result.SearchString = search_string;
-  for (result.LastSearchedPage = start_page;
-       (result.SearchHits.size() < max_num_search_hits) &&
-       (result.LastSearchedPage < GetNumPages());
-       ++result.LastSearchedPage) {
-    const std::vector<SearchHit>& hits_on_page = SearchOnPage(
-        search_string, result.LastSearchedPage, context_length);
-    result.SearchHits.insert(
-        result.SearchHits.end(),
-        hits_on_page.begin(),
-        hits_on_page.end());
-  }
-  return result;
-}
+    std::string::size_type pos = 0);
+
+#endif

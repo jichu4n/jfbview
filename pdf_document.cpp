@@ -30,6 +30,7 @@ extern "C" {
 }
 #include "pdf_document.hpp"
 #include "multithreading.hpp"
+#include "string_utils.hpp"
 
 const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
     "TABLE OF CONTENTS";
@@ -151,7 +152,8 @@ std::vector<Document::SearchHit> PDFDocument::SearchOnPage(
   std::vector<SearchHit> search_hits;
   const std::string& page_text = GetPageText(page, ' ');
   for (size_t pos = 0; ; ++pos) {
-    if ((pos = page_text.find(search_string, pos)) == std::string::npos) {
+    if ((pos = CaseInsensitiveSearch(page_text, search_string, pos)) ==
+        std::string::npos) {
       break;
     }
     const size_t context_start_pos = pos >= margin ?  pos - margin : 0;

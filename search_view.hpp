@@ -49,17 +49,45 @@ class SearchView : public UIView {
  private:
   // Search prompt string.
   static const char* const _SEARCH_PROMPT;
+  // Search progress string.
+  static const char* const _SEARCH_PROGRESS_PREFIX;
+  // Progress filler char.
+  enum { _SEARCH_PROGRESS_CHAR = '.' };
+  // How many filler chars to display at most.
+  enum { _MAX_NUM_SEARCH_PROGRESS_CHARS = 3 };
+  // Delay between two updates to the search progress, in milliseconds.
+  enum { _SEARCH_PROGRESS_UPDATE_DELAY_MS = 250 };
+  // Padding inside the search progress window.
+  enum { _SEARCH_PROGRESS_PADDING = 1 };
+  // String to display when there are no results.
+  static const char* const _NO_RESULTS_PROMPT;
+  // Padded width of page numbers shown in search results.
+  enum { _PAGE_NUMBER_WIDTH = 6 };
+  // Page number prefix.
+  static const char* const _PAGE_NUMBER_PREFIX;
 
   // The document to search.
   Document* const _document;
   // NCURSES Window containing the search form.
   WINDOW* _search_window;
-  // NCURSES search form.
+  // NCURSES search string form.
   FORM*_search_form;
   // Search string NCURSES field.
   FIELD* _search_string_field;
   // The list of all NCURSES fields in the form.
   std::vector<FIELD*> _fields;
+  // The current position of the cursor in the search string field.
+  int _search_string_field_cursor_position;
+  // The current displayed search result.
+  std::unique_ptr<Document::SearchResult> _result;
+  // The result window.
+  WINDOW* _result_window;
+  // The status window.
+  WINDOW* _status_window;
+  // Currently first visible search hit index.
+  int _first_index;
+  // Currently highlighted search hit index.
+  int _selected_hit_index;
 
   // Key processing modes.
   enum KeyProcessingMode {
@@ -69,6 +97,13 @@ class SearchView : public UIView {
   // Key processors.
   void ProcessKeyRegularMode(int key);
   void ProcessKeySearchStringFieldMode(int key);
+
+  // Switch focus to search string form.
+  void SwitchToSearchStringField();
+  // Switch focus to search result.
+  void SwitchToSearchResult();
+  // Runs search and displays results.
+  void Search();
 
   // Returns the current text in the search string field.
   std::string GetSearchString();

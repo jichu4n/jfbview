@@ -16,46 +16,48 @@
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// Implementation for methods declared in document.hpp.
+#include "string_utils.hpp"
 
-#include "document.hpp"
-#include <string>
-#include <vector>
+#include <algorithm>
+#include <cctype>
+#include <cstring>
+#include <functional>
 
-Document::~Document() { }
+namespace {
 
-Document::OutlineItem::~OutlineItem() {
+// Returns !isspace(c).
+const std::function<int(int)> NotIsSpaceFn =
+    std::not1(std::ptr_fun<int, int>(std::isspace));
+
+}  // namespace
+
+std::string TrimLeft(const std::string& s) {
+  std::string r(s);
+  r.erase(r.begin(), std::find_if(r.begin(), r.end(), NotIsSpaceFn));
+  return r;
 }
 
-const std::string& Document::OutlineItem::GetTitle() const {
-  return _title;
+std::string TrimRight(const std::string& s) {
+  std::string r(s);
+  r.erase(std::find_if(r.rbegin(), r.rend(), NotIsSpaceFn).base(), r.end());
+  return r;
 }
 
-int Document::OutlineItem::GetNumChildren() const {
-  return _children.size();
+std::string Trim(const std::string& s) {
+  return TrimLeft(TrimRight(s));
 }
 
-const Document::OutlineItem* Document::OutlineItem::GetChild(int i) const {
-  return _children[i].get();
-}
-
-Document::SearchResult Document::Search(
+std::string::size_type CaseInsensitiveSearch(
+    const std::string& s,
     const std::string& search_string,
-    int start_page,
-    int context_length,
-    int max_num_search_hits) {
-  SearchResult result;
-  result.SearchString = search_string;
-  for (result.LastSearchedPage = start_page;
-       (result.SearchHits.size() < max_num_search_hits) &&
-       (result.LastSearchedPage < GetNumPages());
-       ++result.LastSearchedPage) {
-    const std::vector<SearchHit>& hits_on_page = SearchOnPage(
-        search_string, result.LastSearchedPage, context_length);
-    result.SearchHits.insert(
-        result.SearchHits.end(),
-        hits_on_page.begin(),
-        hits_on_page.end());
+    std::string::size_type pos) {
+  if (pos == std::string::npos || pos > s.length()) {
+    return std::string::npos;
   }
-  return result;
+  const char* const p = strcasestr(s.c_str() + pos, search_string.c_str());
+  if (p == nullptr) {
+    return std::string::npos;
+  }
+  return p - s.c_str();
 }
+

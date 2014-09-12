@@ -76,6 +76,8 @@ class Document {
     }
   };
   struct SearchResult {
+    // The search string.
+    std::string SearchString;
     // Last page that was searched.
     int LastSearchedPage;
     // Hits.

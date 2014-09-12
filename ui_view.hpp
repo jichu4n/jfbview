@@ -61,6 +61,8 @@ class UIView {
   void ExitEventLoop();
   // Switches key processing mode.
   void SwitchKeyProcessingMode(int new_key_processing_mode);
+  // Returns the current key processing mode.
+  int GetKeyProcessingMode() const { return _key_processing_mode; }
 
   // Returns the full-screen NCURSES window.
   WINDOW* GetWindow() const;
