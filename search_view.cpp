@@ -143,7 +143,7 @@ void SearchView::Render() {
       for (int i = 0; i + _first_index <= last_index; ++i) {
         const Document::SearchHit& hit = _result->SearchHits[i + _first_index];
         const bool is_selected_hit =
-            (i + _first_index == _selected_hit_index) &&
+            (i + _first_index == _selected_index) &&
             (GetKeyProcessingMode() == REGULAR_MODE);
         if (is_selected_hit) {
           wattron(_result_window, A_STANDOUT);
@@ -180,11 +180,9 @@ void SearchView::Render() {
       wclrtobot(_result_window);
 
       // 2. Draw status.
-      const bool searched_all_pages =
-          _result->LastSearchedPage >= _document->GetNumPages() - 1;
       std::ostringstream buffer;
-      buffer << (_selected_hit_index + 1) << " of ";
-      if (searched_all_pages) {
+      buffer << (_selected_index + 1) << " of ";
+      if (HasSearchedAllPages()) {
         buffer << _result->SearchHits.size();
       } else {
         buffer << (
@@ -193,12 +191,14 @@ void SearchView::Render() {
             _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING) << "+";
       }
       buffer << " results";
-      if (!searched_all_pages) {
+      if (!HasSearchedAllPages()) {
         buffer << " (scroll to see all)";
       }
       mvwaddstr(_status_window, 0, 0, buffer.str().c_str());
       wclrtoeol(_status_window);
     }
+    wrefresh(_result_window);
+    wrefresh(_status_window);
   }
 
   wrefresh(window);
@@ -247,6 +247,13 @@ void SearchView::ProcessKeySearchStringFieldMode(int key) {
     case KEY_END:
       form_driver(_search_form, REQ_END_FIELD);
       break;
+    case '\t':
+    case KEY_DOWN:
+    case KEY_NPAGE:
+      if (_result && !_result->SearchHits.empty()) {
+        SwitchToSearchResult();
+      }
+      break;
     default:
       form_driver(_search_form, key);
       /*
@@ -267,16 +274,50 @@ void SearchView::ProcessKeySearchStringFieldMode(int key) {
 }
 
 void SearchView::ProcessKeyRegularMode(int key) {
+  const int result_window_height = getmaxy(_result_window);
+
   switch (key) {
     case 'q':
     case 27:
       ExitEventLoop();
       break;
+    case '\t':
     case '/':
       SwitchToSearchStringField();
       break;
+    case 'j':
+    case KEY_DOWN:
+      ++_selected_index;
+      break;
+    case 'k':
+    case KEY_UP:
+      --_selected_index;
+      break;
+    case KEY_NPAGE:
+      _selected_index += result_window_height;
+      break;
+    case KEY_PPAGE:
+      if (_selected_index <= 0) {
+        --_selected_index;
+      } else {
+        _selected_index -= std::min(_selected_index, result_window_height);
+      }
+      break;
     default:
       break;
+  }
+
+  if (_selected_index < 0) {
+    SwitchToSearchStringField();
+    _selected_index = 0;
+  } else if ((_selected_index > GetMaxIndex()) && !HasSearchedAllPages()) {
+    Search();
+  }
+  _selected_index = std::max(0, std::min(GetMaxIndex(), _selected_index));
+  if (_selected_index < _first_index) {
+    _first_index = _selected_index;
+  } else if (_selected_index >= _first_index + result_window_height) {
+    _first_index = _selected_index - result_window_height + 1;
   }
 }
 
@@ -299,6 +340,11 @@ void SearchView::SwitchToSearchResult() {
 }
 
 void SearchView::Search() {
+  const std::string& search_string = Trim(GetSearchString());
+  if (search_string.empty()) {
+    return;
+  }
+
   SwitchToSearchResult();
 
   WINDOW* const window = GetWindow();
@@ -313,13 +359,12 @@ void SearchView::Search() {
 
   // 0. If the search string hasn't changed, continue last search. Else, start
   // afresh.
-  const std::string& search_string = Trim(GetSearchString());
   int search_start_page;
   if (_result && (_result->SearchString == search_string)) {
     search_start_page = _result->LastSearchedPage + 1;
   } else {
     _result.reset();
-    _selected_hit_index = 0;
+    _selected_index = 0;
     _first_index = 0;
     search_start_page = 0;
   }
@@ -423,4 +468,8 @@ std::string SearchView::GetSearchString() {
   // The valued returned will be padded to the width of the field (W.T.F.), so
   // we have to rtrim it.
   return TrimRight(field_buffer(_search_string_field, 0));
+}
+
+bool SearchView::HasSearchedAllPages() {
+  return _result && (_result->LastSearchedPage >= _document->GetNumPages() - 1);
 }

@@ -67,7 +67,7 @@ class SearchView : public UIView {
   static const char* const _PAGE_NUMBER_PREFIX;
   // The maxinum number of search results per search is the product of the
   // result window height and this factor.
-  enum { _MAX_NUM_SEARCH_HITS_FACTOR = 3 };
+  enum { _MAX_NUM_SEARCH_HITS_FACTOR = 2 };
   // The maximum number of search results will be rounded for display to
   // multiples of the following number.
   enum { _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING = 100 };
@@ -93,7 +93,7 @@ class SearchView : public UIView {
   // Currently first visible search hit index.
   int _first_index;
   // Currently highlighted search hit index.
-  int _selected_hit_index;
+  int _selected_index;
 
   // Key processing modes.
   enum KeyProcessingMode {
@@ -110,6 +110,10 @@ class SearchView : public UIView {
   void SwitchToSearchResult();
   // Runs search and displays results.
   void Search();
+  // Returns whether we have searched all pages.
+  bool HasSearchedAllPages();
+  // The maximum search hit index value.
+  int GetMaxIndex() { return _result ? _result->SearchHits.size() - 1 : 0; }
 
   // Returns the current text in the search string field.
   std::string GetSearchString();
