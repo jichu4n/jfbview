@@ -151,6 +151,7 @@ void SearchView::Render() {
         if (is_selected_hit) {
           wattron(_result_window, A_STANDOUT);
         }
+        int remaining_line_length = result_window_width;
 
         // 1.1. Page number.
         wattron(_result_window, A_BOLD);
@@ -161,20 +162,26 @@ void SearchView::Render() {
             _result_window,
             i, 0, buffer.str().c_str());
         wattroff(_result_window, A_BOLD);
+        remaining_line_length -= buffer.str().length();
 
         // 1.2. Context.
         const char* p = hit.ContextText.c_str();
         waddnstr(_result_window, p, hit.SearchStringPosition);
         p += hit.SearchStringPosition;
+        remaining_line_length -= hit.SearchStringPosition;
+        const int search_string_length = std::min(
+            remaining_line_length,
+            static_cast<int>(_result->SearchString.length()));
         wattron(_result_window, A_UNDERLINE);
         wattron(_result_window, A_BOLD);
-        waddnstr(_result_window, p, _result->SearchString.length());
+        waddnstr(_result_window, p, search_string_length);
         wattroff(_result_window, A_BOLD);
         wattroff(_result_window, A_UNDERLINE);
-        p += _result->SearchString.length();
-        waddnstr(_result_window, p, -1);
+        p += search_string_length;
+        remaining_line_length -= search_string_length;
+        waddnstr(_result_window, p, remaining_line_length);
 
-        wclrtoeol(_result_window);
+        // wclrtoeol(_result_window);
 
         if (is_selected_hit) {
           wattroff(_result_window, A_STANDOUT);
