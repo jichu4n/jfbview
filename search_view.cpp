@@ -85,7 +85,7 @@ SearchView::SearchView(Document* document)
   // 2. Construct result and status windows.
   _result_window = derwin(
       window, window_height - 1 - 1 - 1, window_width, 1 + 1, 0);
-  _context_text_length = 
+  _context_text_length =
       window_width - strlen(_PAGE_NUMBER_PREFIX) - _PAGE_NUMBER_WIDTH;
   _status_window = derwin(
       window, 1, window_width, window_height - 1, 0);

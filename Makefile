@@ -52,6 +52,9 @@ JFBVIEW_SRCS := $(LIB_SRCS) \
 JPDFCAT_SRCS := $(LIB_SRCS) \
     jpdfcat.cpp
 
+JPDFGREP_SRCS := $(LIB_SRCS) \
+    jpdfgrep.cpp
+
 
 all: jfbview
 
@@ -84,4 +87,6 @@ jfbpdf: $(JFBVIEW_SRCS)
 	    $(LDLIBS) $(LIBS)
 
 jpdfcat: $(JPDFCAT_SRCS:.cpp=.o)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
+jpdfgrep: $(JPDFGREP_SRCS:.cpp=.o)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
