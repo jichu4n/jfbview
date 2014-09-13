@@ -71,6 +71,8 @@ class SearchView : public UIView {
   // The maximum number of search results will be rounded for display to
   // multiples of the following number.
   enum { _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING = 100 };
+  // The context text length to request and display.
+  int _context_text_length;
 
   // The document to search.
   Document* const _document;

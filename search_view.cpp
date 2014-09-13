@@ -85,6 +85,8 @@ SearchView::SearchView(Document* document)
   // 2. Construct result and status windows.
   _result_window = derwin(
       window, window_height - 1 - 1 - 1, window_width, 1 + 1, 0);
+  _context_text_length = 
+      window_width - strlen(_PAGE_NUMBER_PREFIX) - _PAGE_NUMBER_WIDTH;
   _status_window = derwin(
       window, 1, window_width, window_height - 1, 0);
   wbkgdset(_status_window, A_STANDOUT);
@@ -151,7 +153,6 @@ void SearchView::Render() {
         if (is_selected_hit) {
           wattron(_result_window, A_STANDOUT);
         }
-        int remaining_line_length = result_window_width;
 
         // 1.1. Page number.
         wattron(_result_window, A_BOLD);
@@ -162,26 +163,33 @@ void SearchView::Render() {
             _result_window,
             i, 0, buffer.str().c_str());
         wattroff(_result_window, A_BOLD);
-        remaining_line_length -= buffer.str().length();
 
         // 1.2. Context.
-        const char* p = hit.ContextText.c_str();
-        waddnstr(_result_window, p, hit.SearchStringPosition);
-        p += hit.SearchStringPosition;
-        remaining_line_length -= hit.SearchStringPosition;
+        int offset = 0;
+        waddnstr(
+            _result_window,
+            hit.ContextText.c_str() + offset,
+            hit.SearchStringPosition);
+        offset += hit.SearchStringPosition;
         const int search_string_length = std::min(
-            remaining_line_length,
+            _context_text_length - offset,
             static_cast<int>(_result->SearchString.length()));
         wattron(_result_window, A_UNDERLINE);
         wattron(_result_window, A_BOLD);
-        waddnstr(_result_window, p, search_string_length);
+        waddnstr(
+            _result_window,
+            hit.ContextText.c_str() + offset,
+            search_string_length);
         wattroff(_result_window, A_BOLD);
         wattroff(_result_window, A_UNDERLINE);
-        p += search_string_length;
-        remaining_line_length -= search_string_length;
-        waddnstr(_result_window, p, remaining_line_length);
+        offset += search_string_length;
+        assert(_context_text_length >= offset);
+        waddnstr(
+            _result_window,
+            hit.ContextText.c_str() + offset,
+            _context_text_length - offset);
 
-        // wclrtoeol(_result_window);
+        wclrtoeol(_result_window);
 
         if (is_selected_hit) {
           wattroff(_result_window, A_STANDOUT);
@@ -379,8 +387,6 @@ void SearchView::Search() {
   getmaxyx(window, window_height, window_width);
   int result_window_height, result_window_width;
   getmaxyx(_result_window, result_window_height, result_window_width);
-  const int context_text_length =
-      result_window_width - strlen(_PAGE_NUMBER_PREFIX) - _PAGE_NUMBER_WIDTH;
   const int max_num_search_hits = std::max(
       result_window_height * _MAX_NUM_SEARCH_HITS_FACTOR,
       static_cast<int>(_MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING));
@@ -407,7 +413,7 @@ void SearchView::Search() {
       result = std::make_unique<Document::SearchResult>(_document->Search(
           search_string,
           search_start_page,
-          context_text_length,
+          _context_text_length,
           max_num_search_hits));
       std::unique_lock<std::mutex> search_thread_result_lock(result_mutex);
       result_cond.notify_all();
