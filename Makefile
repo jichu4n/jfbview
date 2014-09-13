@@ -67,7 +67,7 @@ lint:
 
 .PHONY: clean
 clean:
-	-rm -f *.o *.d jfbview jfbpdf jpdfcat
+	-rm -f *.o *.d jfbview jfbpdf jpdfcat jpdfgrep
 
 %.d: %.cpp
 	@$(SHELL) -ec '$(CXX) -MM $(CXXFLAGS) $< \
