@@ -1,6 +1,6 @@
 .\" Manpage for JFBView.
 .\" Contact jichuan89 AT gmail DOT com to correct errors or typos.
-.TH man 1 "10 Nov 2012" "2012-11-10" "JFBView Man Page"
+.TH man 1 "23 Sep 2014" "2014-09-23" "JFBView Man Page"
 .SH NAME
 JFBView \- PDF and image viewer for the Linux framebuffer.
 .SH SYNOPSIS
@@ -52,6 +52,12 @@ a number. These are shown with a [n] prefix below.
 \fBq\fR
 Quit.
 .TP
+\fBTab\fR
+Open \fBOUTLINE VIEW\fR (table of contents, i.e., TOC; see below).
+.TP
+\fB/\fR
+Open \fBSEARCH VIEW\fR (see below).
+.TP
 [n]\fBarrow keys\fR, [n]\fBh\fR/\fBl\fR/\fBk\fR/\fBj\fR
 Move left/right/up/down.
 .TP
@@ -75,9 +81,6 @@ Zoom to screen width.
 .TP
 \fBa\fR
 Zoom to fit.
-.TP
-\fBTab\fR
-Open outline view (table of contents).
 .TP
 \fBHOME\fR/\fBEND\fR
 Go to first / last page in document.
@@ -116,6 +119,9 @@ Toggle outline view.
 \fBj\fR/\fBDown\fR, \fBk\fR/\fBUp\fR
 Move down or up.
 .TP
+\fBPageDown\fR/\fBPageUp\fR
+Go down / up one page.
+.TP
 \fBEnter\fR/\fBg\fR
 Go to selected item.
 .TP
@@ -127,6 +133,32 @@ Unfold all.
 .TP
 \fBzM\fR
 Fold all.
+.SH KEY BINDINGS - SEARCH VIEW - SEARCH TEXT
+.TP
+\fBEsc\fR
+Toggle search view.
+.TP
+\fBEnter\fR
+Start search.
+.TP
+\fBTab\fR/\fBDown\fR/\fBPageDown\fR
+Go to search results.
+.SH KEY BINDINGS - SEARCH VIEW - SEARCH RESULTS
+.TP
+\fBq\fR/\fBEsc\fR
+Toggle search view.
+.TP
+\fBSpace\fR/\fBEnter\fR/\fBg\fR
+Go to selected item.
+.TP
+\fBj\fR/\fBDown\fR, \fBk\fR/\fBUp\fR
+Move down or up.
+.TP
+\fBPageDown\fR/\fBPageUp\fR
+Go down / up one page.
+.TP
+\fBTab\fR/\fB/\fR
+Go to search text.
 .SH BUGS
 This software is still experimental and thus likely contains lots of bugs. You
 are welcome to submit any bugs or improvement suggestions to the author.

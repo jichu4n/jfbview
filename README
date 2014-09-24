@@ -4,16 +4,17 @@ JFBView
 JFBView is a PDF and image viewer for the Linux framebuffer. It is very fast and
 has a number of advanced and unique features including:
 
-  * Supports arbitrary zoom (10% - 1000%) and rotation.
-  * Table of Contents (TOC) viewer for PDF documents.
-  * Multi-threaded rendering on multi-core core machines.
-  * Asynchronous background rendering of the next page.
+  * Arbitrary zoom (10% - 1000%) and rotation;
+  * Table of Contents (TOC) viewer for PDF documents;
+  * Interactive search for PDF documents;
+  * Multi-threaded rendering;
+  * Asynchronous background pre-caching;
   * Customizable multi-threaded caching.
 
 The home page of JFBView is at http://seasonofcode.com/pages/jfbview.html.
 
 Please refer to the home page for more information, including installation
-instructions.
+instructions and usage.
 
 BUILDING
 --------
