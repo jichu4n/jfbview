@@ -6,7 +6,7 @@ has a number of advanced and unique features including:
 
   * Arbitrary zoom (10% - 1000%) and rotation;
   * Table of Contents (TOC) viewer for PDF documents;
-  * Interactive search for PDF documents;
+  * Interactive text search for PDF documents;
   * Multi-threaded rendering;
   * Asynchronous background pre-caching;
   * Customizable multi-threaded caching.
