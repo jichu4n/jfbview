@@ -145,7 +145,7 @@ int PDFDocument::Lookup(const OutlineItem* item) {
 std::vector<Document::SearchHit> PDFDocument::SearchOnPage(
     const std::string& search_string, int page, int context_length) {
   const size_t margin =
-      context_length > search_string.length() ?
+      context_length > static_cast<int>(search_string.length()) ?
       (context_length - search_string.length() + 1) / 2 :
       0;
 
@@ -204,7 +204,7 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
           // go for 8.
           char buffer[8];
           const int num_bytes = fz_runetochar(buffer, c);
-          assert(num_bytes <= sizeof(buffer));
+          assert(num_bytes <= static_cast<int>(sizeof(buffer)));
           buffer[num_bytes] = '\0';
           r += buffer;
         }

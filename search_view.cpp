@@ -257,7 +257,8 @@ void SearchView::ProcessKeySearchStringFieldMode(int key) {
       }
       break;
     case KEY_RIGHT:
-      if (_search_string_field_cursor_position < search_string.length()) {
+      if (_search_string_field_cursor_position <
+          static_cast<int>(search_string.length())) {
         form_driver(_search_form, REQ_NEXT_CHAR);
       }
       break;
@@ -333,7 +334,7 @@ void SearchView::ProcessKeyRegularMode(int key) {
     case 'g':
       if (_result && !_result->SearchHits.empty()) {
         assert(_selected_index >= 0);
-        assert(_selected_index < _result->SearchHits.size());
+        assert(_selected_index < static_cast<int>(_result->SearchHits.size()));
         _selected_page = _result->SearchHits[_selected_index].Page;
         ExitEventLoop();
       }

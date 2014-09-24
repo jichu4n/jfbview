@@ -47,7 +47,7 @@ Document::SearchResult Document::Search(
   SearchResult result;
   result.SearchString = search_string;
   for (result.LastSearchedPage = start_page;
-       (result.SearchHits.size() < max_num_search_hits) &&
+       (static_cast<int>(result.SearchHits.size()) < max_num_search_hits) &&
        (result.LastSearchedPage < GetNumPages());
        ++result.LastSearchedPage) {
     const std::vector<SearchHit>& hits_on_page = SearchOnPage(
