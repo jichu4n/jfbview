@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <jichuan89@gmail.com>                   *
+ *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                   *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -452,7 +452,7 @@ class ReloadCommand : public StateCommand {
 // Help text printed by --help or -h.
 static const char* HELP_STRING =
     JFBVIEW_PROGRAM_NAME " v0.2\n"
-    "Copyright (C) 2012-2014 Chuan Ji <jichuan89@gmail.com>\n"
+    "Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>\n"
     "\n"
     "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
     "you may not use this file except in compliance with the License.\n"
