@@ -41,7 +41,8 @@ PDFDocument* PDFDocument::Open(const std::string& path,
   pdf_document* raw_pdf_document = nullptr;
   fz_try(context) {
     raw_pdf_document = pdf_open_document(context, path.c_str());
-    if ((raw_pdf_document == nullptr) || (!pdf_count_pages(raw_pdf_document))) {
+    if ((raw_pdf_document == nullptr) ||
+        (!pdf_count_pages(context, raw_pdf_document))) {
       fz_throw(
           context,
           FZ_ERROR_GENERIC,
@@ -50,9 +51,9 @@ PDFDocument* PDFDocument::Open(const std::string& path,
     }
   } fz_catch(context) {
     if (raw_pdf_document != nullptr) {
-      pdf_close_document(raw_pdf_document);
+      pdf_close_document(context, raw_pdf_document);
     }
-    fz_free_context(context);
+    fz_drop_context(context);
     return nullptr;
   }
 
@@ -72,12 +73,12 @@ PDFDocument::~PDFDocument() {
   // (_pdf_document, _fz_context) to still exist.
   _page_cache.reset();
 
-  pdf_close_document(_pdf_document);
-  fz_free_context(_fz_context);
+  pdf_close_document(_fz_context, _pdf_document);
+  fz_drop_context(_fz_context);
 }
 
 int PDFDocument::GetNumPages() {
-  return pdf_count_pages(_pdf_document);
+  return pdf_count_pages(_fz_context, _pdf_document);
 }
 
 const Document::PageSize PDFDocument::GetPageSize(
@@ -104,7 +105,7 @@ void PDFDocument::Render(
 
   // 2. Render page.
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
-  pdf_run_page(_pdf_document, page_struct, dev, &m, nullptr);
+  pdf_run_page(_fz_context, page_struct, dev, &m, nullptr);
 
   // 3. Write pixmap to buffer. The page is vertically divided into n equal
   // stripes, each copied to pw by one thread.
@@ -129,12 +130,12 @@ void PDFDocument::Render(
   });
 
   // 4. Clean up.
-  fz_free_device(dev);
+  fz_drop_device(_fz_context, dev);
   fz_drop_pixmap(_fz_context, pixmap);
 }
 
 const Document::OutlineItem* PDFDocument::GetOutline() {
-  fz_outline* src = pdf_load_outline(_pdf_document);
+  fz_outline* src = pdf_load_outline(_fz_context, _pdf_document);
   return (src == nullptr) ? nullptr : PDFOutlineItem::Build(_fz_context, src);
 }
 
@@ -176,9 +177,10 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   //
   // I've no idea what fz_{begin,end}_page do, but without them pdf_run_page
   // segfaults :-/
-  fz_begin_page(dev, &fz_infinite_rect, &fz_identity);
-  pdf_run_page(_pdf_document, page_struct, dev, &fz_identity, nullptr);
-  fz_end_page(dev);
+  fz_begin_page(_fz_context, dev, &fz_infinite_rect, &fz_identity);
+  pdf_run_page(
+      _fz_context, page_struct, dev, &fz_identity, nullptr);
+  fz_end_page(_fz_context, dev);
 
   // 3. Build text.
   std::string r;
@@ -216,9 +218,9 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   }
 
   // 4. Clean up.
-  fz_free_device(dev);
-  fz_free_text_page(_fz_context, text_page);
-  fz_free_text_sheet(_fz_context, text_sheet);
+  fz_drop_device(_fz_context, dev);
+  fz_drop_text_page(_fz_context, text_page);
+  fz_drop_text_sheet(_fz_context, text_sheet);
 
   return r;
 }
@@ -244,7 +246,7 @@ PDFDocument::PDFOutlineItem* PDFDocument::PDFOutlineItem::Build(
   PDFOutlineItem* root = nullptr;
   std::vector<std::unique_ptr<OutlineItem>> items;
   BuildRecursive(src, &items);
-  fz_free_outline(ctx, src);
+  fz_drop_outline(ctx, src);
   if (items.empty()) {
     return nullptr;
   } else if (items.size() == 1) {
@@ -280,13 +282,13 @@ PDFDocument::PDFPageCache::~PDFPageCache() {
 
 pdf_page* PDFDocument::PDFPageCache::Load(const int& page) {
   std::unique_lock<std::mutex> lock(_mutex);
-  return pdf_load_page(_parent->_pdf_document, page);
+  return pdf_load_page(_parent->_fz_context, _parent->_pdf_document, page);
 }
 
 void PDFDocument::PDFPageCache::Discard(
     const int& page, pdf_page* const& page_struct) {
   std::unique_lock<std::mutex> lock(_mutex);
-  pdf_free_page(_parent->_pdf_document, page_struct);
+  pdf_drop_page(_parent->_fz_context, page_struct);
 }
 
 pdf_page* PDFDocument::GetPage(int page) {
@@ -308,5 +310,5 @@ fz_irect PDFDocument::GetBoundingBox(
   fz_rect bbox;
   fz_irect ibbox;
   return *fz_round_rect(&ibbox, fz_transform_rect(
-      pdf_bound_page(_pdf_document, page_struct, &bbox), &m));
+      pdf_bound_page(_fz_context, page_struct, &bbox), &m));
 }
