@@ -36,6 +36,12 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <csignal>
+#include <unistd.h>
+#include <stropts.h>
+#include <fcntl.h>
+#include <linux/vt.h>
+#include <sys/prctl.h>
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -677,6 +683,35 @@ std::unique_ptr<Registry> BuildRegistry() {
   return registry;
 }
 
+static void DetectVTChange(pid_t parent) {
+  struct vt_event e;
+  struct vt_stat s;
+  
+  int fd = open("/dev/tty", O_RDONLY);
+  if (fd == -1)
+    return;
+  
+  if (ioctl(fd, VT_GETSTATE, &s) == -1)
+    goto out;
+  for (;;) {
+    if (ioctl(fd, VT_WAITEVENT, &e) == -1)
+      goto out;
+    if (e.newev == s.v_active) {
+      if (ioctl(fd, VT_WAITACTIVE, (int)(s.v_active)) == -1)
+	goto out;
+      if (kill(parent, SIGWINCH))
+        goto out;
+      // I wanted to use SIGRTMIN, but getch was not interrupted.
+      // So instead, I choiced SIGWINCH because getch already
+      // recognises this (and returns KEY_RESIZE), and the program
+      // should support SIGWINCH and perform the same action anyways.
+    }
+  }
+  
+ out:
+  close(fd);
+}
+
 int main(int argc, char* argv[]) {
   // Main program state.
   State state;
@@ -717,8 +752,25 @@ int main(int argc, char* argv[]) {
   state.SearchViewInst = std::make_unique<SearchView>(
       state.DocumentInst.get());
 
+  pid_t parent = getpid();
+  if (!fork()) {
+    if (prctl(PR_SET_PDEATHSIG, SIGTERM) == -1) {
+      exit(EXIT_FAILURE);
+    }
+    // Possible race condition. Cannot be fixed by doing before
+    // fork, because this is cleared at fork. Instead, we now
+    // check that we have not been reparented. This should
+    // nullify the race condition.
+    if (getppid() != parent) {
+      exit(EXIT_SUCCESS);
+    }
+    DetectVTChange(parent);
+    exit(EXIT_FAILURE);
+  }
+
   // 2. Main event loop.
   state.Render = true;
+  int repeat = Command::NO_REPEAT;
   do {
     // 2.1 Render.
     if (state.Render) {
@@ -729,7 +781,6 @@ int main(int argc, char* argv[]) {
     state.Render = true;
 
     // 2.2. Grab input.
-    int repeat = Command::NO_REPEAT;
     int c;
     while (isdigit(c = getch())) {
       if (repeat == Command::NO_REPEAT) {
@@ -738,9 +789,13 @@ int main(int argc, char* argv[]) {
         repeat = repeat * 10 + c - '0';
       }
     }
+    if (c == KEY_RESIZE) {
+      continue;
+    }
 
     // 2.3. Run command.
     registry->Dispatch(c, repeat, &state);
+    repeat = Command::NO_REPEAT;
   } while (!state.Exit);
 
 
