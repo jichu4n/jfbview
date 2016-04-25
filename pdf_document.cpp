@@ -170,20 +170,12 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   // 1. Init MuPDF structures.
   pdf_page* page_struct = GetPage(page);
   fz_stext_sheet* text_sheet = fz_new_stext_sheet(_fz_context);
-  fz_stext_page* text_page = fz_new_stext_page(_fz_context);
-  fz_device* dev = fz_new_stext_device(_fz_context, text_sheet, text_page);
 
   // 2. Render page.
-  //
-  // I've no idea what fz_{begin,end}_page do, but without them pdf_run_page
-  // segfaults :-/
-  // fz_begin_page(_fz_context, page_struct, dev, &fz_infinite_rect, &fz_identity);
-  fz_run_page(_fz_context, &(page_struct->super), dev, &fz_identity, nullptr);
-  pdf_run_page(
-      _fz_context, page_struct, dev, &fz_identity, nullptr);
-  // fz_end_page(_fz_context, dev);
-
-  text_page = fz_new_stext_page_from_page(_fz_context, &(page_struct->super), text_sheet);
+  // The function below is a wrapper around fz_run_page that uses a fresh
+  // device. We can't use pdf_run_page to gather the text for us.
+  // These notes are also left in here in case MuPDF's API changes again.
+  fz_stext_page* text_page = fz_new_stext_page_from_page(_fz_context, &(page_struct->super), text_sheet);
 
   // 3. Build text.
   std::string r;
@@ -221,7 +213,6 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   }
 
   // 4. Clean up.
-  fz_drop_device(_fz_context, dev);
   fz_drop_stext_page(_fz_context, text_page);
   fz_drop_stext_sheet(_fz_context, text_sheet);
 
