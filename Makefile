@@ -27,7 +27,7 @@ LIBS := \
     -lz \
     -lopenjp2 \
     -lmupdf \
-    -lmujs \
+    -lmupdfthird \
     -lssl \
     -lcrypto
 JFBVIEW_LIBS := $(LIBS) -lImlib2
