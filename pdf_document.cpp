@@ -51,7 +51,7 @@ PDFDocument* PDFDocument::Open(const std::string& path,
     }
   } fz_catch(context) {
     if (raw_pdf_document != nullptr) {
-      pdf_close_document(context, raw_pdf_document);
+      pdf_drop_document(context, raw_pdf_document);
     }
     fz_drop_context(context);
     return nullptr;
@@ -73,7 +73,7 @@ PDFDocument::~PDFDocument() {
   // (_pdf_document, _fz_context) to still exist.
   _page_cache.reset();
 
-  pdf_close_document(_fz_context, _pdf_document);
+  pdf_drop_document(_fz_context, _pdf_document);
   fz_drop_context(_fz_context);
 }
 
@@ -169,18 +169,13 @@ std::vector<Document::SearchHit> PDFDocument::SearchOnPage(
 std::string PDFDocument::GetPageText(int page, int line_sep) {
   // 1. Init MuPDF structures.
   pdf_page* page_struct = GetPage(page);
-  fz_text_sheet* text_sheet = fz_new_text_sheet(_fz_context);
-  fz_text_page* text_page = fz_new_text_page(_fz_context);
-  fz_device* dev = fz_new_text_device(_fz_context, text_sheet, text_page);
+  fz_stext_sheet* text_sheet = fz_new_stext_sheet(_fz_context);
 
   // 2. Render page.
-  //
-  // I've no idea what fz_{begin,end}_page do, but without them pdf_run_page
-  // segfaults :-/
-  fz_begin_page(_fz_context, dev, &fz_infinite_rect, &fz_identity);
-  pdf_run_page(
-      _fz_context, page_struct, dev, &fz_identity, nullptr);
-  fz_end_page(_fz_context, dev);
+  // The function below is a wrapper around fz_run_page that uses a fresh
+  // device. We can't use pdf_run_page to gather the text for us.
+  // These notes are also left in here in case MuPDF's API changes again.
+  fz_stext_page* text_page = fz_new_stext_page_from_page(_fz_context, &(page_struct->super), text_sheet);
 
   // 3. Build text.
   std::string r;
@@ -191,13 +186,13 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
     if (page_block->type != FZ_PAGE_BLOCK_TEXT) {
       continue;
     }
-    fz_text_block* const text_block = page_block->u.text;
+    fz_stext_block* const text_block = page_block->u.text;
     assert(text_block != nullptr);
-    for (fz_text_line* text_line = text_block->lines;
+    for (fz_stext_line* text_line = text_block->lines;
          text_line < text_block->lines + text_block->len;
          ++text_line) {
       assert(text_line != nullptr);
-      for (fz_text_span* text_span = text_line->first_span;
+      for (fz_stext_span* text_span = text_line->first_span;
            text_span != nullptr;
            text_span = text_span->next) {
         for (int i = 0; i < text_span->len; ++i) {
@@ -218,9 +213,8 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   }
 
   // 4. Clean up.
-  fz_drop_device(_fz_context, dev);
-  fz_drop_text_page(_fz_context, text_page);
-  fz_drop_text_sheet(_fz_context, text_sheet);
+  fz_drop_stext_page(_fz_context, text_page);
+  fz_drop_stext_sheet(_fz_context, text_sheet);
 
   return r;
 }
