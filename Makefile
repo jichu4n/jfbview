@@ -16,64 +16,79 @@
 #                                                                             #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-CXXFLAGS := -std=c++1y -Wall -O2
-LIBS := \
-    -lpthread \
-    -lform \
-    -lncurses \
-    -lfreetype \
-    -ljbig2dec \
-    -ljpeg \
-    -lz \
-    -lopenjp2 \
-    -lmupdf \
-    -lmupdfthird \
-    -lssl \
-    -lcrypto
-JFBVIEW_LIBS := $(LIBS) -lImlib2
+CXXFLAGS := -Wall -O2
+override CXXFLAGS += -std=c++1y
 
-LIB_SRCS := \
-    command.cpp \
-    document.cpp \
-    framebuffer.cpp \
-    image_document.cpp \
-    multithreading.cpp \
-    outline_view.cpp \
-    pdf_document.cpp \
-    pixel_buffer.cpp \
-    search_view.cpp \
-    string_utils.cpp \
-    ui_view.cpp \
-    viewer.cpp
+ifdef MUPDF_VERSION
 
-JFBVIEW_SRCS := $(LIB_SRCS) \
-    main.cpp
+  override CXXFLAGS += $(MUPDF_VERSION_FLAG)
 
-JPDFCAT_SRCS := $(LIB_SRCS) \
-    jpdfcat.cpp
+  LIBS := \
+      -lpthread \
+      -lform \
+      -lncurses \
+      -lharfbuzz \
+      -lfreetype \
+      -lz \
+      -ljbig2dec \
+      -ljpeg \
+      -lopenjp2 \
+      -lssl \
+      -lcrypto \
+      -lmupdf
+  ifeq ($(shell [ $(MUPDF_VERSION) -ge 10009 ]; echo $$?), 0)
+    LIBS += -lmupdfthird
+  else
+    LIBS += -lmujs
+  endif
 
-JPDFGREP_SRCS := $(LIB_SRCS) \
-    jpdfgrep.cpp
+  JFBVIEW_LIBS := $(LIBS) -lImlib2
+
+  COMMON_SRCS := \
+      command.cpp \
+      document.cpp \
+      framebuffer.cpp \
+      image_document.cpp \
+      multithreading.cpp \
+      outline_view.cpp \
+      pdf_document.cpp \
+      pixel_buffer.cpp \
+      search_view.cpp \
+      string_utils.cpp \
+      ui_view.cpp \
+      viewer.cpp
+
+  JFBVIEW_SRCS := $(COMMON_SRCS) \
+      main.cpp
+
+  JPDFCAT_SRCS := $(COMMON_SRCS) \
+      jpdfcat.cpp
+
+  JPDFGREP_SRCS := $(COMMON_SRCS) \
+      jpdfgrep.cpp
+
+endif
 
 
-all: jfbview
+.PHONY: all
+all: detect_mupdf_version
+	$(MAKE) \
+	    MUPDF_VERSION=$(MUPDF_VERSION) \
+	    MUPDF_VERSION_FLAG=-DMUPDF_VERSION=$(MUPDF_VERSION) \
+	    jfbview \
+	    jpdfcat \
+	    jpdfgrep
 
-.PHONY: lint
-lint:
-	cpplint \
-	    --extensions=hpp,cpp \
-	    --filter=-build/c++11,-readability/streams \
-	    *.{h,c}pp
+.PHONY: detect_mupdf_version
+detect_mupdf_version: mupdf_version
+	$(eval MUPDF_VERSION = $(shell ./$^))
+	@echo '============================='
+	@echo "Detected MuPDF version $(MUPDF_VERSION)"
+	@echo '============================='
 
-.PHONY: clean
-clean:
-	-rm -f *.o *.d jfbview jfbpdf jpdfcat jpdfgrep
-
-%.d: %.cpp
-	@$(SHELL) -ec '$(CXX) -MM $(CXXFLAGS) $< \
-	  | sed '\''s/\($*\)\.o[ :]*/\1.o $@ : /g'\'' > $@; \
-	  [ -s $@ ] || rm -f $@'
--include $(SRCS:.cpp=.d)
+# mupdf_version only depends on -lmupdf.
+mupdf_version: mupdf_version.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) -lmupdf
 
 jfbview: $(JFBVIEW_SRCS:.cpp=.o)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
@@ -88,5 +103,19 @@ jfbpdf: $(JFBVIEW_SRCS)
 
 jpdfcat: $(JPDFCAT_SRCS:.cpp=.o)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
+
 jpdfgrep: $(JPDFGREP_SRCS:.cpp=.o)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
+
+
+.PHONY: lint
+lint:
+	cpplint \
+	    --extensions=hpp,cpp \
+	    --filter=-build/c++11,-readability/streams \
+	    *.{h,c}pp
+
+.PHONY: clean
+clean:
+	-rm -f *.o *.d mupdf_version jfbview jfbpdf jpdfcat jpdfgrep
+
