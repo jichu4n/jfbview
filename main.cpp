@@ -30,18 +30,18 @@
 
 #include <curses.h>
 #include <locale.h>
+#include <fcntl.h>
 #include <getopt.h>
+#include <linux/vt.h>
+#include <stropts.h>
+#include <sys/prctl.h>
+#include <unistd.h>
 #include <cctype>
 #include <climits>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <csignal>
-#include <unistd.h>
-#include <stropts.h>
-#include <fcntl.h>
-#include <linux/vt.h>
-#include <sys/prctl.h>
 #include <algorithm>
 #include <map>
 #include <memory>
@@ -686,28 +686,33 @@ std::unique_ptr<Registry> BuildRegistry() {
 static void DetectVTChange(pid_t parent) {
   struct vt_event e;
   struct vt_stat s;
-  
+
   int fd = open("/dev/tty", O_RDONLY);
-  if (fd == -1)
+  if (fd == -1) {
     return;
-  
-  if (ioctl(fd, VT_GETSTATE, &s) == -1)
+  }
+
+  if (ioctl(fd, VT_GETSTATE, &s) == -1) {
     goto out;
+  }
   for (;;) {
-    if (ioctl(fd, VT_WAITEVENT, &e) == -1)
+    if (ioctl(fd, VT_WAITEVENT, &e) == -1) {
       goto out;
+    }
     if (e.newev == s.v_active) {
-      if (ioctl(fd, VT_WAITACTIVE, (int)(s.v_active)) == -1)
-	goto out;
-      if (kill(parent, SIGWINCH))
+      if (ioctl(fd, VT_WAITACTIVE, static_cast<int>(s.v_active)) == -1) {
         goto out;
-      // I wanted to use SIGRTMIN, but getch was not interrupted.
-      // So instead, I choiced SIGWINCH because getch already
-      // recognises this (and returns KEY_RESIZE), and the program
-      // should support SIGWINCH and perform the same action anyways.
+      }
+      if (kill(parent, SIGWINCH)) {
+        goto out;
+        // I wanted to use SIGRTMIN, but getch was not interrupted.
+        // So instead, I choiced SIGWINCH because getch already
+        // recognises this (and returns KEY_RESIZE), and the program
+        // should support SIGWINCH and perform the same action anyways.
+      }
     }
   }
-  
+
  out:
   close(fd);
 }

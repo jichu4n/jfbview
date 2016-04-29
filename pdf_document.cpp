@@ -32,6 +32,19 @@ extern "C" {
 #include "multithreading.hpp"
 #include "string_utils.hpp"
 
+#if MUPDF_VERSION < 10009
+#  define pdf_drop_document pdf_close_document
+#  define fz_stext_sheet fz_text_sheet
+#  define fz_stext_page fz_text_page
+#  define fz_stext_block fz_text_block
+#  define fz_stext_line fz_text_line
+#  define fz_stext_span fz_text_span
+#  define fz_new_stext_sheet fz_new_text_sheet
+#  define fz_drop_stext_sheet fz_drop_text_sheet
+#  define fz_new_stext_page_from_page fz_new_text_page_from_page
+#  define fz_drop_stext_page fz_drop_text_page
+#endif
+
 const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
     "TABLE OF CONTENTS";
 
@@ -175,7 +188,8 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   // The function below is a wrapper around fz_run_page that uses a fresh
   // device. We can't use pdf_run_page to gather the text for us.
   // These notes are also left in here in case MuPDF's API changes again.
-  fz_stext_page* text_page = fz_new_stext_page_from_page(_fz_context, &(page_struct->super), text_sheet);
+  fz_stext_page* text_page = fz_new_stext_page_from_page(
+      _fz_context, &(page_struct->super), text_sheet);
 
   // 3. Build text.
   std::string r;
