@@ -33,13 +33,19 @@ ifdef MUPDF_VERSION
       -ljbig2dec \
       -ljpeg \
       -lopenjp2 \
-      -lssl \
-      -lcrypto \
       -lmupdf
   ifeq ($(shell [ $(MUPDF_VERSION) -ge 10009 ]; echo $$?), 0)
-    LIBS += -lmupdfthird
+    LIBS += -lmupdfthird \
+	-lssl \
+	-lcrypto
   else
-    LIBS += -lmujs
+  ifeq ($(shell [ $(MUPDF_VERSION) -ge 10004 ]; echo $$?), 0)
+    LIBS += -lmujs \
+	-lssl \
+	-lcrypto
+  else
+    LIBS += -lmupdf-js-none
+  endif
   endif
 
   JFBVIEW_LIBS := $(LIBS) -lImlib2
