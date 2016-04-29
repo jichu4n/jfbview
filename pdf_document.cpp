@@ -39,10 +39,44 @@ extern "C" {
 #  define fz_stext_block fz_text_block
 #  define fz_stext_line fz_text_line
 #  define fz_stext_span fz_text_span
+#  define fz_new_stext_device fz_new_text_device
 #  define fz_new_stext_sheet fz_new_text_sheet
 #  define fz_drop_stext_sheet fz_drop_text_sheet
 #  define fz_new_stext_page_from_page fz_new_text_page_from_page
 #  define fz_drop_stext_page fz_drop_text_page
+#endif
+
+#if MUPDF_VERSION >= 10007
+#  define pdf_run_page(context, pdf_document, page, dev, matrix, cookie) \
+       pdf_run_page((context), (page), (dev), (matrix), (cookie))
+#  define pdf_bound_page(context, pdf_document, page, bbox) \
+       pdf_bound_page((context), (page), (bbox))
+#  define pdf_drop_page(context, pdf_document, page) \
+       pdf_drop_page((context), (page))
+#else
+#  define pdf_run_page(context, pdf_document, page, dev, matrix, cookie) \
+       pdf_run_page((pdf_document), (page), (dev), (matrix), (cookie))
+#  define pdf_bound_page(context, pdf_document, page, bbox) \
+       pdf_bound_page((pdf_document), (page), (bbox))
+#  define fz_drop_context fz_free_context
+#  define fz_drop_device(context, dev) fz_free_device(dev)
+#  define fz_drop_text_page fz_free_text_page
+#  define fz_drop_text_sheet fz_free_text_sheet
+#  define fz_drop_outline fz_free_outline
+#  define pdf_drop_page(context, pdf_document, page) \
+       pdf_free_page((pdf_document), (page))
+#  define fz_begin_page(context, dev, rect, identity) \
+       (fz_begin_page((dev), (rect), (identity)))
+#  define fz_end_page(context, dev) \
+       (fz_end_page(dev))
+#  define pdf_count_pages(context, pdf_document) \
+       (pdf_count_pages(pdf_document))
+#  define pdf_load_page(context, pdf_document, page) \
+       (pdf_load_page((pdf_document), (page)))
+#  define pdf_load_outline(context, pdf_document) \
+       (pdf_load_outline(pdf_document))
+#  define pdf_close_document(context, pdf_document) \
+       (pdf_close_document(pdf_document))
 #endif
 
 const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
@@ -118,7 +152,7 @@ void PDFDocument::Render(
 
   // 2. Render page.
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
-  pdf_run_page(_fz_context, page_struct, dev, &m, nullptr);
+  pdf_run_page(_fz_context, _pdf_document, page_struct, dev, &m, nullptr);
 
   // 3. Write pixmap to buffer. The page is vertically divided into n equal
   // stripes, each copied to pw by one thread.
@@ -185,11 +219,22 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   fz_stext_sheet* text_sheet = fz_new_stext_sheet(_fz_context);
 
   // 2. Render page.
+#if MUPDF_VERSION >= 10009
   // The function below is a wrapper around fz_run_page that uses a fresh
   // device. We can't use pdf_run_page to gather the text for us.
   // These notes are also left in here in case MuPDF's API changes again.
   fz_stext_page* text_page = fz_new_stext_page_from_page(
       _fz_context, &(page_struct->super), text_sheet);
+#else
+  fz_stext_page* text_page = fz_new_text_page(_fz_context);
+  fz_device* dev = fz_new_stext_device(_fz_context, text_sheet, text_page);
+  // I've no idea what fz_{begin,end}_page do, but without them pdf_run_page
+  // segfaults :-/
+  fz_begin_page(_fz_context, dev, &fz_infinite_rect, &fz_identity);
+  pdf_run_page(
+      _fz_context, _pdf_document, page_struct, dev, &fz_identity, nullptr);
+  fz_end_page(_fz_context, dev);
+#endif
 
   // 3. Build text.
   std::string r;
@@ -296,7 +341,7 @@ pdf_page* PDFDocument::PDFPageCache::Load(const int& page) {
 void PDFDocument::PDFPageCache::Discard(
     const int& page, pdf_page* const& page_struct) {
   std::unique_lock<std::mutex> lock(_mutex);
-  pdf_drop_page(_parent->_fz_context, page_struct);
+  pdf_drop_page(_parent->_fz_context, _parent->_pdf_document, page_struct);
 }
 
 pdf_page* PDFDocument::GetPage(int page) {
@@ -318,5 +363,5 @@ fz_irect PDFDocument::GetBoundingBox(
   fz_rect bbox;
   fz_irect ibbox;
   return *fz_round_rect(&ibbox, fz_transform_rect(
-      pdf_bound_page(_fz_context, page_struct, &bbox), &m));
+      pdf_bound_page(_fz_context, _pdf_document, page_struct, &bbox), &m));
 }
