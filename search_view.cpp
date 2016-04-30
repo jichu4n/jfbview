@@ -35,6 +35,7 @@
 #include <string>
 #include <thread>
 #include "string_utils.hpp"
+#include "cpp_compat.hpp"
 
 using std::placeholders::_1;
 

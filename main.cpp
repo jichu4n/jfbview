@@ -53,6 +53,7 @@
 #include "search_view.hpp"
 #include "pdf_document.hpp"
 #include "viewer.hpp"
+#include "cpp_compat.hpp"
 
 // Main program state.
 struct State : public Viewer::State {
