@@ -20,6 +20,7 @@
 *.o
 *.d
 *.pyc
+jfbview.1.gz
 tags
 config.mk
 mupdf_version

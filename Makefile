@@ -19,6 +19,12 @@
 CXXFLAGS := -Wall -O2
 override CXXFLAGS += -std=c++1y
 
+PREFIX ?= /usr/local
+BINDIR := $(PREFIX)/bin
+DATADIR := $(PREFIX)/share
+DOCDIR := $(DATADIR)/doc/jfbview
+MANDIR := $(DATADIR)/man
+
 CONFIG_MK := config.mk
 
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -141,6 +147,17 @@ endif
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                     Misc                                    #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
+.PHONY: install
+install: all jfbview.1.gz
+	for bin in jfbview jpdfcat jpdfgrep; do \
+	  install -Dm755 ./$${bin} "$(BINDIR)/$${bin}"; \
+	done
+	install -Dm644 ./README "$(DOCDIR)/README"
+	install -Dm644 ./jfbview.1.gz "$(MANDIR)/man1/jfbview.1.gz"
+
+jfbview.1.gz: jfbview.1
+	cat $^ | gzip > $@
 
 .PHONY: lint
 lint:
