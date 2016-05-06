@@ -21,6 +21,7 @@
 *.d
 *.pyc
 tags
+config.mk
 mupdf_version
 jfbview
 jfbpdf

@@ -24,7 +24,7 @@
 
 // Implement std::make_unique for GCC < 4.9.
 #ifdef __GNUC__
-#  if !(__GNUC__ >= 4 && __GNUC_MINOR >= 9)
+#  if (__GNUC__ == 4 && __GNUC_MINOR < 9)
 namespace std {
 
 template<typename T, typename... Args>

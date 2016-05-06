@@ -1,6 +1,6 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
-#    Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                   #
+#    Copyright (C) 2012-2016 Chuan Ji <ji@chu4n.com>                          #
 #                                                                             #
 #    Licensed under the Apache License, Version 2.0 (the "License");          #
 #    you may not use this file except in compliance with the License.         #
@@ -19,82 +19,71 @@
 CXXFLAGS := -Wall -O2
 override CXXFLAGS += -std=c++1y
 
-ifdef MUPDF_VERSION
+CONFIG_MK := config.mk
 
-  override CXXFLAGS += $(MUPDF_VERSION_FLAG)
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                 Main Targets                                #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+ifeq ($(shell [ -f $(CONFIG_MK) ]; echo $$?), 0)
 
-  LIBS := \
-      -lpthread \
-      -lform \
-      -lncurses \
-      -lharfbuzz \
-      -lfreetype \
-      -lz \
-      -ljbig2dec \
-      -ljpeg \
-      -lopenjp2 \
-      -lmupdf
-  ifeq ($(shell [ $(MUPDF_VERSION) -ge 10009 ]; echo $$?), 0)
-    LIBS += -lmupdfthird \
-	-lssl \
-	-lcrypto
-  else
-  ifeq ($(shell [ $(MUPDF_VERSION) -ge 10004 ]; echo $$?), 0)
-    LIBS += -lmujs \
-	-lssl \
-	-lcrypto
-  else
-    LIBS += -lmupdf-js-none
-  endif
-  endif
+include $(CONFIG_MK)
 
-  JFBVIEW_LIBS := $(LIBS) -lImlib2
+override CXXFLAGS += -DMUPDF_VERSION=$(MUPDF_VERSION)
 
-  COMMON_SRCS := \
-      command.cpp \
-      document.cpp \
-      framebuffer.cpp \
-      image_document.cpp \
-      multithreading.cpp \
-      outline_view.cpp \
-      pdf_document.cpp \
-      pixel_buffer.cpp \
-      search_view.cpp \
-      string_utils.cpp \
-      ui_view.cpp \
-      viewer.cpp
-
-  JFBVIEW_SRCS := $(COMMON_SRCS) \
-      main.cpp
-
-  JPDFCAT_SRCS := $(COMMON_SRCS) \
-      jpdfcat.cpp
-
-  JPDFGREP_SRCS := $(COMMON_SRCS) \
-      jpdfgrep.cpp
-
+LIBS := \
+    -lpthread \
+    -lform \
+    -lncurses \
+    -lmupdf \
+    -lfreetype \
+    -lharfbuzz \
+    -lz \
+    -ljbig2dec \
+    -ljpeg \
+    -l$(OPENJP2)
+ifeq ($(shell [ $(MUPDF_VERSION) -ge 10009 ]; echo $$?), 0)
+  LIBS += -lmupdfthird \
+      -lssl \
+      -lcrypto
+else
+ifeq ($(shell [ $(MUPDF_VERSION) -ge 10004 ]; echo $$?), 0)
+  LIBS += -lmujs \
+      -lssl \
+      -lcrypto
+else
+  LIBS += -lmupdf-js-none
 endif
+endif
+
+JFBVIEW_LIBS := $(LIBS) -lImlib2
+
+COMMON_SRCS := \
+    command.cpp \
+    document.cpp \
+    framebuffer.cpp \
+    image_document.cpp \
+    multithreading.cpp \
+    outline_view.cpp \
+    pdf_document.cpp \
+    pixel_buffer.cpp \
+    search_view.cpp \
+    string_utils.cpp \
+    ui_view.cpp \
+    viewer.cpp
+
+JFBVIEW_SRCS := $(COMMON_SRCS) \
+    main.cpp
+
+JPDFCAT_SRCS := $(COMMON_SRCS) \
+    jpdfcat.cpp
+
+JPDFGREP_SRCS := $(COMMON_SRCS) \
+    jpdfgrep.cpp
 
 
 .PHONY: all
-all: detect_mupdf_version
-	$(MAKE) \
-	    MUPDF_VERSION=$(MUPDF_VERSION) \
-	    MUPDF_VERSION_FLAG=-DMUPDF_VERSION=$(MUPDF_VERSION) \
-	    jfbview \
-	    jpdfcat \
-	    jpdfgrep
+all: jfbview jpdfcat jpdfgrep
 
-.PHONY: detect_mupdf_version
-detect_mupdf_version: mupdf_version
-	$(eval MUPDF_VERSION = $(shell ./$^))
-	@echo '============================='
-	@echo "Detected MuPDF version $(MUPDF_VERSION)"
-	@echo '============================='
-
-# mupdf_version only depends on -lmupdf.
-mupdf_version: mupdf_version.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) -lmupdf
 
 jfbview: $(JFBVIEW_SRCS:.cpp=.o)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
@@ -114,6 +103,45 @@ jpdfgrep: $(JPDFGREP_SRCS:.cpp=.o)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) $(JFBVIEW_LIBS)
 
 
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                         Build Environment Detection                         #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+else
+
+.PHONY: all
+all: $(CONFIG_MK)
+	@$(MAKE)
+
+$(CONFIG_MK): detect_mupdf_version detect_libopenjp2
+	@echo
+	@echo '============================='
+	@echo "Detected configuration:"
+	@echo
+	@cat $(CONFIG_MK)
+	@echo '============================='
+	@echo
+
+.PHONY: detect_mupdf_version
+detect_mupdf_version: mupdf_version
+	$(eval MUPDF_VERSION = $(shell ./$^))
+	@echo "MUPDF_VERSION = $(MUPDF_VERSION)" >> $(CONFIG_MK)
+
+.PHONY: detect_libopenjp2
+detect_libopenjp2:
+	$(eval OPENJP2 = $(shell ldconfig -p | grep -q libopenjp2 && echo 'openjp2' || echo 'openjpeg'))
+	@echo "OPENJP2 = $(OPENJP2)" >> $(CONFIG_MK)
+
+# mupdf_version only depends on -lmupdf.
+mupdf_version: mupdf_version.cpp
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDLIBS) -lmupdf
+
+endif
+
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+#                                     Misc                                    #
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+
 .PHONY: lint
 lint:
 	cpplint \
@@ -123,5 +151,5 @@ lint:
 
 .PHONY: clean
 clean:
-	-rm -f *.o *.d mupdf_version jfbview jfbpdf jpdfcat jpdfgrep
+	-rm -f *.o *.d $(CONFIG_MK) mupdf_version jfbview jfbpdf jpdfcat jpdfgrep
 
