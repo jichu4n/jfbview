@@ -79,6 +79,13 @@ extern "C" {
        (pdf_close_document(pdf_document))
 #endif
 
+#if MUPDF_VERSION < 10010
+#  define fz_new_pixmap_with_bbox(context, colorspace, bbox, alpha) \
+       (fz_new_pixmap_with_bbox(context, colorspace, bbox))
+#  define fz_new_draw_device(context, transform, dest) \
+       (fz_new_draw_device(context, dest))
+#endif
+
 const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
     "TABLE OF CONTENTS";
 
@@ -147,8 +154,8 @@ void PDFDocument::Render(
   pdf_page* page_struct = GetPage(page);
   const fz_irect& bbox = GetBoundingBox(page_struct, m);
   fz_pixmap* pixmap = fz_new_pixmap_with_bbox(
-      _fz_context, fz_device_rgb(_fz_context), &bbox);
-  fz_device* dev = fz_new_draw_device(_fz_context, pixmap);
+      _fz_context, fz_device_rgb(_fz_context), &bbox, 1);
+  fz_device* dev = fz_new_draw_device(_fz_context, &fz_identity, pixmap);
 
   // 2. Render page.
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
@@ -219,7 +226,12 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   fz_stext_sheet* text_sheet = fz_new_stext_sheet(_fz_context);
 
   // 2. Render page.
-#if MUPDF_VERSION >= 10009
+#if MUPDF_VERSION >= 10010
+  fz_stext_options stext_options = { 0 };
+  // See #elif MUPDF_VERSION >= 10009 block below.
+  fz_stext_page* text_page = fz_new_stext_page_from_page(
+      _fz_context, &(page_struct->super), text_sheet, &stext_options);
+#elif MUPDF_VERSION >= 10009
   // The function below is a wrapper around fz_run_page that uses a fresh
   // device. We can't use pdf_run_page to gather the text for us.
   // These notes are also left in here in case MuPDF's API changes again.
@@ -286,7 +298,11 @@ PDFDocument::PDFOutlineItem::PDFOutlineItem(fz_outline* src) {
     _dest_page = -1;
   } else {
     _title = src->title;
+#if MUPDF_VERSION >= 10010
+    _dest_page = src->page;
+#else
     _dest_page = src->dest.ld.gotor.page;
+#endif
   }
 }
 
