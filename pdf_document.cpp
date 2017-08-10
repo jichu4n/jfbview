@@ -51,8 +51,13 @@ extern "C" {
        pdf_run_page((context), (page), (dev), (matrix), (cookie))
 #  define pdf_bound_page(context, pdf_document, page, bbox) \
        pdf_bound_page((context), (page), (bbox))
-#  define pdf_drop_page(context, pdf_document, page) \
-       pdf_drop_page((context), (page))
+#  if MUPDF_VERSION >= 10011
+#    define pdf_drop_page(context, pdf_document, page) \
+         fz_drop_page((context), &(page)->super)
+#  else
+#    define pdf_drop_page(context, pdf_document, page) \
+         pdf_drop_page((context), (page))
+#  endif
 #else
 #  define pdf_run_page(context, pdf_document, page, dev, matrix, cookie) \
        pdf_run_page((pdf_document), (page), (dev), (matrix), (cookie))
