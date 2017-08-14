@@ -718,6 +718,21 @@ static void DetectVTChange(pid_t parent) {
   close(fd);
 }
 
+static const char* FRAMEBUFFER_ERROR_HELP_STR = R"(
+Troubleshooting tips:
+
+1. Try adding yourself to the "video" group, e.g.:
+
+       sudo usermod -a -G video $USER
+
+   You will typically need to log out and back in for this to take effect.
+
+2. Try running this command as root, e.g. "sudo jfbview <file>".
+
+3. Verify that the framebuffer device exists. If not, please supply the correct
+   device with "--fb=<path to device>".
+)";
+
 int main(int argc, char* argv[]) {
   // Main program state.
   State state;
@@ -730,8 +745,11 @@ int main(int argc, char* argv[]) {
   }
   state.FramebufferInst.reset(Framebuffer::Open(state.FramebufferDevice));
   if (state.FramebufferInst == nullptr) {
-    fprintf(stderr, "Failed to initialize framebuffer device \"%s\".\n",
-            state.FramebufferDevice.c_str());
+    fprintf(
+        stderr,
+        "Failed to initialize framebuffer device \"%s\".\n",
+        state.FramebufferDevice.c_str());
+    fprintf(stderr, FRAMEBUFFER_ERROR_HELP_STR);
     exit(EXIT_FAILURE);
   }
   state.ViewerInst = std::make_unique<Viewer>(
