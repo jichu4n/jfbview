@@ -85,8 +85,14 @@ extern "C" {
 #endif
 
 #if MUPDF_VERSION < 10010
-#  define fz_new_pixmap_with_bbox(context, colorspace, bbox, alpha) \
+#  define fz_new_pixmap_with_bbox(context, colorspace, bbox, sep, alpha) \
        (fz_new_pixmap_with_bbox(context, colorspace, bbox))
+#elif MUPDF_VERSION < 10012
+#  define fz_new_pixmap_with_bbox(context, colorspace, bbox, sep, alpha) \
+       (fz_new_pixmap_with_bbox(context, colorspace, bbox, alpha))
+#endif
+
+#if MUPDF_VERSION < 10010
 #  define fz_new_draw_device(context, transform, dest) \
        (fz_new_draw_device(context, dest))
 #endif
@@ -159,7 +165,7 @@ void PDFDocument::Render(
   pdf_page* page_struct = GetPage(page);
   const fz_irect& bbox = GetBoundingBox(page_struct, m);
   fz_pixmap* pixmap = fz_new_pixmap_with_bbox(
-      _fz_context, fz_device_rgb(_fz_context), &bbox, 1);
+      _fz_context, fz_device_rgb(_fz_context), &bbox, nullptr, 1);
   fz_device* dev = fz_new_draw_device(_fz_context, &fz_identity, pixmap);
 
   // 2. Render page.
@@ -228,10 +234,18 @@ std::vector<Document::SearchHit> PDFDocument::SearchOnPage(
 std::string PDFDocument::GetPageText(int page, int line_sep) {
   // 1. Init MuPDF structures.
   pdf_page* page_struct = GetPage(page);
+
+#if MUPDF_VERSION < 10012
   fz_stext_sheet* text_sheet = fz_new_stext_sheet(_fz_context);
+#endif
 
   // 2. Render page.
-#if MUPDF_VERSION >= 10010
+#if MUPDF_VERSION >= 10012
+  fz_stext_options stext_options = { 0 };
+  // See #elif MUPDF_VERSION >= 10009 block below.
+  fz_stext_page* text_page = fz_new_stext_page_from_page(
+      _fz_context, &(page_struct->super), &stext_options);
+#elif MUPDF_VERSION >= 10010
   fz_stext_options stext_options = { 0 };
   // See #elif MUPDF_VERSION >= 10009 block below.
   fz_stext_page* text_page = fz_new_stext_page_from_page(
@@ -255,6 +269,22 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
 
   // 3. Build text.
   std::string r;
+#if MUPDF_VERSION >= 10012
+  for (fz_stext_block* text_block = text_page->first_block;
+       text_block != nullptr;
+       text_block = text_block->next) {
+    if (text_block->type != FZ_STEXT_BLOCK_TEXT) {
+      continue;
+    }
+    for (fz_stext_line* text_line = text_block->u.t.first_line;
+         text_line != nullptr;
+         text_line = text_line->next) {
+      for (fz_stext_char* text_char = text_line->first_char;
+           text_char != nullptr;
+           text_char = text_char->next) {
+        {
+          const int c = text_char->c;
+#else
   for (fz_page_block* page_block = text_page->blocks;
        page_block < text_page->blocks + text_page->len;
        ++page_block) {
@@ -273,6 +303,7 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
            text_span = text_span->next) {
         for (int i = 0; i < text_span->len; ++i) {
           const int c = text_span->text[i].c;
+#endif
           // A single UTF-8 character cannot take more than 4 bytes, but let's
           // go for 8.
           char buffer[8];
@@ -290,7 +321,9 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
 
   // 4. Clean up.
   fz_drop_stext_page(_fz_context, text_page);
+#if MUPDF_VERSION < 10012
   fz_drop_stext_sheet(_fz_context, text_sheet);
+#endif
 
   return r;
 }
