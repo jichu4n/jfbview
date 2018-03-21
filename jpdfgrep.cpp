@@ -19,6 +19,7 @@
 // A simple tool to search for text in PDF documents.
 
 #include <curses.h>
+#include <climits>
 #include <iostream>
 #include <memory>
 #include <sstream>
