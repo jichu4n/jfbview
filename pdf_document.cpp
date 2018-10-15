@@ -95,6 +95,7 @@ extern "C" {
 #if MUPDF_VERSION < 10010
 #  define fz_new_draw_device(context, transform, dest) \
        (fz_new_draw_device(context, dest))
+#  define fz_close_device(context, dev)
 #endif
 
 const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
@@ -195,6 +196,7 @@ void PDFDocument::Render(
   });
 
   // 4. Clean up.
+  fz_close_device(_fz_context, dev);
   fz_drop_device(_fz_context, dev);
   fz_drop_pixmap(_fz_context, pixmap);
 }
