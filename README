@@ -11,7 +11,7 @@ has a number of advanced and unique features including:
   * Asynchronous background pre-caching;
   * Customizable multi-threaded caching.
 
-The home page of JFBView is at http://seasonofcode.com/pages/jfbview.html.
+The home page of JFBView is at https://github.com/jichu4n/jfbview.
 
 Please refer to the home page for more information, including installation
 instructions and usage.
@@ -32,8 +32,24 @@ It is also possible to build a variant of JFBView without support for images and
 without dependency on Imlib2, which has a rather large list of dependencies
 itself. This target is called JFBPDF. To build, run `make jfbpdf`.
 
-KEYS AND OPTIONS
-----------------
+MUPDF VERSIONS
+--------------
+
+JFBView can be compiled against MuPDF 1.3 and up. To test compilation against a
+particular version of MuPDF:
+
+1. Obtain MuPDF headers and libraries at the particular version. For Arch Linux,
+   historical package versions can be obtained at
+   https://archive.archlinux.org/packages/l/libmupdf/.
+
+2. Set `CXXFLAGS` to point to location of extracted package when invoking
+   `make`, e.g.:
+   ```
+    make CXXFLAGS="-I../mupdf-1.12.0-2/usr/include -L../mupdf-1.12.0-2/usr/lib"
+   ```
+
+DOCUMENTATION
+-------------
 
 The key bindings and command line options available are described in the man
 page of JFBView. To view it, do `man jfbview`, or check out the
@@ -42,8 +58,7 @@ page of JFBView. To view it, do `man jfbview`, or check out the
 ABOUT
 -----
 
-JFBView is written by Chuan Ji \<ji AT chu4n DOT com>, and is distributed
-under the Apache License v2.
+JFBView is written by Chuan Ji, and is distributed under the Apache License v2.
 
 HISTORY
 -------
