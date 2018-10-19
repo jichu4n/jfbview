@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2016 Chuan Ji <ji@chu4n.com>                               *
+ *  Copyright (C) 2016 Chuan Ji                                              *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -38,11 +38,10 @@
 // the min version we support, so we will assume 1.3 in the absence of the
 // FZ_VERSION macro.
 #ifdef FZ_VERSION
-  const char* MUPDF_VERSION_STRING = FZ_VERSION;
+const char* MUPDF_VERSION_STRING = FZ_VERSION;
 #else
-  const char* MUPDF_VERSION_STRING = "1.3";
+const char* MUPDF_VERSION_STRING = "1.3";
 #endif
-
 
 int main() {
   std::istringstream mupdfVersionString(MUPDF_VERSION_STRING);
@@ -56,4 +55,3 @@ int main() {
 
   return 0;
 }
-

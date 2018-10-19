@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -29,31 +29,31 @@
 #endif
 
 #include <curses.h>
-#include <locale.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <linux/vt.h>
+#include <locale.h>
 #include <stropts.h>
 #include <sys/prctl.h>
 #include <unistd.h>
+#include <algorithm>
 #include <cctype>
 #include <climits>
 #include <cmath>
+#include <csignal>
 #include <cstdio>
 #include <cstdlib>
-#include <csignal>
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
 #include "command.hpp"
+#include "cpp_compat.hpp"
 #include "framebuffer.hpp"
 #include "image_document.hpp"
 #include "outline_view.hpp"
-#include "search_view.hpp"
 #include "pdf_document.hpp"
+#include "search_view.hpp"
 #include "viewer.hpp"
-#include "cpp_compat.hpp"
 
 // Main program state.
 struct State : public Viewer::State {
@@ -99,8 +99,7 @@ struct State : public Viewer::State {
         OutlineViewInst(nullptr),
         SearchViewInst(nullptr),
         FramebufferInst(nullptr),
-        ViewerInst(nullptr) {
-  }
+        ViewerInst(nullptr) {}
 };
 
 // Returns the all lowercase version of a string.
@@ -130,8 +129,10 @@ static bool LoadFile(State* state) {
 #ifndef JFBVIEW_NO_IMLIB2
       state->DocumentType = State::IMAGE;
 #else
-      fprintf(stderr, "Cannot detect file format. Plase specify a file format "
-                      "with --format. Try --help for help.\n");
+      fprintf(
+          stderr,
+          "Cannot detect file format. Plase specify a file format "
+          "with --format. Try --help for help.\n");
       return false;
 #endif
     }
@@ -150,14 +151,13 @@ static bool LoadFile(State* state) {
       abort();
   }
   if (doc == nullptr) {
-    fprintf(stderr, "Failed to open document \"%s\".\n",
-            state->FilePath.c_str());
+    fprintf(
+        stderr, "Failed to open document \"%s\".\n", state->FilePath.c_str());
     return false;
   }
   state->DocumentInst.reset(doc);
   return true;
 }
-
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                 COMMANDS                                  *
@@ -165,9 +165,7 @@ static bool LoadFile(State* state) {
 
 class ExitCommand : public Command {
  public:
-  void Execute(int repeat, State* state) override {
-    state->Exit = true;
-  }
+  void Execute(int repeat, State* state) override { state->Exit = true; }
 };
 
 // Base class for move commands.
@@ -187,7 +185,7 @@ class MoveDownCommand : public MoveCommand {
   void Execute(int repeat, State* state) override {
     state->YOffset += RepeatOrDefault(repeat, 1) * GetMoveSize(state, false);
     if (state->YOffset + state->ScreenHeight >=
-            state->PageHeight - 1 + GetMoveSize(state, false)) {
+        state->PageHeight - 1 + GetMoveSize(state, false)) {
       if (++(state->Page) < state->NumPages) {
         state->YOffset = 0;
       }
@@ -226,7 +224,7 @@ class ScreenDownCommand : public Command {
   void Execute(int repeat, State* state) override {
     state->YOffset += RepeatOrDefault(repeat, 1) * state->ScreenHeight;
     if (state->YOffset + state->ScreenHeight >=
-            state->PageHeight - 1 + state->ScreenHeight) {
+        state->PageHeight - 1 + state->ScreenHeight) {
       if (++(state->Page) < state->NumPages) {
         state->YOffset = 0;
       }
@@ -279,10 +277,8 @@ class ZoomCommand : public Command {
     // Quotient of new and old zoom ratios.
     const float q = zoom / state->ActualZoom;
     // New page size after zoom change.
-    const float new_page_width =
-        static_cast<float>(state->PageWidth) * q;
-    const float new_page_height =
-        static_cast<float>(state->PageHeight) * q;
+    const float new_page_width = static_cast<float>(state->PageWidth) * q;
+    const float new_page_height = static_cast<float>(state->PageHeight) * q;
     // New center position within page after zoom change.
     const float new_center_x = new_page_width * center_ratio_x;
     const float new_center_y = new_page_height * center_ratio_y;
@@ -298,24 +294,25 @@ const float ZoomCommand::ZOOM_COEFFICIENT = 1.2f;
 class ZoomInCommand : public ZoomCommand {
  public:
   void Execute(int repeat, State* state) override {
-    SetZoom(state->ActualZoom * RepeatOrDefault(repeat, 1) * ZOOM_COEFFICIENT,
-            state);
+    SetZoom(
+        state->ActualZoom * RepeatOrDefault(repeat, 1) * ZOOM_COEFFICIENT,
+        state);
   }
 };
 
 class ZoomOutCommand : public ZoomCommand {
  public:
   void Execute(int repeat, State* state) override {
-    SetZoom(state->ActualZoom * RepeatOrDefault(repeat, 1) / ZOOM_COEFFICIENT,
-            state);
+    SetZoom(
+        state->ActualZoom * RepeatOrDefault(repeat, 1) / ZOOM_COEFFICIENT,
+        state);
   }
 };
 
 class SetZoomCommand : public ZoomCommand {
  public:
   void Execute(int repeat, State* state) override {
-    SetZoom(static_cast<float>(RepeatOrDefault(repeat, 100)) / 100.0f,
-            state);
+    SetZoom(static_cast<float>(RepeatOrDefault(repeat, 100)) / 100.0f, state);
   }
 };
 
@@ -328,9 +325,7 @@ class SetRotationCommand : public Command {
 
 class RotateCommand : public Command {
  public:
-  explicit RotateCommand(int increment)
-      : _increment(increment) {
-  }
+  explicit RotateCommand(int increment) : _increment(increment) {}
 
   void Execute(int repeat, State* state) override {
     state->Rotation += RepeatOrDefault(repeat, 1) * _increment;
@@ -365,12 +360,14 @@ class ZoomToWidthCommand : public ZoomCommand {
 
 class GoToPageCommand : public Command {
  public:
-  explicit GoToPageCommand(int default_page)
-      : _default_page(default_page) {}
+  explicit GoToPageCommand(int default_page) : _default_page(default_page) {}
 
   void Execute(int repeat, State* state) override {
-    int page = (std::max(1, std::min(state->NumPages,
-        RepeatOrDefault(repeat, _default_page)))) - 1;
+    int page =
+        (std::max(
+            1, std::min(
+                   state->NumPages, RepeatOrDefault(repeat, _default_page)))) -
+        1;
     if (page != state->Page) {
       state->Page = page;
       state->XOffset = 0;
@@ -419,8 +416,7 @@ std::map<int, Viewer::State> StateCommand::_saved_states;
 class SaveStateCommand : public StateCommand {
  public:
   void Execute(int repeat, State* state) override {
-    state->ViewerInst->GetState(
-        &(_saved_states[RepeatOrDefault(repeat, 0)]));
+    state->ViewerInst->GetState(&(_saved_states[RepeatOrDefault(repeat, 0)]));
     state->Render = false;
   }
 };
@@ -441,10 +437,8 @@ class ReloadCommand : public StateCommand {
   void Execute(int repeat, State* state) override {
     if (LoadFile(state)) {
       state->ViewerInst = std::make_unique<Viewer>(
-        state->DocumentInst.get(),
-        state->FramebufferInst.get(),
-        *state,
-        state->RenderCacheSize);
+          state->DocumentInst.get(), state->FramebufferInst.get(), *state,
+          state->RenderCacheSize);
     } else {
       state->Exit = true;
     }
@@ -455,11 +449,10 @@ class ReloadCommand : public StateCommand {
  *                               END COMMANDS                                *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-
 // Help text printed by --help or -h.
-static const char* HELP_STRING =
-    JFBVIEW_PROGRAM_NAME " v0.2\n"
-    "Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>\n"
+static const char* HELP_STRING = JFBVIEW_PROGRAM_NAME
+    " v0.2\n"
+    "Copyright (C) 2012-2018 Chuan Ji\n"
     "\n"
     "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
     "you may not use this file except in compliance with the License.\n"
@@ -473,7 +466,8 @@ static const char* HELP_STRING =
     "See the License for the specific language governing permissions and\n"
     "limitations under the License.\n"
     "\n"
-    "Usage: " JFBVIEW_BINARY_NAME " [OPTIONS] FILE\n"
+    "Usage: " JFBVIEW_BINARY_NAME
+    " [OPTIONS] FILE\n"
     "\n"
     "Options:\n"
     "\t--help, -h            Show this message.\n"
@@ -510,16 +504,16 @@ void ParseCommandLine(int argc, char* argv[], State* state) {
   };
   // Command line options.
   static const option LongFlags[] = {
-      { "help", false, nullptr, 'h' },
-      { "fb", true, nullptr, FB },
-      { "page", true, nullptr, 'p' },
-      { "zoom", true, nullptr, 'z' },
-      { "zoom_to_width", false, nullptr, ZOOM_TO_WIDTH },
-      { "zoom_to_fit", false, nullptr, ZOOM_TO_FIT },
-      { "rotation", true, nullptr, 'r' },
-      { "cache_size", true, nullptr, RENDER_CACHE_SIZE },
-      { "format", true, nullptr, 'f' },
-      { 0, 0, 0, 0 },
+      {"help", false, nullptr, 'h'},
+      {"fb", true, nullptr, FB},
+      {"page", true, nullptr, 'p'},
+      {"zoom", true, nullptr, 'z'},
+      {"zoom_to_width", false, nullptr, ZOOM_TO_WIDTH},
+      {"zoom_to_fit", false, nullptr, ZOOM_TO_FIT},
+      {"rotation", true, nullptr, 'r'},
+      {"cache_size", true, nullptr, RENDER_CACHE_SIZE},
+      {"format", true, nullptr, 'f'},
+      {0, 0, 0, 0},
   };
   static const char* ShortFlags = "hp:z:r:f:";
 
@@ -529,68 +523,70 @@ void ParseCommandLine(int argc, char* argv[], State* state) {
       break;
     }
     switch (opt_char) {
-     case 'h':
-       fprintf(stdout, "%s", HELP_STRING);
-       exit(EXIT_FAILURE);
-     case FB:
-       state->FramebufferDevice = optarg;
-       break;
-     case 'f':
-       if (ToLower(optarg) == "pdf") {
-         state->DocumentType = State::PDF;
+      case 'h':
+        fprintf(stdout, "%s", HELP_STRING);
+        exit(EXIT_FAILURE);
+      case FB:
+        state->FramebufferDevice = optarg;
+        break;
+      case 'f':
+        if (ToLower(optarg) == "pdf") {
+          state->DocumentType = State::PDF;
 #ifndef JFBVIEW_NO_IMLIB2
-       } else if (ToLower(optarg) == "image") {
-         state->DocumentType = State::IMAGE;
+        } else if (ToLower(optarg) == "image") {
+          state->DocumentType = State::IMAGE;
 #endif
-       } else {
-        fprintf(stderr, "Invalid file format \"%s\"\n", optarg);
+        } else {
+          fprintf(stderr, "Invalid file format \"%s\"\n", optarg);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      case RENDER_CACHE_SIZE:
+        if (sscanf(optarg, "%d", &(state->RenderCacheSize)) < 1) {
+          fprintf(stderr, "Invalid render cache size \"%s\"\n", optarg);
+          exit(EXIT_FAILURE);
+        }
+        state->RenderCacheSize = std::max(1, state->RenderCacheSize + 1);
+        break;
+      case 'p':
+        if (sscanf(optarg, "%d", &(state->Page)) < 1) {
+          fprintf(stderr, "Invalid page number \"%s\"\n", optarg);
+          exit(EXIT_FAILURE);
+        }
+        --(state->Page);
+        break;
+      case 'z':
+        if (sscanf(optarg, "%f", &(state->Zoom)) < 1) {
+          fprintf(stderr, "Invalid zoom ratio \"%s\"\n", optarg);
+          exit(EXIT_FAILURE);
+        }
+        state->Zoom /= 100.0f;
+        break;
+      case ZOOM_TO_WIDTH:
+        state->Zoom = Viewer::ZOOM_TO_WIDTH;
+        break;
+      case ZOOM_TO_FIT:
+        state->Zoom = Viewer::ZOOM_TO_FIT;
+        break;
+      case 'r':
+        if (sscanf(optarg, "%d", &(state->Rotation)) < 1) {
+          fprintf(stderr, "Invalid rotation degree \"%s\"\n", optarg);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      default:
+        fprintf(stderr, "Try \"-h\" for help.\n");
         exit(EXIT_FAILURE);
-       }
-       break;
-     case RENDER_CACHE_SIZE:
-      if (sscanf(optarg, "%d", &(state->RenderCacheSize)) < 1) {
-        fprintf(stderr, "Invalid render cache size \"%s\"\n", optarg);
-        exit(EXIT_FAILURE);
-      }
-      state->RenderCacheSize = std::max(1, state->RenderCacheSize + 1);
-      break;
-     case 'p':
-      if (sscanf(optarg, "%d", &(state->Page)) < 1) {
-        fprintf(stderr, "Invalid page number \"%s\"\n", optarg);
-        exit(EXIT_FAILURE);
-      }
-      --(state->Page);
-      break;
-     case 'z':
-      if (sscanf(optarg, "%f", &(state->Zoom)) < 1) {
-        fprintf(stderr, "Invalid zoom ratio \"%s\"\n", optarg);
-        exit(EXIT_FAILURE);
-      }
-      state->Zoom /= 100.0f;
-      break;
-     case ZOOM_TO_WIDTH:
-      state->Zoom = Viewer::ZOOM_TO_WIDTH;
-      break;
-     case ZOOM_TO_FIT:
-      state->Zoom = Viewer::ZOOM_TO_FIT;
-      break;
-     case 'r':
-      if (sscanf(optarg, "%d", &(state->Rotation)) < 1) {
-        fprintf(stderr, "Invalid rotation degree \"%s\"\n", optarg);
-        exit(EXIT_FAILURE);
-      }
-      break;
-     default:
-      fprintf(stderr, "Try \"-h\" for help.\n");
-      exit(EXIT_FAILURE);
     }
   }
   if (optind == argc) {
     fprintf(stderr, "No file specified. Try \"-h\" for help.\n");
     exit(EXIT_FAILURE);
   } else if (optind < argc - 1) {
-    fprintf(stderr, "Please specify exactly one input file. Try \"-h\" for "
-                    "help.\n");
+    fprintf(
+        stderr,
+        "Please specify exactly one input file. Try \"-h\" for "
+        "help.\n");
     exit(EXIT_FAILURE);
   } else {
     state->FilePath = argv[optind];
@@ -601,68 +597,41 @@ void ParseCommandLine(int argc, char* argv[], State* state) {
 std::unique_ptr<Registry> BuildRegistry() {
   std::unique_ptr<Registry> registry = std::make_unique<Registry>();
 
-  registry->Register(
-      'q', std::move(std::make_unique<ExitCommand>()));
+  registry->Register('q', std::move(std::make_unique<ExitCommand>()));
 
-  registry->Register(
-      'h', std::move(std::make_unique<MoveLeftCommand>()));
-  registry->Register(
-      KEY_LEFT, std::move(std::make_unique<MoveLeftCommand>()));
-  registry->Register(
-      'j', std::move(std::make_unique<MoveDownCommand>()));
-  registry->Register(
-      KEY_DOWN, std::move(std::make_unique<MoveDownCommand>()));
-  registry->Register(
-      'k', std::move(std::make_unique<MoveUpCommand>()));
-  registry->Register(
-      KEY_UP, std::move(std::make_unique<MoveUpCommand>()));
-  registry->Register(
-      'l', std::move(std::make_unique<MoveRightCommand>()));
+  registry->Register('h', std::move(std::make_unique<MoveLeftCommand>()));
+  registry->Register(KEY_LEFT, std::move(std::make_unique<MoveLeftCommand>()));
+  registry->Register('j', std::move(std::make_unique<MoveDownCommand>()));
+  registry->Register(KEY_DOWN, std::move(std::make_unique<MoveDownCommand>()));
+  registry->Register('k', std::move(std::make_unique<MoveUpCommand>()));
+  registry->Register(KEY_UP, std::move(std::make_unique<MoveUpCommand>()));
+  registry->Register('l', std::move(std::make_unique<MoveRightCommand>()));
   registry->Register(
       KEY_RIGHT, std::move(std::make_unique<MoveRightCommand>()));
+  registry->Register(' ', std::move(std::make_unique<ScreenDownCommand>()));
   registry->Register(
-      ' ', std::move(std::make_unique<ScreenDownCommand>()));
-  registry->Register(
-      6, std::move(std::make_unique<ScreenDownCommand>()));  // ^F
-  registry->Register(
-      2, std::move(std::make_unique<ScreenUpCommand>()));    // ^B
-  registry->Register(
-      'J', std::move(std::make_unique<PageDownCommand>()));
-  registry->Register(
-      KEY_NPAGE, std::move(std::make_unique<PageDownCommand>()));
-  registry->Register(
-      'K', std::move(std::make_unique<PageUpCommand>()));
-  registry->Register(
-      KEY_PPAGE, std::move(std::make_unique<PageUpCommand>()));
+      6, std::move(std::make_unique<ScreenDownCommand>()));               // ^F
+  registry->Register(2, std::move(std::make_unique<ScreenUpCommand>()));  // ^B
+  registry->Register('J', std::move(std::make_unique<PageDownCommand>()));
+  registry->Register(KEY_NPAGE, std::move(std::make_unique<PageDownCommand>()));
+  registry->Register('K', std::move(std::make_unique<PageUpCommand>()));
+  registry->Register(KEY_PPAGE, std::move(std::make_unique<PageUpCommand>()));
 
-  registry->Register(
-      '=', std::move(std::make_unique<ZoomInCommand>()));
-  registry->Register(
-      '+', std::move(std::make_unique<ZoomInCommand>()));
-  registry->Register(
-      '-', std::move(std::make_unique<ZoomOutCommand>()));
-  registry->Register(
-      'z', std::move(std::make_unique<SetZoomCommand>()));
-  registry->Register(
-      's', std::move(std::make_unique<ZoomToWidthCommand>()));
-  registry->Register(
-      'a', std::move(std::make_unique<ZoomToFitCommand>()));
+  registry->Register('=', std::move(std::make_unique<ZoomInCommand>()));
+  registry->Register('+', std::move(std::make_unique<ZoomInCommand>()));
+  registry->Register('-', std::move(std::make_unique<ZoomOutCommand>()));
+  registry->Register('z', std::move(std::make_unique<SetZoomCommand>()));
+  registry->Register('s', std::move(std::make_unique<ZoomToWidthCommand>()));
+  registry->Register('a', std::move(std::make_unique<ZoomToFitCommand>()));
 
-  registry->Register(
-      'r', std::move(std::make_unique<SetRotationCommand>()));
-  registry->Register(
-      '>', std::move(std::make_unique<RotateCommand>(90)));
-  registry->Register(
-      '.', std::move(std::make_unique<RotateCommand>(90)));
-  registry->Register(
-      '<', std::move(std::make_unique<RotateCommand>(-90)));
-  registry->Register(
-      ',', std::move(std::make_unique<RotateCommand>(-90)));
+  registry->Register('r', std::move(std::make_unique<SetRotationCommand>()));
+  registry->Register('>', std::move(std::make_unique<RotateCommand>(90)));
+  registry->Register('.', std::move(std::make_unique<RotateCommand>(90)));
+  registry->Register('<', std::move(std::make_unique<RotateCommand>(-90)));
+  registry->Register(',', std::move(std::make_unique<RotateCommand>(-90)));
 
-  registry->Register(
-      'g', std::move(std::make_unique<GoToPageCommand>(0)));
-  registry->Register(
-      KEY_HOME, std::move(std::make_unique<GoToPageCommand>(0)));
+  registry->Register('g', std::move(std::make_unique<GoToPageCommand>(0)));
+  registry->Register(KEY_HOME, std::move(std::make_unique<GoToPageCommand>(0)));
   registry->Register(
       'G', std::move(std::make_unique<GoToPageCommand>(INT_MAX)));
   registry->Register(
@@ -670,16 +639,12 @@ std::unique_ptr<Registry> BuildRegistry() {
 
   registry->Register(
       '\t', std::move(std::make_unique<ShowOutlineViewCommand>()));
-  registry->Register(
-      '/', std::move(std::make_unique<ShowSearchViewCommand>()));
+  registry->Register('/', std::move(std::make_unique<ShowSearchViewCommand>()));
 
-  registry->Register(
-      'm', std::move(std::make_unique<SaveStateCommand>()));
-  registry->Register(
-      '`', std::move(std::make_unique<RestoreStateCommand>()));
+  registry->Register('m', std::move(std::make_unique<SaveStateCommand>()));
+  registry->Register('`', std::move(std::make_unique<RestoreStateCommand>()));
 
-  registry->Register(
-      'e', std::move(std::make_unique<ReloadCommand>()));
+  registry->Register('e', std::move(std::make_unique<ReloadCommand>()));
 
   return registry;
 }
@@ -714,7 +679,7 @@ static void DetectVTChange(pid_t parent) {
     }
   }
 
- out:
+out:
   close(fd);
 }
 
@@ -746,16 +711,13 @@ int main(int argc, char* argv[]) {
   state.FramebufferInst.reset(Framebuffer::Open(state.FramebufferDevice));
   if (state.FramebufferInst == nullptr) {
     fprintf(
-        stderr,
-        "Failed to initialize framebuffer device \"%s\".\n",
+        stderr, "Failed to initialize framebuffer device \"%s\".\n",
         state.FramebufferDevice.c_str());
     fprintf(stderr, FRAMEBUFFER_ERROR_HELP_STR);
     exit(EXIT_FAILURE);
   }
   state.ViewerInst = std::make_unique<Viewer>(
-      state.DocumentInst.get(),
-      state.FramebufferInst.get(),
-      state,
+      state.DocumentInst.get(), state.FramebufferInst.get(), state,
       state.RenderCacheSize);
   std::unique_ptr<Registry> registry(BuildRegistry());
 
@@ -771,10 +733,9 @@ int main(int argc, char* argv[]) {
   // to getch().
   refresh();
 
-  state.OutlineViewInst = std::make_unique<OutlineView>(
-      state.DocumentInst->GetOutline());
-  state.SearchViewInst = std::make_unique<SearchView>(
-      state.DocumentInst.get());
+  state.OutlineViewInst =
+      std::make_unique<OutlineView>(state.DocumentInst->GetOutline());
+  state.SearchViewInst = std::make_unique<SearchView>(state.DocumentInst.get());
 
   pid_t parent = getpid();
   if (!fork()) {
@@ -821,7 +782,6 @@ int main(int argc, char* argv[]) {
     registry->Dispatch(c, repeat, &state);
     repeat = Command::NO_REPEAT;
   } while (!state.Exit);
-
 
   // 3. Clean up.
   state.OutlineViewInst.reset();

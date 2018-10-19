@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -21,9 +21,9 @@
 
 #include "viewer.hpp"
 #include <unistd.h>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <algorithm>
 #include "document.hpp"
 #include "framebuffer.hpp"
 
@@ -39,13 +39,12 @@ class PixelBufferWriter : public Document::PixelWriter {
   // Constructs a BufferPixel writer with the given settings. buffer_width
   // gives the number of pixels in a row in the buffer. buffer is the target
   // buffer.
-  explicit PixelBufferWriter(PixelBuffer* buffer)
-      : _buffer(buffer) {
-  }
+  explicit PixelBufferWriter(PixelBuffer* buffer) : _buffer(buffer) {}
   // See PixelWriter.
   void Write(int x, int y, int r, int g, int b) override {
     _buffer->WritePixel(x, y, r, g, b);
   }
+
  private:
   // The destination buffer.
   PixelBuffer* _buffer;
@@ -53,17 +52,18 @@ class PixelBufferWriter : public Document::PixelWriter {
 
 }  // namespace
 
-
-Viewer::Viewer(Document* doc, Framebuffer* fb, const Viewer::State& state,
-               int render_cache_size)
-    : _doc(doc), _fb(fb), _state(state),
+Viewer::Viewer(
+    Document* doc, Framebuffer* fb, const Viewer::State& state,
+    int render_cache_size)
+    : _doc(doc),
+      _fb(fb),
+      _state(state),
       _render_cache(this, render_cache_size) {
   assert(_doc != nullptr);
   assert(_fb != nullptr);
 }
 
-Viewer::~Viewer() {
-}
+Viewer::~Viewer() {}
 
 void Viewer::Render() {
   // 1. Process state.
@@ -77,10 +77,11 @@ void Viewer::Render() {
     const PixelBuffer::Size& screen_size = _fb->GetSize();
     const Document::PageSize& page_size =
         _doc->GetPageSize(page, 1.0f, _state.Rotation);
-    zoom = std::min(static_cast<float>(screen_size.Width) /
-                        static_cast<float>(page_size.Width),
-                    static_cast<float>(screen_size.Height) /
-                        static_cast<float>(page_size.Height));
+    zoom = std::min(
+        static_cast<float>(screen_size.Width) /
+            static_cast<float>(page_size.Width),
+        static_cast<float>(screen_size.Height) /
+            static_cast<float>(page_size.Height));
   }
   assert(zoom >= 0.0f);
   zoom = std::max(MIN_ZOOM, std::min(MAX_ZOOM, zoom));
@@ -90,13 +91,13 @@ void Viewer::Render() {
       _render_cache.Get(RenderCacheKey(page, zoom, _state.Rotation));
 
   // 3. Compute the area actually visible on screen.
-  const PixelBuffer::Size& screen_size = _fb->GetSize(),
+  const PixelBuffer::Size &screen_size = _fb->GetSize(),
                           &page_size = buffer->GetSize();
   PixelBuffer::Rect src_rect;
-  src_rect.X = std::max(0, std::min(page_size.Width - screen_size.Width - 1,
-                                    _state.XOffset));
-  src_rect.Y = std::max(0, std::min(page_size.Height - screen_size.Height - 1,
-                                    _state.YOffset));
+  src_rect.X = std::max(
+      0, std::min(page_size.Width - screen_size.Width - 1, _state.XOffset));
+  src_rect.Y = std::max(
+      0, std::min(page_size.Height - screen_size.Height - 1, _state.YOffset));
   src_rect.Width = std::min(screen_size.Width, page_size.Width - src_rect.X);
   src_rect.Height = std::min(screen_size.Height, page_size.Height - src_rect.Y);
 
@@ -137,12 +138,9 @@ void Viewer::GetState(Viewer::State* state) const {
   state->ScreenHeight = _state.ScreenHeight;
 }
 
-void Viewer::SetState(const State& state) {
-  _state = state;
-}
+void Viewer::SetState(const State& state) { _state = state; }
 
-
-bool Viewer::RenderCacheKey::operator < (
+bool Viewer::RenderCacheKey::operator<(
     const Viewer::RenderCacheKey& other) const {
   if (Page != other.Page) {
     return Page < other.Page;
@@ -159,19 +157,16 @@ bool Viewer::RenderCacheKey::operator < (
 }
 
 Viewer::RenderCache::RenderCache(Viewer* parent, int size)
-    : Cache<RenderCacheKey, PixelBuffer*>(size), _parent(parent) {
-}
+    : Cache<RenderCacheKey, PixelBuffer*>(size), _parent(parent) {}
 
-Viewer::RenderCache::~RenderCache() {
-  Clear();
-}
+Viewer::RenderCache::~RenderCache() { Clear(); }
 
 PixelBuffer* Viewer::RenderCache::Load(const RenderCacheKey& key) {
   const Document::PageSize& page_size =
       _parent->_doc->GetPageSize(key.Page, key.Zoom, key.Rotation);
 
-  PixelBuffer* buffer = _parent->_fb->NewPixelBuffer(PixelBuffer::Size(
-      page_size.Width, page_size.Height));
+  PixelBuffer* buffer = _parent->_fb->NewPixelBuffer(
+      PixelBuffer::Size(page_size.Width, page_size.Height));
   PixelBufferWriter writer(buffer);
   _parent->_doc->Render(&writer, key.Page, key.Zoom, key.Rotation);
 
@@ -182,4 +177,3 @@ void Viewer::RenderCache::Discard(
     const RenderCacheKey& key, PixelBuffer* const& value) {
   delete value;
 }
-

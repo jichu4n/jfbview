@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -32,9 +32,7 @@ class PixelBuffer {
     int Width;
     int Height;
 
-    Size(int width, int height)
-        : Width(width), Height(height) {
-    }
+    Size(int width, int height) : Width(width), Height(height) {}
   };
   // Color format of a pixel buffer.
   class Format {
@@ -54,8 +52,7 @@ class PixelBuffer {
     int Width, Height;
 
     explicit Rect(int x = 0, int y = 0, int width = 0, int height = 0)
-        : X(x), Y(y), Width(width), Height(height) {
-    }
+        : X(x), Y(y), Width(width), Height(height) {}
   };
 
   // Constructs a new PixelBuffer object, and allocate memory. Will take
@@ -136,8 +133,7 @@ class PixelBuffer {
 
   // Disable copy and assign.
   PixelBuffer(const PixelBuffer&);
-  PixelBuffer& operator = (const PixelBuffer&);
+  PixelBuffer& operator=(const PixelBuffer&);
 };
 
 #endif
-

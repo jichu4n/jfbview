@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -79,7 +79,7 @@ class SearchView : public UIView {
   // NCURSES Window containing the search form.
   WINDOW* _search_window;
   // NCURSES search string form.
-  FORM*_search_form;
+  FORM* _search_form;
   // Search string NCURSES field.
   FIELD* _search_string_field;
   // The list of all NCURSES fields in the form.

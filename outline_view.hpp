@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -21,8 +21,8 @@
 #ifndef OUTLINE_VIEWER_HPP
 #define OUTLINE_VIEWER_HPP
 
-#include <set>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 #include "document.hpp"
@@ -57,10 +57,10 @@ class OutlineView : public UIView {
   // Handle to the outline we display.
   std::unique_ptr<const Document::OutlineItem> _outline;
   // The set of expanded (unfolded) items.
-  std::set<const Document::OutlineItem *> _expanded_items;
+  std::set<const Document::OutlineItem*> _expanded_items;
   // The set of all expandedable items (i.e., those with children). Built by
   // Flatten().
-  std::set<const Document::OutlineItem *> _all_expandable_items;
+  std::set<const Document::OutlineItem*> _all_expandable_items;
   // The outline flattened out into an array of lines.
   std::vector<Line> _lines;
   // Index in _lines of the currently highlighted item.
@@ -72,8 +72,8 @@ class OutlineView : public UIView {
 
   // Key processing modes.
   enum KeyProcessingMode {
-    REGULAR_MODE,   // Regular mode.
-    FOLD_MODE,      // Processing the next character after a 'z'.
+    REGULAR_MODE,  // Regular mode.
+    FOLD_MODE,     // Processing the next character after a 'z'.
   };
   // Key processors.
   void ProcessKeyRegularMode(int key);
@@ -89,4 +89,3 @@ class OutlineView : public UIView {
 };
 
 #endif
-

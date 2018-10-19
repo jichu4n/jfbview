@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -44,13 +44,10 @@ std::string TrimRight(const std::string& s) {
   return r;
 }
 
-std::string Trim(const std::string& s) {
-  return TrimLeft(TrimRight(s));
-}
+std::string Trim(const std::string& s) { return TrimLeft(TrimRight(s)); }
 
 std::string::size_type CaseInsensitiveSearch(
-    const std::string& s,
-    const std::string& search_string,
+    const std::string& s, const std::string& search_string,
     std::string::size_type pos) {
   if (pos == std::string::npos || pos > s.length()) {
     return std::string::npos;
@@ -61,4 +58,3 @@ std::string::size_type CaseInsensitiveSearch(
   }
   return p - s.c_str();
 }
-

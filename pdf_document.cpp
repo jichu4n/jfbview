@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -20,89 +20,85 @@
 // using MuPDF.
 
 #include <stdint.h>
+#include <algorithm>
 #include <cassert>
 #include <cstring>
-#include <algorithm>
 #include <string>
 #include <vector>
 extern "C" {
 #include "mupdf/pdf.h"
 }
-#include "pdf_document.hpp"
 #include "multithreading.hpp"
+#include "pdf_document.hpp"
 #include "string_utils.hpp"
 
 #if MUPDF_VERSION < 10009
-#  define pdf_drop_document pdf_close_document
-#  define fz_stext_sheet fz_text_sheet
-#  define fz_stext_page fz_text_page
-#  define fz_stext_block fz_text_block
-#  define fz_stext_line fz_text_line
-#  define fz_stext_span fz_text_span
-#  define fz_new_stext_device fz_new_text_device
-#  define fz_new_stext_sheet fz_new_text_sheet
-#  define fz_drop_stext_sheet fz_drop_text_sheet
-#  define fz_new_stext_page_from_page fz_new_text_page_from_page
-#  define fz_drop_stext_page fz_drop_text_page
+#define pdf_drop_document pdf_close_document
+#define fz_stext_sheet fz_text_sheet
+#define fz_stext_page fz_text_page
+#define fz_stext_block fz_text_block
+#define fz_stext_line fz_text_line
+#define fz_stext_span fz_text_span
+#define fz_new_stext_device fz_new_text_device
+#define fz_new_stext_sheet fz_new_text_sheet
+#define fz_drop_stext_sheet fz_drop_text_sheet
+#define fz_new_stext_page_from_page fz_new_text_page_from_page
+#define fz_drop_stext_page fz_drop_text_page
 #endif
 
 #if MUPDF_VERSION >= 10007
-#  define pdf_run_page(context, pdf_document, page, dev, matrix, cookie) \
-       pdf_run_page((context), (page), (dev), (matrix), (cookie))
-#  define pdf_bound_page(context, pdf_document, page, bbox) \
-       pdf_bound_page((context), (page), (bbox))
-#  if MUPDF_VERSION >= 10011
-#    define pdf_drop_page(context, pdf_document, page) \
-         fz_drop_page((context), &(page)->super)
-#  else
-#    define pdf_drop_page(context, pdf_document, page) \
-         pdf_drop_page((context), (page))
-#  endif
+#define pdf_run_page(context, pdf_document, page, dev, matrix, cookie) \
+  pdf_run_page((context), (page), (dev), (matrix), (cookie))
+#define pdf_bound_page(context, pdf_document, page, bbox) \
+  pdf_bound_page((context), (page), (bbox))
+#if MUPDF_VERSION >= 10011
+#define pdf_drop_page(context, pdf_document, page) \
+  fz_drop_page((context), &(page)->super)
 #else
-#  define pdf_run_page(context, pdf_document, page, dev, matrix, cookie) \
-       pdf_run_page((pdf_document), (page), (dev), (matrix), (cookie))
-#  define pdf_bound_page(context, pdf_document, page, bbox) \
-       pdf_bound_page((pdf_document), (page), (bbox))
-#  define fz_drop_context fz_free_context
-#  define fz_drop_device(context, dev) fz_free_device(dev)
-#  define fz_drop_text_page fz_free_text_page
-#  define fz_drop_text_sheet fz_free_text_sheet
-#  define fz_drop_outline fz_free_outline
-#  define pdf_drop_page(context, pdf_document, page) \
-       pdf_free_page((pdf_document), (page))
-#  define fz_begin_page(context, dev, rect, identity) \
-       (fz_begin_page((dev), (rect), (identity)))
-#  define fz_end_page(context, dev) \
-       (fz_end_page(dev))
-#  define pdf_count_pages(context, pdf_document) \
-       (pdf_count_pages(pdf_document))
-#  define pdf_load_page(context, pdf_document, page) \
-       (pdf_load_page((pdf_document), (page)))
-#  define pdf_load_outline(context, pdf_document) \
-       (pdf_load_outline(pdf_document))
-#  define pdf_close_document(context, pdf_document) \
-       (pdf_close_document(pdf_document))
+#define pdf_drop_page(context, pdf_document, page) \
+  pdf_drop_page((context), (page))
+#endif
+#else
+#define pdf_run_page(context, pdf_document, page, dev, matrix, cookie) \
+  pdf_run_page((pdf_document), (page), (dev), (matrix), (cookie))
+#define pdf_bound_page(context, pdf_document, page, bbox) \
+  pdf_bound_page((pdf_document), (page), (bbox))
+#define fz_drop_context fz_free_context
+#define fz_drop_device(context, dev) fz_free_device(dev)
+#define fz_drop_text_page fz_free_text_page
+#define fz_drop_text_sheet fz_free_text_sheet
+#define fz_drop_outline fz_free_outline
+#define pdf_drop_page(context, pdf_document, page) \
+  pdf_free_page((pdf_document), (page))
+#define fz_begin_page(context, dev, rect, identity) \
+  (fz_begin_page((dev), (rect), (identity)))
+#define fz_end_page(context, dev) (fz_end_page(dev))
+#define pdf_count_pages(context, pdf_document) (pdf_count_pages(pdf_document))
+#define pdf_load_page(context, pdf_document, page) \
+  (pdf_load_page((pdf_document), (page)))
+#define pdf_load_outline(context, pdf_document) (pdf_load_outline(pdf_document))
+#define pdf_close_document(context, pdf_document) \
+  (pdf_close_document(pdf_document))
 #endif
 
 #if MUPDF_VERSION < 10010
-#  define fz_new_pixmap_with_bbox(context, colorspace, bbox, sep, alpha) \
-       (fz_new_pixmap_with_bbox(context, colorspace, bbox))
+#define fz_new_pixmap_with_bbox(context, colorspace, bbox, sep, alpha) \
+  (fz_new_pixmap_with_bbox(context, colorspace, bbox))
 #elif MUPDF_VERSION < 10012
-#  define fz_new_pixmap_with_bbox(context, colorspace, bbox, sep, alpha) \
-       (fz_new_pixmap_with_bbox(context, colorspace, bbox, alpha))
+#define fz_new_pixmap_with_bbox(context, colorspace, bbox, sep, alpha) \
+  (fz_new_pixmap_with_bbox(context, colorspace, bbox, alpha))
 #endif
 
 #if MUPDF_VERSION < 10010
-#  define fz_new_draw_device(context, transform, dest) \
-       (fz_new_draw_device(context, dest))
-#  define fz_close_device(context, dev)
+#define fz_new_draw_device(context, transform, dest) \
+  (fz_new_draw_device(context, dest))
+#define fz_close_device(context, dev)
 #endif
 
 const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
     "TABLE OF CONTENTS";
 
-PDFDocument* PDFDocument::Open(const std::string& path,
-                               int page_cache_size) {
+PDFDocument* PDFDocument::Open(const std::string& path, int page_cache_size) {
   fz_context* context = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
   pdf_document* raw_pdf_document = nullptr;
   fz_try(context) {
@@ -110,12 +106,11 @@ PDFDocument* PDFDocument::Open(const std::string& path,
     if ((raw_pdf_document == nullptr) ||
         (!pdf_count_pages(context, raw_pdf_document))) {
       fz_throw(
-          context,
-          FZ_ERROR_GENERIC,
-          const_cast<char*>("Cannot open document \"%s\""),
-          path.c_str());
+          context, FZ_ERROR_GENERIC,
+          const_cast<char*>("Cannot open document \"%s\""), path.c_str());
     }
-  } fz_catch(context) {
+  }
+  fz_catch(context) {
     if (raw_pdf_document != nullptr) {
       pdf_drop_document(context, raw_pdf_document);
     }
@@ -130,8 +125,7 @@ PDFDocument* PDFDocument::Open(const std::string& path,
 }
 
 PDFDocument::PDFDocument(int page_cache_size)
-    : _page_cache(new PDFPageCache(page_cache_size, this)) {
-}
+    : _page_cache(new PDFPageCache(page_cache_size, this)) {}
 
 PDFDocument::~PDFDocument() {
   // Must destroy page cache explicitly first, since destroying cached pages
@@ -150,8 +144,8 @@ int PDFDocument::GetNumPages() {
 const Document::PageSize PDFDocument::GetPageSize(
     int page, float zoom, int rotation) {
   assert((page >= 0) && (page < GetNumPages()));
-  const fz_irect& bbox = GetBoundingBox(
-      GetPage(page), Transform(zoom, rotation));
+  const fz_irect& bbox =
+      GetBoundingBox(GetPage(page), Transform(zoom, rotation));
   return PageSize(bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
 }
 
@@ -176,16 +170,15 @@ void PDFDocument::Render(
   // 3. Write pixmap to buffer. The page is vertically divided into n equal
   // stripes, each copied to pw by one thread.
   assert(fz_pixmap_components(_fz_context, pixmap) == 4);
-  uint8_t* buffer = reinterpret_cast<uint8_t*>(
-      fz_pixmap_samples(_fz_context, pixmap));
+  uint8_t* buffer =
+      reinterpret_cast<uint8_t*>(fz_pixmap_samples(_fz_context, pixmap));
   const int num_cols = fz_pixmap_width(_fz_context, pixmap);
   const int num_rows = fz_pixmap_height(_fz_context, pixmap);
   ExecuteInParallel([=](int num_threads, int i) {
     const int num_rows_per_thread = num_rows / num_threads;
     const int y_begin = i * num_rows_per_thread;
-    const int y_end = (i == num_threads - 1) ?
-                          num_rows :
-                          (i + 1) * num_rows_per_thread;
+    const int y_end =
+        (i == num_threads - 1) ? num_rows : (i + 1) * num_rows_per_thread;
     uint8_t* p = buffer + y_begin * num_cols * 4;
     for (int y = y_begin; y < y_end; ++y) {
       for (int x = 0; x < num_cols; ++x) {
@@ -213,21 +206,20 @@ int PDFDocument::Lookup(const OutlineItem* item) {
 std::vector<Document::SearchHit> PDFDocument::SearchOnPage(
     const std::string& search_string, int page, int context_length) {
   const size_t margin =
-      context_length > static_cast<int>(search_string.length()) ?
-      (context_length - search_string.length() + 1) / 2 :
-      0;
+      context_length > static_cast<int>(search_string.length())
+          ? (context_length - search_string.length() + 1) / 2
+          : 0;
 
   std::vector<SearchHit> search_hits;
   const std::string& page_text = GetPageText(page, ' ');
-  for (size_t pos = 0; ; ++pos) {
+  for (size_t pos = 0;; ++pos) {
     if ((pos = CaseInsensitiveSearch(page_text, search_string, pos)) ==
         std::string::npos) {
       break;
     }
-    const size_t context_start_pos = pos >= margin ?  pos - margin : 0;
+    const size_t context_start_pos = pos >= margin ? pos - margin : 0;
     search_hits.emplace_back(
-        page,
-        page_text.substr(context_start_pos, context_length),
+        page, page_text.substr(context_start_pos, context_length),
         pos - context_start_pos);
   }
   return search_hits;
@@ -243,12 +235,12 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
 
   // 2. Render page.
 #if MUPDF_VERSION >= 10012
-  fz_stext_options stext_options = { 0 };
+  fz_stext_options stext_options = {0};
   // See #elif MUPDF_VERSION >= 10009 block below.
   fz_stext_page* text_page = fz_new_stext_page_from_page(
       _fz_context, &(page_struct->super), &stext_options);
 #elif MUPDF_VERSION >= 10010
-  fz_stext_options stext_options = { 0 };
+  fz_stext_options stext_options = {0};
   // See #elif MUPDF_VERSION >= 10009 block below.
   fz_stext_page* text_page = fz_new_stext_page_from_page(
       _fz_context, &(page_struct->super), text_sheet, &stext_options);
@@ -273,23 +265,19 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   std::string r;
 #if MUPDF_VERSION >= 10012
   for (fz_stext_block* text_block = text_page->first_block;
-       text_block != nullptr;
-       text_block = text_block->next) {
+       text_block != nullptr; text_block = text_block->next) {
     if (text_block->type != FZ_STEXT_BLOCK_TEXT) {
       continue;
     }
     for (fz_stext_line* text_line = text_block->u.t.first_line;
-         text_line != nullptr;
-         text_line = text_line->next) {
+         text_line != nullptr; text_line = text_line->next) {
       for (fz_stext_char* text_char = text_line->first_char;
-           text_char != nullptr;
-           text_char = text_char->next) {
+           text_char != nullptr; text_char = text_char->next) {
         {
           const int c = text_char->c;
 #else
   for (fz_page_block* page_block = text_page->blocks;
-       page_block < text_page->blocks + text_page->len;
-       ++page_block) {
+       page_block < text_page->blocks + text_page->len; ++page_block) {
     assert(page_block != nullptr);
     if (page_block->type != FZ_PAGE_BLOCK_TEXT) {
       continue;
@@ -297,12 +285,10 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
     fz_stext_block* const text_block = page_block->u.text;
     assert(text_block != nullptr);
     for (fz_stext_line* text_line = text_block->lines;
-         text_line < text_block->lines + text_block->len;
-         ++text_line) {
+         text_line < text_block->lines + text_block->len; ++text_line) {
       assert(text_line != nullptr);
       for (fz_stext_span* text_span = text_line->first_span;
-           text_span != nullptr;
-           text_span = text_span->next) {
+           text_span != nullptr; text_span = text_span->next) {
         for (int i = 0; i < text_span->len; ++i) {
           const int c = text_span->text[i].c;
 #endif
@@ -330,8 +316,7 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   return r;
 }
 
-PDFDocument::PDFOutlineItem::~PDFOutlineItem() {
-}
+PDFDocument::PDFOutlineItem::~PDFOutlineItem() {}
 
 PDFDocument::PDFOutlineItem::PDFOutlineItem(fz_outline* src) {
   if (src == nullptr) {
@@ -346,9 +331,7 @@ PDFDocument::PDFOutlineItem::PDFOutlineItem(fz_outline* src) {
   }
 }
 
-int PDFDocument::PDFOutlineItem::GetDestPage() const {
-  return _dest_page;
-}
+int PDFDocument::PDFOutlineItem::GetDestPage() const { return _dest_page; }
 
 PDFDocument::PDFOutlineItem* PDFDocument::PDFOutlineItem::Build(
     fz_context* ctx, fz_outline* src) {
@@ -359,7 +342,7 @@ PDFDocument::PDFOutlineItem* PDFDocument::PDFOutlineItem::Build(
   if (items.empty()) {
     return nullptr;
   } else if (items.size() == 1) {
-    root =  dynamic_cast<PDFOutlineItem*>(items[0].release());
+    root = dynamic_cast<PDFOutlineItem*>(items[0].release());
   } else {
     root = new PDFOutlineItem(nullptr);
     root->_title = DEFAULT_ROOT_OUTLINE_ITEM_TITLE;
@@ -382,12 +365,9 @@ void PDFDocument::PDFOutlineItem::BuildRecursive(
 }
 
 PDFDocument::PDFPageCache::PDFPageCache(int cache_size, PDFDocument* parent)
-    : Cache<int, pdf_page*>(cache_size), _parent(parent) {
-}
+    : Cache<int, pdf_page*>(cache_size), _parent(parent) {}
 
-PDFDocument::PDFPageCache::~PDFPageCache() {
-  Clear();
-}
+PDFDocument::PDFPageCache::~PDFPageCache() { Clear(); }
 
 pdf_page* PDFDocument::PDFPageCache::Load(const int& page) {
   std::unique_lock<std::mutex> lock(_mutex);
@@ -409,7 +389,7 @@ fz_matrix PDFDocument::Transform(float zoom, int rotation) {
   fz_matrix transformation_matrix, scale_matrix, rotate_matrix;
   fz_scale(&scale_matrix, zoom, zoom);
   fz_rotate(&rotate_matrix, rotation);
-  fz_concat(&transformation_matrix, &scale_matrix, & rotate_matrix);
+  fz_concat(&transformation_matrix, &scale_matrix, &rotate_matrix);
   return transformation_matrix;
 }
 
@@ -418,6 +398,8 @@ fz_irect PDFDocument::GetBoundingBox(
   assert(page_struct != nullptr);
   fz_rect bbox;
   fz_irect ibbox;
-  return *fz_round_rect(&ibbox, fz_transform_rect(
-      pdf_bound_page(_fz_context, _pdf_document, page_struct, &bbox), &m));
+  return *fz_round_rect(
+      &ibbox,
+      fz_transform_rect(
+          pdf_bound_page(_fz_context, _pdf_document, page_struct, &bbox), &m));
 }

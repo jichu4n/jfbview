@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
   endwin();
 
   const std::string search_string = argv[2];
-  const Document::SearchResult& result = document->Search(
-      search_string, 0, line_width, INT_MAX);
+  const Document::SearchResult& result =
+      document->Search(search_string, 0, line_width, INT_MAX);
 
   for (const Document::SearchHit& hit : result.SearchHits) {
     std::ostringstream buffer;

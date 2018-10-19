@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -34,8 +34,7 @@ extern std::string Trim(const std::string& s);
 // Returns the first occurrance after the given position, or string::npos if not
 // found.
 extern std::string::size_type CaseInsensitiveSearch(
-    const std::string& s,
-    const std::string& search_string,
+    const std::string& s, const std::string& search_string,
     std::string::size_type pos = 0);
 
 #endif

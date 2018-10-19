@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -31,8 +31,6 @@ extern int GetDefaultNumThreads();
 // num_threads specifies how many threads to spawn, and defaults to the number
 // of CPU cores. Blocks until all spawned threads exit.
 extern void ExecuteInParallel(
-    const std::function<void(int, int)> &f,
-    int num_threads = 0);
+    const std::function<void(int, int)> &f, int num_threads = 0);
 
 #endif
-

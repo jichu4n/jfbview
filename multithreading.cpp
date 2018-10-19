@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2014 Chuan Ji <ji@chu4n.com>                          *
+ *  Copyright (C) 2012-2018 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -28,7 +28,7 @@ int GetDefaultNumThreads() {
 }
 
 void ExecuteInParallel(
-    const std::function<void(int, int)> &f, int num_threads) {
+    const std::function<void(int, int)>& f, int num_threads) {
   // 1. Set default value for num_threads if needed.
   assert(num_threads >= 0);
   if (num_threads <= 0) {
@@ -46,5 +46,3 @@ void ExecuteInParallel(
     thread.join();
   }
 }
-
-

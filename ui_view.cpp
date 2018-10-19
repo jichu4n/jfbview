@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2014 Chuan Ji <ji@chu4n.com>                               *
+ *  Copyright (C) 2014 Chuan Ji                                              *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -55,15 +55,13 @@ void UIView::EventLoop(int initial_key_processing_mode) {
   do {
     Render();
 
-    const KeyProcessor& key_processor = _key_processing_mode_map.at(
-        _key_processing_mode);
+    const KeyProcessor& key_processor =
+        _key_processing_mode_map.at(_key_processing_mode);
     key_processor(wgetch(_window));
   } while (!_exit_event_loop);
 }
 
-void UIView::ExitEventLoop() {
-  _exit_event_loop = true;
-}
+void UIView::ExitEventLoop() { _exit_event_loop = true; }
 
 void UIView::SwitchKeyProcessingMode(int new_key_processing_mode) {
   _key_processing_mode = new_key_processing_mode;
