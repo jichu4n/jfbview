@@ -1,6 +1,6 @@
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 #                                                                             #
-#    Copyright (C) 2012-2014 Chuan Ji <jichuan89@gmail.com>                   #
+#    Copyright (C) 2012-2018 Chuan Ji                                         #
 #                                                                             #
 #    Licensed under the Apache License, Version 2.0 (the "License");          #
 #    you may not use this file except in compliance with the License.         #
