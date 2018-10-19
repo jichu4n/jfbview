@@ -19,20 +19,21 @@
 // This file defines the document outline view.
 
 #include "outline_view.hpp"
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <functional>
 
 using std::placeholders::_1;
 
 OutlineView::OutlineView(const Document::OutlineItem* outline)
     : UIView({{
-          REGULAR_MODE,
-          std::bind(&OutlineView::ProcessKeyRegularMode, this, _1),
-      }, {
-          FOLD_MODE,
-          std::bind(&OutlineView::ProcessKeyFoldMode, this, _1),
-      }}),
+                  REGULAR_MODE,
+                  std::bind(&OutlineView::ProcessKeyRegularMode, this, _1),
+              },
+              {
+                  FOLD_MODE,
+                  std::bind(&OutlineView::ProcessKeyFoldMode, this, _1),
+              }}),
       _outline(outline),
       _selected_index(0),
       _first_index(0) {
@@ -88,7 +89,7 @@ void OutlineView::FlattenRecursive(
       _lines[line_num].Label += '-';
     }
   } else {
-      _lines[line_num].Label += ' ';
+    _lines[line_num].Label += ' ';
   }
   _lines[line_num].Label += ' ';
   _lines[line_num].Label += item->GetTitle();
@@ -96,8 +97,8 @@ void OutlineView::FlattenRecursive(
 
 void OutlineView::Render() {
   WINDOW* const window = GetWindow();
-  const int num_lines_to_display = std::min(
-      getmaxy(window), static_cast<int>(_lines.size() - _first_index));
+  const int num_lines_to_display =
+      std::min(getmaxy(window), static_cast<int>(_lines.size() - _first_index));
   for (int y = 0; y < num_lines_to_display; ++y) {
     const int line = _first_index + y;
     if (line == _selected_index) {
@@ -167,8 +168,7 @@ void OutlineView::ProcessKeyRegularMode(int key) {
 void OutlineView::ProcessKeyFoldMode(int key) {
   const Document::OutlineItem* selected_item =
       _lines[_selected_index].OutlineItem;
-  const Document::OutlineItem* first_item =
-      _lines[_first_index].OutlineItem;
+  const Document::OutlineItem* first_item = _lines[_first_index].OutlineItem;
 
   switch (key) {
     case 'R':
@@ -207,8 +207,8 @@ void OutlineView::ProcessKeyFoldMode(int key) {
 void OutlineView::UpdateForSelectedIndex() {
   WINDOW* const window = GetWindow();
 
-  _selected_index = std::max(0, std::min(static_cast<int>(_lines.size() - 1),
-      _selected_index));
+  _selected_index = std::max(
+      0, std::min(static_cast<int>(_lines.size() - 1), _selected_index));
   if (_selected_index < _first_index) {
     _first_index = _selected_index;
   } else if (_selected_index >= _first_index + getmaxy(window)) {

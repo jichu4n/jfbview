@@ -34,8 +34,8 @@
 #include <sstream>
 #include <string>
 #include <thread>
-#include "string_utils.hpp"
 #include "cpp_compat.hpp"
+#include "string_utils.hpp"
 
 using std::placeholders::_1;
 
@@ -46,12 +46,14 @@ const char* const SearchView::_PAGE_NUMBER_PREFIX = "p";
 
 SearchView::SearchView(Document* document)
     : UIView({{
-          REGULAR_MODE,
-          std::bind(&SearchView::ProcessKeyRegularMode, this, _1),
-      }, {
-          SEARCH_STRING_FIELD_MODE,
-          std::bind(&SearchView::ProcessKeySearchStringFieldMode, this, _1),
-      }}),
+                  REGULAR_MODE,
+                  std::bind(&SearchView::ProcessKeyRegularMode, this, _1),
+              },
+              {
+                  SEARCH_STRING_FIELD_MODE,
+                  std::bind(
+                      &SearchView::ProcessKeySearchStringFieldMode, this, _1),
+              }}),
       _document(document),
       _search_string_field_cursor_position(0) {
   assert(_document != nullptr);
@@ -64,14 +66,10 @@ SearchView::SearchView(Document* document)
   const int search_string_form_left = strlen(_SEARCH_PROMPT);
   const int search_string_form_width = window_width - search_string_form_left;
 
-  _search_window = derwin(
-      window, 1, search_string_form_width, 0, search_string_form_left);
+  _search_window =
+      derwin(window, 1, search_string_form_width, 0, search_string_form_left);
 
-  _search_string_field = new_field(
-      1, search_string_form_width,
-      0, 0,
-      0,
-      0);
+  _search_string_field = new_field(1, search_string_form_width, 0, 0, 0, 0);
   assert(_search_string_field != nullptr);
   set_field_back(_search_string_field, A_STANDOUT);
   field_opts_off(_search_string_field, O_AUTOSKIP | O_BLANK);
@@ -84,12 +82,11 @@ SearchView::SearchView(Document* document)
   set_form_sub(_search_form, _search_window);
 
   // 2. Construct result and status windows.
-  _result_window = derwin(
-      window, window_height - 1 - 1 - 1, window_width, 1 + 1, 0);
+  _result_window =
+      derwin(window, window_height - 1 - 1 - 1, window_width, 1 + 1, 0);
   _context_text_length =
       window_width - strlen(_PAGE_NUMBER_PREFIX) - _PAGE_NUMBER_WIDTH;
-  _status_window = derwin(
-      window, 1, window_width, window_height - 1, 0);
+  _status_window = derwin(window, 1, window_width, window_height - 1, 0);
   wbkgdset(_status_window, A_STANDOUT);
 }
 
@@ -137,8 +134,7 @@ void SearchView::Render() {
     if (_result->SearchHits.empty()) {
       wclear(_result_window);
       mvwaddstr(
-          _result_window,
-          result_window_height / 2,
+          _result_window, result_window_height / 2,
           (result_window_width - strlen(_NO_RESULTS_PROMPT)) / 2,
           _NO_RESULTS_PROMPT);
     } else {
@@ -148,9 +144,8 @@ void SearchView::Render() {
           static_cast<int>(_result->SearchHits.size()) - 1);
       for (int i = 0; i + _first_index <= last_index; ++i) {
         const Document::SearchHit& hit = _result->SearchHits[i + _first_index];
-        const bool is_selected_hit =
-            (i + _first_index == _selected_index) &&
-            (GetKeyProcessingMode() == REGULAR_MODE);
+        const bool is_selected_hit = (i + _first_index == _selected_index) &&
+                                     (GetKeyProcessingMode() == REGULAR_MODE);
         if (is_selected_hit) {
           wattron(_result_window, A_STANDOUT);
         }
@@ -158,18 +153,15 @@ void SearchView::Render() {
         // 1.1. Page number.
         wattron(_result_window, A_BOLD);
         std::ostringstream buffer;
-        buffer <<_PAGE_NUMBER_PREFIX
-               << std::setw(_PAGE_NUMBER_WIDTH) << std::left << hit.Page;
-        mvwaddstr(
-            _result_window,
-            i, 0, buffer.str().c_str());
+        buffer << _PAGE_NUMBER_PREFIX << std::setw(_PAGE_NUMBER_WIDTH)
+               << std::left << hit.Page;
+        mvwaddstr(_result_window, i, 0, buffer.str().c_str());
         wattroff(_result_window, A_BOLD);
 
         // 1.2. Context.
         int offset = 0;
         waddnstr(
-            _result_window,
-            hit.ContextText.c_str() + offset,
+            _result_window, hit.ContextText.c_str() + offset,
             hit.SearchStringPosition);
         offset += hit.SearchStringPosition;
         const int search_string_length = std::min(
@@ -178,16 +170,14 @@ void SearchView::Render() {
         wattron(_result_window, A_UNDERLINE);
         wattron(_result_window, A_BOLD);
         waddnstr(
-            _result_window,
-            hit.ContextText.c_str() + offset,
+            _result_window, hit.ContextText.c_str() + offset,
             search_string_length);
         wattroff(_result_window, A_BOLD);
         wattroff(_result_window, A_UNDERLINE);
         offset += search_string_length;
         assert(_context_text_length >= offset);
         waddnstr(
-            _result_window,
-            hit.ContextText.c_str() + offset,
+            _result_window, hit.ContextText.c_str() + offset,
             _context_text_length - offset);
 
         wclrtoeol(_result_window);
@@ -204,10 +194,10 @@ void SearchView::Render() {
       if (HasSearchedAllPages()) {
         buffer << _result->SearchHits.size();
       } else {
-        buffer << (
-            (_result->SearchHits.size() /
-             _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING) *
-            _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING) << "+";
+        buffer << ((_result->SearchHits.size() /
+                    _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING) *
+                   _MAX_NUM_SEARCH_HITS_DISPLAY_ROUNDING)
+               << "+";
       }
       buffer << " results";
       if (!HasSearchedAllPages()) {
@@ -412,48 +402,39 @@ void SearchView::Search() {
   std::unique_ptr<Document::SearchResult> result;
 
   std::thread search_thread([&]() {
-      result = std::make_unique<Document::SearchResult>(_document->Search(
-          search_string,
-          search_start_page,
-          _context_text_length,
-          max_num_search_hits));
-      std::unique_lock<std::mutex> search_thread_result_lock(result_mutex);
-      result_cond.notify_all();
+    result = std::make_unique<Document::SearchResult>(_document->Search(
+        search_string, search_start_page, _context_text_length,
+        max_num_search_hits));
+    std::unique_lock<std::mutex> search_thread_result_lock(result_mutex);
+    result_cond.notify_all();
   });
 
   // 2. Construct progress window.
   const int progress_window_width =
-      1 + _SEARCH_PROGRESS_PADDING +
-      strlen(_SEARCH_PROGRESS_PREFIX) + _MAX_NUM_SEARCH_PROGRESS_CHARS +
-      _SEARCH_PROGRESS_PADDING + 1;
+      1 + _SEARCH_PROGRESS_PADDING + strlen(_SEARCH_PROGRESS_PREFIX) +
+      _MAX_NUM_SEARCH_PROGRESS_CHARS + _SEARCH_PROGRESS_PADDING + 1;
   const int progress_window_height =
       1 + _SEARCH_PROGRESS_PADDING + 1 + _SEARCH_PROGRESS_PADDING + 1;
   const int progress_window_x = (window_width - progress_window_width) / 2;
   const int progress_window_y = (window_height - progress_window_height) / 2;
   WINDOW* progress_window = derwin(
-      window,
-      progress_window_height, progress_window_width,
-      progress_window_y, progress_window_x);
+      window, progress_window_height, progress_window_width, progress_window_y,
+      progress_window_x);
   wbkgdset(progress_window, A_STANDOUT);
   wclear(progress_window);
   box(progress_window, 0, 0);
   mvwaddstr(
-      progress_window,
-      1 + _SEARCH_PROGRESS_PADDING, 1 + _SEARCH_PROGRESS_PADDING,
-      _SEARCH_PROGRESS_PREFIX);
+      progress_window, 1 + _SEARCH_PROGRESS_PADDING,
+      1 + _SEARCH_PROGRESS_PADDING, _SEARCH_PROGRESS_PREFIX);
   int search_progress_chars_x, search_progress_chars_y;
-  getyx(
-      progress_window,
-      search_progress_chars_y, search_progress_chars_x);
+  getyx(progress_window, search_progress_chars_y, search_progress_chars_x);
 
   // 3. Block until search result is available.
-  for (int num_progress_chars = 0; ; ++num_progress_chars) {
+  for (int num_progress_chars = 0;; ++num_progress_chars) {
     // 3.1. Draw progress chars.
     num_progress_chars =
         num_progress_chars % (_MAX_NUM_SEARCH_PROGRESS_CHARS + 1);
-    wmove(
-        progress_window,
-        search_progress_chars_y, search_progress_chars_x);
+    wmove(progress_window, search_progress_chars_y, search_progress_chars_x);
     for (int i = 1; i <= _MAX_NUM_SEARCH_PROGRESS_CHARS; ++i) {
       const char c = i <= num_progress_chars ? _SEARCH_PROGRESS_CHAR : ' ';
       waddch(progress_window, c);
@@ -490,8 +471,8 @@ void SearchView::Search() {
     assert(_result->SearchString == result->SearchString);
     _result->LastSearchedPage = result->LastSearchedPage;
     _result->SearchHits.insert(
-        _result->SearchHits.end(),
-        result->SearchHits.begin(), result->SearchHits.end());
+        _result->SearchHits.end(), result->SearchHits.begin(),
+        result->SearchHits.end());
   } else {
     _result = std::move(result);
   }

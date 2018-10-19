@@ -41,8 +41,8 @@
 extern "C" {
 #include "mupdf/fitz.h"
 #ifndef MUPDF_PDF_H
-  struct pdf_document;
-  struct pdf_page;
+struct pdf_document;
+struct pdf_page;
 #endif
 }
 
@@ -105,9 +105,11 @@ class PDFDocument : public Document {
    public:
     PDFPageCache(int cache_size, PDFDocument* parent);
     virtual ~PDFPageCache();
+
    protected:
     pdf_page* Load(const int& page) override;
     void Discard(const int& page, pdf_page* const& page_struct) override;
+
    private:
     // PDF document we belong to.
     PDFDocument* _parent;
@@ -128,7 +130,7 @@ class PDFDocument : public Document {
   explicit PDFDocument(int page_cache_size);
   // We disallow copying because we store lots of heap allocated state.
   PDFDocument(const PDFDocument& other);
-  PDFDocument& operator = (const PDFDocument& other);
+  PDFDocument& operator=(const PDFDocument& other);
 
   // Wrapper around pdf_load_page that implements caching. If _page_cache_size
   // is reached, throw out the oldest page. Will also attempt to load the pages
@@ -142,4 +144,3 @@ class PDFDocument : public Document {
 };
 
 #endif
-

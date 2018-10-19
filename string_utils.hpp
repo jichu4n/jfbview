@@ -34,8 +34,7 @@ extern std::string Trim(const std::string& s);
 // Returns the first occurrance after the given position, or string::npos if not
 // found.
 extern std::string::size_type CaseInsensitiveSearch(
-    const std::string& s,
-    const std::string& search_string,
+    const std::string& s, const std::string& search_string,
     std::string::size_type pos = 0);
 
 #endif

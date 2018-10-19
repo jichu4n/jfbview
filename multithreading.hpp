@@ -31,8 +31,6 @@ extern int GetDefaultNumThreads();
 // num_threads specifies how many threads to spawn, and defaults to the number
 // of CPU cores. Blocks until all spawned threads exit.
 extern void ExecuteInParallel(
-    const std::function<void(int, int)> &f,
-    int num_threads = 0);
+    const std::function<void(int, int)> &f, int num_threads = 0);
 
 #endif
-

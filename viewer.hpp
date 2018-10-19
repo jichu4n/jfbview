@@ -80,19 +80,20 @@ class Viewer {
     // Render() itself.
     int ScreenHeight;
 
-    State(int page = 0, float zoom = ZOOM_TO_WIDTH, int rotation = 0,
-           int x_offset = 0, int y_offset = 0)
-        : Page(page), Zoom(zoom), Rotation(rotation),
-          XOffset(x_offset), YOffset(y_offset) {
-    }
+    State(
+        int page = 0, float zoom = ZOOM_TO_WIDTH, int rotation = 0,
+        int x_offset = 0, int y_offset = 0)
+        : Page(page),
+          Zoom(zoom),
+          Rotation(rotation),
+          XOffset(x_offset),
+          YOffset(y_offset) {}
   };
 
   // Constructs a new Viewer object. Does not take ownership of the document or
   // the framebuffer object.
   Viewer(
-      Document* doc,
-      Framebuffer* fb,
-      const State& state = State(),
+      Document* doc, Framebuffer* fb, const State& state = State(),
       int render_cache_size = DEFAULT_RENDER_CACHE_SIZE);
   virtual ~Viewer();
 
@@ -125,21 +126,21 @@ class Viewer {
     int Rotation;
 
     RenderCacheKey(int page, float zoom, int rotation)
-        : Page(page), Zoom(zoom), Rotation(rotation) {
-    }
+        : Page(page), Zoom(zoom), Rotation(rotation) {}
 
     // This is required as this class will be inserted into a map.
-    bool operator < (const RenderCacheKey& other) const;
+    bool operator<(const RenderCacheKey& other) const;
   };
   // Render cache class.
   class RenderCache : public Cache<RenderCacheKey, PixelBuffer*> {
    public:
     RenderCache(Viewer* parent, int size);
     virtual ~RenderCache();
+
    protected:
     PixelBuffer* Load(const RenderCacheKey& key) override;
-    void Discard(
-        const RenderCacheKey& key, PixelBuffer* const& value) override;
+    void Discard(const RenderCacheKey& key, PixelBuffer* const& value) override;
+
    private:
     Viewer* _parent;
   };
@@ -148,4 +149,3 @@ class Viewer {
 };
 
 #endif
-

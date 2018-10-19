@@ -50,8 +50,8 @@ int main(int argc, char* argv[]) {
   endwin();
 
   const std::string search_string = argv[2];
-  const Document::SearchResult& result = document->Search(
-      search_string, 0, line_width, INT_MAX);
+  const Document::SearchResult& result =
+      document->Search(search_string, 0, line_width, INT_MAX);
 
   for (const Document::SearchHit& hit : result.SearchHits) {
     std::ostringstream buffer;
