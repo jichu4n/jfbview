@@ -46,30 +46,38 @@ extern "C" {
 #define fz_drop_stext_page fz_drop_text_page
 #endif
 
+#if MUPDF_VERSION < 10007
+#define pdf_bound_page(context, pdf_document, page, bbox) \
+  pdf_bound_page((pdf_document), (page), (bbox))
+#elif MUPDF_VERSION < 10014
+#define pdf_bound_page(context, pdf_document, page, bbox) \
+  pdf_bound_page((context), (page), (bbox))
+#else
+// No definition
+#endif
+
+#if MUPDF_VERSION < 10007
+#define pdf_drop_page(context, pdf_document, page) \
+  pdf_free_page((pdf_document), (page))
+#elif MUPDF_VERSION < 10011
+#define pdf_drop_page(context, pdf_document, page) \
+  pdf_drop_page((context), (page))
+#else
+#define pdf_drop_page(context, pdf_document, page) \
+  fz_drop_page((context), &(page)->super)
+#endif
+
 #if MUPDF_VERSION >= 10007
 #define pdf_run_page(context, pdf_document, page, dev, matrix, cookie) \
   pdf_run_page((context), (page), (dev), (matrix), (cookie))
-#define pdf_bound_page(context, pdf_document, page, bbox) \
-  pdf_bound_page((context), (page), (bbox))
-#if MUPDF_VERSION >= 10011
-#define pdf_drop_page(context, pdf_document, page) \
-  fz_drop_page((context), &(page)->super)
-#else
-#define pdf_drop_page(context, pdf_document, page) \
-  pdf_drop_page((context), (page))
-#endif
 #else
 #define pdf_run_page(context, pdf_document, page, dev, matrix, cookie) \
   pdf_run_page((pdf_document), (page), (dev), (matrix), (cookie))
-#define pdf_bound_page(context, pdf_document, page, bbox) \
-  pdf_bound_page((pdf_document), (page), (bbox))
 #define fz_drop_context fz_free_context
 #define fz_drop_device(context, dev) fz_free_device(dev)
 #define fz_drop_text_page fz_free_text_page
 #define fz_drop_text_sheet fz_free_text_sheet
 #define fz_drop_outline fz_free_outline
-#define pdf_drop_page(context, pdf_document, page) \
-  pdf_free_page((pdf_document), (page))
 #define fz_begin_page(context, dev, rect, identity) \
   (fz_begin_page((dev), (rect), (identity)))
 #define fz_end_page(context, dev) (fz_end_page(dev))
@@ -93,6 +101,12 @@ extern "C" {
 #define fz_new_draw_device(context, transform, dest) \
   (fz_new_draw_device(context, dest))
 #define fz_close_device(context, dev)
+#endif
+
+#if MUPDF_VERSION < 10014
+#define FZ_OBJ(x) (&(x))
+#else
+#define FZ_OBJ(x) (x)
 #endif
 
 const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
@@ -160,12 +174,13 @@ void PDFDocument::Render(
   pdf_page* page_struct = GetPage(page);
   const fz_irect& bbox = GetBoundingBox(page_struct, m);
   fz_pixmap* pixmap = fz_new_pixmap_with_bbox(
-      _fz_context, fz_device_rgb(_fz_context), &bbox, nullptr, 1);
-  fz_device* dev = fz_new_draw_device(_fz_context, &fz_identity, pixmap);
+      _fz_context, fz_device_rgb(_fz_context), FZ_OBJ(bbox), nullptr, 1);
+  fz_device* dev = fz_new_draw_device(_fz_context, FZ_OBJ(fz_identity), pixmap);
 
   // 2. Render page.
   fz_clear_pixmap_with_value(_fz_context, pixmap, 0xff);
-  pdf_run_page(_fz_context, _pdf_document, page_struct, dev, &m, nullptr);
+  pdf_run_page(
+      _fz_context, _pdf_document, page_struct, dev, FZ_OBJ(m), nullptr);
 
   // 3. Write pixmap to buffer. The page is vertically divided into n equal
   // stripes, each copied to pw by one thread.
@@ -387,19 +402,31 @@ pdf_page* PDFDocument::GetPage(int page) {
 
 fz_matrix PDFDocument::Transform(float zoom, int rotation) {
   fz_matrix transformation_matrix, scale_matrix, rotate_matrix;
+#if MUPDF_VERSION >= 10014
+  scale_matrix = fz_scale(zoom, zoom);
+  rotate_matrix = fz_rotate(rotation);
+  transformation_matrix = fz_concat(scale_matrix, rotate_matrix);
+#else
   fz_scale(&scale_matrix, zoom, zoom);
   fz_rotate(&rotate_matrix, rotation);
   fz_concat(&transformation_matrix, &scale_matrix, &rotate_matrix);
+#endif
+
   return transformation_matrix;
 }
 
 fz_irect PDFDocument::GetBoundingBox(
     pdf_page* page_struct, const fz_matrix& m) {
   assert(page_struct != nullptr);
+#if MUPDF_VERSION >= 10014
+  return fz_round_rect(
+      fz_transform_rect(pdf_bound_page(_fz_context, page_struct), m));
+#else
   fz_rect bbox;
   fz_irect ibbox;
   return *fz_round_rect(
       &ibbox,
       fz_transform_rect(
           pdf_bound_page(_fz_context, _pdf_document, page_struct, &bbox), &m));
+#endif
 }
