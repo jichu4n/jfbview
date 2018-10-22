@@ -19,30 +19,31 @@ instructions and usage.
 INSTALLATION
 ------------
 
-  * Arch Linux:
-    - Install package `jfbview` from the AUR, e.g.
-      ```
+Arch Linux:
+  * Install package `jfbview` from the AUR, e.g.
+    ```
       yay -S jfbview
-      ```
-    - Source: https://aur.archlinux.org/packages/jfbview
-  * Debian / Ubuntu:
-    - Install dependencies:
-      ```
-      sudo apt-get install \
-        libssl-dev \
-        libopenjp2-7-dev \
-        libjbig2dec-dev \
-        libharfbuzz-dev \
-        libncurses5-dev \
-        libimlib2-dev \
-        libmupdf-dev
-      ```
-    - Clone this repo and build:
-      ```
-      git clone https://github.com/jichu4n/jfbview.git
-      cd jfbview
-      make
-      ```
+    ```
+  * Source: https://aur.archlinux.org/packages/jfbview
+
+Debian / Ubuntu:
+  * Install dependencies:
+    ```
+    sudo apt-get install \
+      libssl-dev \
+      libopenjp2-7-dev \
+      libjbig2dec-dev \
+      libharfbuzz-dev \
+      libncurses5-dev \
+      libimlib2-dev \
+      libmupdf-dev
+    ```
+  * Clone this repo and build:
+    ```
+    git clone https://github.com/jichu4n/jfbview.git
+    cd jfbview
+    make
+    ```
 
 BUILDING
 --------
