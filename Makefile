@@ -47,6 +47,11 @@ LIBS := \
     -ljbig2dec \
     -ljpeg \
     -l$(OPENJP2)
+ifeq ($(shell [ $(MUPDF_VERSION) -ge 10014 ]; echo $$?), 0)
+  LIBS += -lmupdf-third \
+      -lssl \
+      -lcrypto
+else
 ifeq ($(shell [ $(MUPDF_VERSION) -ge 10009 ]; echo $$?), 0)
   LIBS += -lmupdfthird \
       -lssl \
@@ -58,6 +63,7 @@ ifeq ($(shell [ $(MUPDF_VERSION) -ge 10004 ]; echo $$?), 0)
       -lcrypto
 else
   LIBS += -lmupdf-js-none
+endif
 endif
 endif
 
