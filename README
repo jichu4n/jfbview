@@ -1,5 +1,5 @@
 JFBView
-=====
+=======
 
 JFBView is a PDF and image viewer for the Linux framebuffer. It is very fast and
 has a number of advanced and unique features including:
@@ -15,6 +15,34 @@ The home page of JFBView is at https://github.com/jichu4n/jfbview.
 
 Please refer to the home page for more information, including installation
 instructions and usage.
+
+INSTALLATION
+------------
+
+  * Arch Linux:
+    - Install package `jfbview` from the AUR, e.g.
+      ```
+      yay -S jfbview
+      ```
+    - Source: https://aur.archlinux.org/packages/jfbview
+  * Debian / Ubuntu:
+    - Install dependencies:
+      ```
+      sudo apt-get install \
+        libssl-dev \
+        libopenjp2-7-dev \
+        libjbig2dec-dev \
+        libharfbuzz-dev \
+        libncurses5-dev \
+        libimlib2-dev \
+        libmupdf-dev
+      ```
+    - Clone this repo and build:
+      ```
+      git clone https://github.com/jichu4n/jfbview.git
+      cd jfbview
+      make
+      ```
 
 BUILDING
 --------
