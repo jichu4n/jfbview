@@ -33,9 +33,10 @@
 #include <getopt.h>
 #include <linux/vt.h>
 #include <locale.h>
-#include <stropts.h>
+#include <sys/ioctl.h>
 #include <sys/prctl.h>
 #include <unistd.h>
+
 #include <algorithm>
 #include <cctype>
 #include <climits>
@@ -46,6 +47,7 @@
 #include <map>
 #include <memory>
 #include <string>
+
 #include "command.hpp"
 #include "cpp_compat.hpp"
 #include "framebuffer.hpp"
