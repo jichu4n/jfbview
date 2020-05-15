@@ -11,8 +11,8 @@ project(jfbview)
 # Third-party code in vendor.
 # ---------------------------
 add_subdirectory(vendor)
-include_directories(${vendor_include_dirs})
-link_directories(${vendor_link_dirs})
+include_directories(${vendor_mupdf_include_dirs})
+link_directories(${vendor_mupdf_link_dirs})
 
 # Detect MuPDF version.
 # ---------------------
@@ -22,7 +22,7 @@ add_executable(
 )
 add_dependencies(
   print_mupdf_version
-  vendor
+  vendor_mupdf
 )
 target_link_libraries(
   print_mupdf_version
