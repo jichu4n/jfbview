@@ -78,6 +78,7 @@ target_link_libraries(
   jpdfcat
   jfbview_pdf
 )
+install(TARGETS jpdfcat DESTINATION bin)
 
 # jpdfgrep
 # --------
@@ -87,6 +88,7 @@ target_link_libraries(
   jfbview_pdf
   ${CURSES_LIBRARIES}
 )
+install(TARGETS jpdfgrep DESTINATION bin)
 
 # Common viewer code shared by jfbview and jfbpdf.
 # ------------------------------------------------
@@ -119,6 +121,7 @@ target_link_libraries(
   jfbview_pdf_viewer
   ${IMLIB2_LIBRARIES}
 )
+install(TARGETS jfbview DESTINATION bin)
 
 # jfbpdf
 # ------
@@ -134,8 +137,9 @@ target_compile_definitions(
   JFBVIEW_PROGRAM_NAME=\"JFBPDF\"
   JFBVIEW_BINARY_NAME=\"jfbpdf\"
 )
+install(TARGETS jfbpdf DESTINATION bin)
 
-# Man page.
+# Docs.
 # ---------
 add_custom_target(
   jfbview.1.gz
@@ -145,4 +149,6 @@ add_custom_target(
     gzip > "${CMAKE_CURRENT_BINARY_DIR}/jfbview.1.gz"
   DEPENDS jfbview.1
 )
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/jfbview.1.gz" DESTINATION share/man/man1)
+install(FILES README DESTINATION share/doc/jfbview)
 
