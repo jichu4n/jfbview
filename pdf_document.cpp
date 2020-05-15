@@ -32,6 +32,8 @@ extern "C" {
 #include "pdf_document.hpp"
 #include "string_utils.hpp"
 
+#include "detected_mupdf_version.hpp"
+
 #if MUPDF_VERSION < 10009
 #define pdf_drop_document pdf_close_document
 #define fz_stext_sheet fz_text_sheet
