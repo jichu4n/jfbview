@@ -1,7 +1,7 @@
-JFBView
+jfbview
 =======
 
-JFBView is a PDF and image viewer for the Linux framebuffer. It is very fast and
+jfbview is a PDF and image viewer for the Linux framebuffer. It is very fast and
 has a number of advanced and unique features including:
 
   * Arbitrary zoom (10% - 1000%) and rotation;
@@ -11,7 +11,7 @@ has a number of advanced and unique features including:
   * Asynchronous background pre-caching;
   * Customizable multi-threaded caching.
 
-The home page of JFBView is at https://github.com/jichu4n/jfbview.
+The home page of jfbview is at https://github.com/jichu4n/jfbview.
 
 Please refer to the home page for more information, including installation
 instructions and usage.
@@ -48,51 +48,45 @@ Debian / Ubuntu:
 BUILDING
 --------
 
-JFBView depends on MuPDF 1.x for PDF rendering and Imlib2 for image rendering.
-Note that the 1.x MuPDF API is incompatible with the pre-1.0 MuPDF API, wich
-means you cannot build JFBView against a pre-1.0 MuPDF library.
+jfbview uses MuPDF for PDF rendering and Imlib2 for image rendering.
 
-JFBView makes use of C++14 features where available, so you will need a
+Starting from version 0.5.8, jfbview uses a bundled version of MuPDF located in
+the `vendor` directory in order to reduce the complexity from maintaining
+compatibility with multiple MuPDF versions. This complexity comes from the fact
+that MuPDF's API has historically changed quite frequently between versions,
+and different Linux distributions ship with a wide range of MuPDF versions.
+
+However, jfbview does use the system version of Imlib2 as it has not been a
+source of compatibility issues so far.
+
+jfbview makes use of C++14 features where available, so you will need a 
 compatible C++ compiler (GCC 4.9+, Clang 3.5+) to build it.
 
-To build JFBView, just run `make`.
+Starting from version 0.5.8, jfbview uses CMake instead of traditional Make as
+its build system.
 
-It is also possible to build a variant of JFBView without support for images and
-without dependency on Imlib2, which has a rather large list of dependencies
-itself. This target is called JFBPDF. To build, run `make jfbpdf`.
-
-MUPDF VERSIONS
---------------
-
-JFBView can be compiled against MuPDF 1.3 and up. To test compilation against a
-particular version of MuPDF:
-
-1. Obtain MuPDF headers and libraries at the particular version. For Arch Linux,
-   historical package versions can be obtained at
-   https://archive.archlinux.org/packages/l/libmupdf/.
-
-2. Set `CXXFLAGS` to point to location of extracted package when invoking
-   `make`, e.g.:
-   ```
-    make CXXFLAGS="-I../mupdf-1.12.0-2/usr/include -L../mupdf-1.12.0-2/usr/lib"
-   ```
+It is also possible to build a variant of jfbview without support for images
+and without dependency on Imlib2, which has a rather large list of dependencies
+itself. To build this variant, specify the CMake flag
+`-DENABLE_IMAGE_SUPPORT=OFF`. For backwards compatibility, this will also
+enable an alias for `jfbview` called `jfbpdf`.
 
 DOCUMENTATION
 -------------
 
 The key bindings and command line options available are described in the man
-page of JFBView. To view it, do `man jfbview`, or check out the
-[online version](http://seasonofcode.com/assets/files/jfbview.html).
+page of jfbview. To view it, do `man jfbview`.
 
 ABOUT
 -----
 
-JFBView is written by Chuan Ji, and is distributed under the Apache License v2.
+jfbview is written by Chuan Ji, and is distributed under the Apache License v2.
 
 HISTORY
 -------
 
-JFBView started as a fork of FBPDF by Ali Gholami Rudi with improvements and bug
+jfbview started as a fork of FBPDF by Ali Gholami Rudi with improvements and bug
 fixes, and was named JFBPDF. The JFBPDF code (in C) grew steadily more
 convoluted as features were added, and finally was completely rewritten from
 scratch in November 2012, with added support for images through Imlib2.
+

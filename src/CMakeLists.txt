@@ -7,8 +7,10 @@ set(CURSES_NEED_NCURSES ON)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIRS})
 
-find_package(Imlib2 REQUIRED)
-include_directories(${IMLIB2_INCLUDE_DIR})
+if(ENABLE_IMAGE_SUPPORT)
+  find_package(Imlib2 REQUIRED)
+  include_directories(${IMLIB2_INCLUDE_DIR})
+endif()
 
 # Detect MuPDF version.
 # ---------------------
@@ -94,31 +96,28 @@ target_link_libraries(
 
 # jfbview
 # -------
-add_executable(
-  jfbview
-  image_document.cpp
-  main.cpp
-)
-target_link_libraries(
-  jfbview
-  jfbview_pdf_viewer
-  ${IMLIB2_LIBRARIES}
-)
+set(jfbview_sources image_document.cpp main.cpp)
+add_executable(jfbview ${jfbview_sources})
+if(ENABLE_IMAGE_SUPPORT)
+  target_link_libraries(jfbview ${IMLIB2_LIBRARIES})
+else()
+  target_compile_definitions(jfbview PRIVATE JFBVIEW_NO_IMLIB2)
+endif()
+target_link_libraries(jfbview jfbview_pdf_viewer)
 install(TARGETS jfbview DESTINATION bin)
 
 # jfbpdf
 # ------
-add_executable(jfbpdf main.cpp)
-target_link_libraries(
-  jfbpdf
-  jfbview_pdf_viewer
-)
-target_compile_definitions(
-  jfbpdf
-  PRIVATE
-  JFBVIEW_NO_IMLIB2
-  JFBVIEW_PROGRAM_NAME=\"JFBPDF\"
-  JFBVIEW_BINARY_NAME=\"jfbpdf\"
-)
-install(TARGETS jfbpdf DESTINATION bin)
+if(NOT ENABLE_IMAGE_SUPPORT)
+  add_executable(jfbpdf ${jfbview_sources})
+  target_compile_definitions(
+    jfbpdf
+    PRIVATE
+    JFBVIEW_NO_IMLIB2
+    JFBVIEW_PROGRAM_NAME=\"JFBPDF\"
+    JFBVIEW_BINARY_NAME=\"jfbpdf\"
+  )
+  target_link_libraries(jfbpdf jfbview_pdf_viewer)
+  install(TARGETS jfbpdf DESTINATION bin)
+endif()
 

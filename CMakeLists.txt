@@ -8,6 +8,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(jfbview)
 
+# Build options.
+# --------------
+option(
+  ENABLE_IMAGE_SUPPORT
+  "If OFF, disable support for images via Imlib2 and build a PDF-only variant (jfbpdf)."
+  ON)
+
 # Third-party code in vendor.
 # ---------------------------
 add_subdirectory(vendor)
