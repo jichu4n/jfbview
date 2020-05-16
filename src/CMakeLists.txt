@@ -10,7 +10,20 @@ include_directories(${CURSES_INCLUDE_DIRS})
 if(ENABLE_IMAGE_SUPPORT)
   find_package(Imlib2 REQUIRED)
   include_directories(${IMLIB2_INCLUDE_DIR})
+else()
+  add_definitions(
+    -DJFBVIEW_NO_IMLIB2
+  )
+  set(IMLIB2_LIBRARIES)
 endif()
+
+# Build settings.
+# ---------------
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_definitions(
+  -DJFBVIEW_VERSION=\"${PROJECT_VERSION}\"
+)
 
 # Detect MuPDF version.
 # ---------------------
@@ -98,12 +111,7 @@ target_link_libraries(
 # -------
 set(jfbview_sources image_document.cpp main.cpp)
 add_executable(jfbview ${jfbview_sources})
-if(ENABLE_IMAGE_SUPPORT)
-  target_link_libraries(jfbview ${IMLIB2_LIBRARIES})
-else()
-  target_compile_definitions(jfbview PRIVATE JFBVIEW_NO_IMLIB2)
-endif()
-target_link_libraries(jfbview jfbview_pdf_viewer)
+target_link_libraries(jfbview jfbview_pdf_viewer ${IMLIB2_LIBRARIES})
 install(TARGETS jfbview DESTINATION bin)
 
 # jfbpdf

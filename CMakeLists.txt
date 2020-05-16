@@ -1,19 +1,20 @@
-# Project settings.
-# -----------------
+# CMake settings.
+# ---------------
 cmake_minimum_required(VERSION 3.2)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+cmake_policy(SET CMP0048 NEW)
 
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-project(jfbview)
+# Project settings.
+# -----------------
+project(jfbview VERSION 0.5.8)
 
 # Build options.
 # --------------
 option(
   ENABLE_IMAGE_SUPPORT
   "If OFF, disable support for images via Imlib2 and build a PDF-only variant (jfbpdf)."
-  ON)
+  ON
+)
 
 # Third-party code in vendor.
 # ---------------------------
@@ -28,4 +29,8 @@ add_subdirectory(src)
 # Docs.
 # -----
 add_subdirectory(doc)
+
+# Packaging.
+# ----------
+add_subdirectory(packaging)
 
