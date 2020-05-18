@@ -1,7 +1,7 @@
 jfbview
 =======
 
-jfbview is a PDF and image viewer for the Linux framebuffer. It is very fast and
+jfbview is a PDF and image viewer for the Linux framebuffer. It's pretty fast and
 has a number of advanced and unique features including:
 
   * Arbitrary zoom (10% - 1000%) and rotation;
@@ -16,6 +16,9 @@ The home page of jfbview is at https://github.com/jichu4n/jfbview.
 Please refer to the home page for more information, including installation
 instructions and usage.
 
+![GitHub Workflow Build Status](https://github.com/jichu4n/jfbview/workflows/build/badge.svg)
+[![Travis CI Build Status](https://travis-ci.org/jichu4n/jfbview.svg?branch=master)](https://travis-ci.org/jichu4n/jfbview)
+
 INSTALLATION
 ------------
 
@@ -29,26 +32,8 @@ Arch Linux:
   * Source: https://aur.archlinux.org/packages/jfbview
 
 Debian / Ubuntu:
-  * See [Releases page] for pre-built binary packages
-  * To build from source:
-    * Install dependencies:
-
-        ```
-        sudo apt-get install \
-          build-essential cmake \
-          libncurses5-dev libimlib2-dev \
-          libglu1-mesa-dev libxi-dev libxrandr-dev
-        ```
-
-    * Clone this repo and build:
-
-        ```
-        git clone https://github.com/jichu4n/jfbview.git
-        cd jfbview
-        mkdir build && cd build
-        cmake ../
-        make && make install
-        ```
+  * See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.deb` packages for various Debian and Ubuntu versions.
+  * To build from source, check out the build scripts in the `packaging` directory.
 
 DEPENDENCIES
 ------------
@@ -67,8 +52,8 @@ source of compatibility issues so far.
 jfbview makes use of C++14 features where available, so you will need a 
 compatible C++ compiler (GCC 4.9+, Clang 3.5+) to build it.
 
-Starting from version 0.5.8, jfbview uses CMake instead of traditional Make as
-its build system.
+Starting from version 0.5.8, jfbview uses CMake (version 3.2+) as its build
+system.
 
 It is also possible to build a variant of jfbview without support for images
 and without dependency on Imlib2, which has a rather large list of dependencies
