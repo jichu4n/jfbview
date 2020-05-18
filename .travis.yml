@@ -1,0 +1,36 @@
+language: cpp
+jobs:
+  include:
+    - dist: trusty
+      arch: amd64
+    - dist: xenial
+      arch: amd64
+    - dist: bionic
+      arch: amd64
+    - dist: trusty
+      arch: arm64
+    - dist: xenial
+      arch: arm64
+    - dist: bionic
+      arch: arm64
+before_install:
+  - >
+    sudo apt-get install
+    libncurses5-dev libimlib2-dev
+    libglu1-mesa-dev libxi-dev libxrandr-dev
+script: >
+    mkdir build upload &&
+    cmake -H. -Bbuild -DCMAKE_VERBOSE_MAKEFILE=ON &&
+    cmake --build build --target package &&
+    cp build/*.deb upload/jfbview_${TRAVIS_COMMIT}~${TRAVIS_DIST}_${TRAVIS_CPU_ARCH}.deb
+deploy:
+  provider: gcs
+  access_key_id: ${GCS_ACCESS_KEY_ID}
+  secret_access_key: ${GCS_SECRET_ACCESS_KEY}
+  bucket: ${GCS_BUCKET}
+  local_dir: upload
+  on:
+    repo: jichu4n/jfbview
+    all_branches: true
+  skip_cleanup: true
+
