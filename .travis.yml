@@ -1,28 +1,50 @@
 language: cpp
+services:
+  - docker
 jobs:
   include:
-    - dist: trusty
+    # Ubuntu amd64
+    - env: docker_image=ubuntu:focal dist=focal arch=amd64
       arch: amd64
-    - dist: xenial
+    - env: docker_image=ubuntu:bionic dist=bionic arch=amd64
       arch: amd64
-    - dist: bionic
+    - env: docker_image=ubuntu:xenial dist=xenial arch=amd64
       arch: amd64
-    - dist: trusty
+    # Ubuntu i386
+    # i386 version of focal is currently buggy.
+    # - env: docker_image=i386/ubuntu:focal dist=focal arch=i386
+    #   arch: amd64
+    - env: docker_image=i386/ubuntu:bionic dist=bionic arch=i386
+      arch: amd64
+    - env: docker_image=i386/ubuntu:xenial dist=xenial arch=i386
+      arch: amd64
+    # Debian amd64
+    - env: docker_image=debian:buster dist=buster arch=amd64
+      arch: amd64
+    - env: docker_image=debian:stretch dist=stretch arch=amd64
+      arch: amd64
+    # Debian i386
+    - env: docker_image=i386/debian:buster dist=buster arch=i386
+      arch: amd64
+    - env: docker_image=i386/debian:stretch dist=stretch arch=i386
+      arch: amd64
+    # Debian arm64v8
+    - env: docker_image=arm64v8/debian:buster dist=buster arch=arm64
       arch: arm64
-    - dist: xenial
+    - env: docker_image=arm64v8/debian:stretch dist=stretch arch=arm64
       arch: arm64
-    - dist: bionic
+    # Debian armv7
+    - env: docker_image=arm32v7/debian:buster dist=buster arch=armhf
       arch: arm64
-before_install:
-  - >
-    sudo apt-get install
-    libncurses5-dev libimlib2-dev
-    libglu1-mesa-dev libxi-dev libxrandr-dev
+    - env: docker_image=arm32v7/debian:stretch dist=stretch arch=armhf
+      arch: arm64
+    # Debian armv6 (Raspberry Pi)
+    - env: docker_image=balenalib/rpi-raspbian:buster dist=buster arch=rpi
+      arch: arm64
+    - env: docker_image=balenalib/rpi-raspbian:stretch dist=stretch arch=rpi
+      arch: arm64
 script: >
-    mkdir build upload &&
-    cmake -H. -Bbuild -DCMAKE_VERBOSE_MAKEFILE=ON &&
-    cmake --build build --target package &&
-    cp build/*.deb upload/jfbview_${TRAVIS_COMMIT}~${TRAVIS_DIST}_${TRAVIS_CPU_ARCH}.deb
+  packaging/build-deb-in-docker.sh "${docker_image}" "jfbview_${TRAVIS_COMMIT}~${dist}_${arch}"
 deploy:
   provider: gcs
   access_key_id: ${GCS_ACCESS_KEY_ID}

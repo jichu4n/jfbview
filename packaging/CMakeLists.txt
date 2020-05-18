@@ -7,6 +7,7 @@ set(
   CPACK_PACKAGE_DESCRIPTION_SUMMARY
   "PDF and image viewer for the Linux framebuffer."
 )
+set(CPACK_PACKAGE_FILE_NAME "${PACKAGE_FILE_PREFIX}")
 
 # Debian CPack settings.
 # ----------------------
