@@ -15,6 +15,16 @@ option(
   "If OFF, disable support for images via Imlib2 and build a PDF-only variant (jfbpdf)."
   ON
 )
+set(
+  PACKAGE_FORMAT
+  "DEB"
+  CACHE STRING
+  "CPack package generator(s) to enable.")
+set(
+  PACKAGE_FILE_PREFIX
+  "jfbview"
+  CACHE STRING
+  "CPack package file name prefix.")
 
 # Third-party code in vendor.
 # ---------------------------

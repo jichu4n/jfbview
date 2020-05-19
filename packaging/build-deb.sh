@@ -1,6 +1,9 @@
 #!/bin/bash
 
-package_file_prefix="${1:-jfbview}"
+version="$1"
+dist="$2"
+arch="$3"
+package_file_prefix="jfbview_${version}~${dist}_${arch}"
 
 set -ex
 
@@ -14,6 +17,7 @@ apt-get install -y \
 cd "$(dirname "$0")/.."
 mkdir -p build upload
 cmake -H. -Bbuild \
+  -DPACKAGE_FORMAT=DEB \
   -DPACKAGE_FILE_PREFIX="$package_file_prefix" \
   -DCMAKE_VERBOSE_MAKEFILE=ON
 cmake --build build --target package

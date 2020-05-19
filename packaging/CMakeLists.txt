@@ -1,6 +1,6 @@
 # General CPack settings.
 # -----------------------
-set(CPACK_GENERATOR "DEB")
+set(CPACK_GENERATOR "${PACKAGE_FORMAT}")
 set(CPACK_PACKAGE_VENDOR "Chuan Ji")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 set(
@@ -19,6 +19,16 @@ set(
   "libncurses5, libimlib2"
 )
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+
+# RPM CPack settings.
+# -------------------
+set(CPACK_RPM_PACKAGE_LICENSE "Apache v2.0")
+set(CPACK_RPM_PACKAGE_GROUP "Applications/Text")
+set(CPACK_RPM_PACKAGE_URL "https://github.com/jichu4n/jfbview")
+set(
+  CPACK_RPM_PACKAGE_REQUIRES
+  "ncurses-libs, imlib2"
+)
 
 # Enable CPack.
 # -------------
