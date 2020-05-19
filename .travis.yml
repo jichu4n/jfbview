@@ -44,7 +44,7 @@ jobs:
     - env: docker_image=balenalib/rpi-raspbian:stretch dist=stretch arch=rpi
       arch: arm64
 script: >
-  packaging/build-deb-in-docker.sh "${docker_image}" "jfbview_${TRAVIS_COMMIT}~${dist}_${arch}"
+  packaging/build-deb-with-docker.sh "${docker_image}" "jfbview_${TRAVIS_COMMIT}~${dist}_${arch}"
 deploy:
   provider: gcs
   access_key_id: ${GCS_ACCESS_KEY_ID}
