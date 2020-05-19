@@ -32,8 +32,18 @@ Arch Linux:
   * Source: https://aur.archlinux.org/packages/jfbview
 
 Debian / Ubuntu:
-  * See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.deb` packages for various Debian and Ubuntu versions.
-  * To build from source, check out the build scripts in the `packaging` directory.
+  * See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.deb` packages.
+  * To build from source, see [`packaging/build-deb.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-deb.sh).
+
+CentOS / Fedora:
+  * See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.rpm` packages.
+  * To build from source, see [`packaging/build-rpm.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-rpm.sh).
+
+DOCUMENTATION
+-------------
+
+The key bindings and command line options available are described in the man
+page of jfbview. To view it, do `man jfbview`.
 
 DEPENDENCIES
 ------------
@@ -60,12 +70,6 @@ and without dependency on Imlib2, which has a rather large list of dependencies
 itself. To build this variant, specify the CMake flag
 `-DENABLE_IMAGE_SUPPORT=OFF`. For backwards compatibility, this will also
 enable an alias for `jfbview` called `jfbpdf`.
-
-DOCUMENTATION
--------------
-
-The key bindings and command line options available are described in the man
-page of jfbview. To view it, do `man jfbview`.
 
 ABOUT
 -----
