@@ -20,12 +20,17 @@
 
 // Program name. May be overridden in the Makefile.
 #ifndef JFBVIEW_PROGRAM_NAME
-#define JFBVIEW_PROGRAM_NAME "JFBView"
+#define JFBVIEW_PROGRAM_NAME "jfbview"
 #endif
 
 // Binary program name. May be overridden in the Makefile.
 #ifndef JFBVIEW_BINARY_NAME
 #define JFBVIEW_BINARY_NAME "jfbview"
+#endif
+
+// Program version. May be overridden in the Makefile.
+#ifndef JFBVIEW_VERSION
+#define JFBVIEW_VERSION
 #endif
 
 #include <curses.h>
@@ -452,8 +457,8 @@ class ReloadCommand : public StateCommand {
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Help text printed by --help or -h.
-static const char* HELP_STRING = JFBVIEW_PROGRAM_NAME
-    " v0.2\n"
+static const char* HELP_STRING =
+    JFBVIEW_PROGRAM_NAME " " JFBVIEW_VERSION "\n"
     "Copyright (C) 2012-2018 Chuan Ji\n"
     "\n"
     "Licensed under the Apache License, Version 2.0 (the \"License\");\n"

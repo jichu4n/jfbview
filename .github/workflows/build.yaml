@@ -1,0 +1,27 @@
+name: build
+on: [push]
+jobs:
+  build-ubuntu-latest:
+    name: Build on ubuntu-latest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Build
+        run: sudo packaging/build-deb.sh
+      - name: Upload package
+        uses: actions/upload-artifact@v2
+        with:
+          name: jfbview_${{github.sha}}_amd64.deb
+          path: upload/*.deb
+      - name: Inspect package
+        run: >
+          dpkg-deb -I upload/*.deb &&
+          dpkg-deb -c upload/*.deb
+      - name: Install package
+        run: sudo dpkg -i upload/*.deb
+      - name: Check help message
+        run: jfbview -h || true
+
