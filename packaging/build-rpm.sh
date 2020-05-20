@@ -18,6 +18,7 @@ mkdir -p build upload
 cmake -H. -Bbuild \
   -DPACKAGE_FORMAT=RPM \
   -DPACKAGE_FILE_PREFIX="$package_file_prefix" \
+  -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_VERBOSE_MAKEFILE=ON
 cmake --build build --target package
 mv build/*.rpm upload/
