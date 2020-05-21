@@ -64,6 +64,8 @@
 
 // Main program state.
 struct State : public Viewer::State {
+  // If true, just print debugging info and exit.
+  bool PrintFBDebugInfoAndExit;
   // If true, exit main event loop.
   bool Exit;
   // If true (default), requires refresh after current command.
@@ -97,6 +99,7 @@ struct State : public Viewer::State {
   // Default state.
   State()
       : Viewer::State(),
+        PrintFBDebugInfoAndExit(false),
         Exit(false),
         Render(true),
         DocumentType(AUTO_DETECT),
@@ -457,8 +460,9 @@ class ReloadCommand : public StateCommand {
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Help text printed by --help or -h.
-static const char* HELP_STRING =
-    JFBVIEW_PROGRAM_NAME " " JFBVIEW_VERSION "\n"
+static const char* HELP_STRING = JFBVIEW_PROGRAM_NAME
+    " " JFBVIEW_VERSION
+    "\n"
     "Copyright (C) 2012-2018 Chuan Ji\n"
     "\n"
     "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
@@ -508,6 +512,7 @@ void ParseCommandLine(int argc, char* argv[], State* state) {
     ZOOM_TO_WIDTH,
     ZOOM_TO_FIT,
     FB,
+    PRINT_FB_DEBUG_INFO_AND_EXIT,
   };
   // Command line options.
   static const option LongFlags[] = {
@@ -518,8 +523,9 @@ void ParseCommandLine(int argc, char* argv[], State* state) {
       {"zoom_to_width", false, nullptr, ZOOM_TO_WIDTH},
       {"zoom_to_fit", false, nullptr, ZOOM_TO_FIT},
       {"rotation", true, nullptr, 'r'},
-      {"cache_size", true, nullptr, RENDER_CACHE_SIZE},
       {"format", true, nullptr, 'f'},
+      {"cache_size", true, nullptr, RENDER_CACHE_SIZE},
+      {"fb_debug_info", false, nullptr, PRINT_FB_DEBUG_INFO_AND_EXIT},
       {0, 0, 0, 0},
   };
   static const char* ShortFlags = "hp:z:r:f:";
@@ -581,14 +587,19 @@ void ParseCommandLine(int argc, char* argv[], State* state) {
           exit(EXIT_FAILURE);
         }
         break;
+      case PRINT_FB_DEBUG_INFO_AND_EXIT:
+        state->PrintFBDebugInfoAndExit = true;
+        break;
       default:
         fprintf(stderr, "Try \"-h\" for help.\n");
         exit(EXIT_FAILURE);
     }
   }
   if (optind == argc) {
-    fprintf(stderr, "No file specified. Try \"-h\" for help.\n");
-    exit(EXIT_FAILURE);
+    if (!state->PrintFBDebugInfoAndExit) {
+      fprintf(stderr, "No file specified. Try \"-h\" for help.\n");
+      exit(EXIT_FAILURE);
+    }
   } else if (optind < argc - 1) {
     fprintf(
         stderr,
@@ -690,6 +701,11 @@ out:
   close(fd);
 }
 
+void PrintFBDebugInfo(Framebuffer* fb) {
+  assert(fb != nullptr);
+  fprintf(stdout, "%s", fb->GetDebugInfoString().c_str());
+}
+
 static const char* FRAMEBUFFER_ERROR_HELP_STR = R"(
 Troubleshooting tips:
 
@@ -711,10 +727,6 @@ int main(int argc, char* argv[]) {
 
   // 1. Initialization.
   ParseCommandLine(argc, argv, &state);
-
-  if (!LoadFile(&state)) {
-    exit(EXIT_FAILURE);
-  }
   state.FramebufferInst.reset(Framebuffer::Open(state.FramebufferDevice));
   if (state.FramebufferInst == nullptr) {
     fprintf(
@@ -723,10 +735,15 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "%s", FRAMEBUFFER_ERROR_HELP_STR);
     exit(EXIT_FAILURE);
   }
-  state.ViewerInst = std::make_unique<Viewer>(
-      state.DocumentInst.get(), state.FramebufferInst.get(), state,
-      state.RenderCacheSize);
-  std::unique_ptr<Registry> registry(BuildRegistry());
+
+  if (state.PrintFBDebugInfoAndExit) {
+    PrintFBDebugInfo(state.FramebufferInst.get());
+    exit(EXIT_SUCCESS);
+  }
+
+  if (!LoadFile(&state)) {
+    exit(EXIT_FAILURE);
+  }
 
   setlocale(LC_CTYPE, "");
   initscr();
@@ -739,6 +756,11 @@ int main(int argc, char* argv[]) {
   // This is necessary to prevent curses erasing the framebuffer on first call
   // to getch().
   refresh();
+
+  state.ViewerInst = std::make_unique<Viewer>(
+      state.DocumentInst.get(), state.FramebufferInst.get(), state,
+      state.RenderCacheSize);
+  std::unique_ptr<Registry> registry(BuildRegistry());
 
   state.OutlineViewInst =
       std::make_unique<OutlineView>(state.DocumentInst->GetOutline());
@@ -796,3 +818,4 @@ int main(int argc, char* argv[]) {
 
   return EXIT_SUCCESS;
 }
+

@@ -29,12 +29,13 @@
 #include <cstdio>
 #include <cstring>
 #include <memory>
+#include <sstream>
 #include <string>
 
 const char* const Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE = "/dev/fb0";
 
 Framebuffer* Framebuffer::Open(const std::string& device) {
-  std::unique_ptr<Framebuffer> fb(new Framebuffer());
+  std::unique_ptr<Framebuffer> fb(new Framebuffer(device));
 
   if ((fb->_fd = open(device.c_str(), O_RDWR)) == -1) {
     goto error;
@@ -60,8 +61,11 @@ error:
   return nullptr;
 }
 
-Framebuffer::Framebuffer()
-    : _buffer(nullptr), _format(nullptr), _pixel_buffer(nullptr) {}
+Framebuffer::Framebuffer(const std::string& device)
+    : _device(device),
+      _buffer(nullptr),
+      _format(nullptr),
+      _pixel_buffer(nullptr) {}
 
 Framebuffer::~Framebuffer() {
   if (_buffer != nullptr && _buffer != MAP_FAILED) {
@@ -71,6 +75,32 @@ Framebuffer::~Framebuffer() {
   if (_fd != -1) {
     close(_fd);
   }
+}
+
+std::string Framebuffer::GetDebugInfoString() {
+  std::ostringstream out;
+
+  out << "Device:\t\t\t" << _device << std::endl;
+  out << "Visible resolution:\t" << _vinfo.xres << "x" << _vinfo.yres
+      << std::endl;
+  out << "Virtual resolution:\t" << _vinfo.xres_virtual << "x"
+      << _vinfo.yres_virtual << std::endl;
+  out << "Offset:\t\t\t" << _vinfo.xoffset << ", " << _vinfo.yoffset
+      << std::endl;
+  out << "Bits per pixel:\t\t" << _vinfo.bits_per_pixel << std::endl;
+  out << "Bit depth:\t\t" << _format->GetDepth() << std::endl;
+  out << "Red:\t\t\t"
+      << "length " << _vinfo.red.length << ", offset " << _vinfo.red.offset
+      << std::endl;
+  out << "Green:\t\t\t"
+      << "length " << _vinfo.green.length << ", offset " << _vinfo.green.offset
+      << std::endl;
+  out << "Blue:\t\t\t"
+      << "length " << _vinfo.blue.length << ", offset " << _vinfo.blue.offset
+      << std::endl;
+  out << "Non-std pixel format:\t" << _vinfo.nonstd << std::endl;
+
+  return out.str();
 }
 
 PixelBuffer* Framebuffer::NewPixelBuffer(const PixelBuffer::Size& size) {

@@ -21,10 +21,12 @@
 #ifndef FRAMEBUFFER_HPP
 #define FRAMEBUFFER_HPP
 
-#include <stdint.h>
 #include <linux/fb.h>
+#include <stdint.h>
+
 #include <memory>
 #include <string>
+
 #include "pixel_buffer.hpp"
 
 // An abstraction for a framebuffer device.
@@ -50,6 +52,9 @@ class Framebuffer {
   // rect is centered on screen.
   void Render(const PixelBuffer& src, const PixelBuffer::Rect& rect);
 
+  // Return debugging information as a string.
+  std::string GetDebugInfoString();
+
  private:
   // Color format of the framebuffer.
   class Format : public PixelBuffer::Format {
@@ -62,10 +67,13 @@ class Framebuffer {
     int GetDepth() const override;
     // See PixelBuffer::Format.
     uint32_t Pack(int r, int g, int b) const override;
+
    private:
     fb_var_screeninfo _vinfo;
   };
 
+  // The framebuffer device.
+  const std::string _device;
   // File descriptor of the opened framebuffer device.
   int _fd;
   // Framebuffer info structures.
@@ -78,10 +86,10 @@ class Framebuffer {
   std::unique_ptr<PixelBuffer> _pixel_buffer;
 
   // Contructors are disallowed. Use factory method Open() instead.
-  Framebuffer();
+  Framebuffer(const std::string& device);
   // No copying is allowed.
   Framebuffer(const Framebuffer&);
-  Framebuffer& operator = (const Framebuffer&);
+  Framebuffer& operator=(const Framebuffer&);
 
   // Returns the size of the mmap'd buffer in bytes.
   int GetBufferSize() const;
