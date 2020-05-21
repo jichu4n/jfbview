@@ -19,11 +19,13 @@
 // This file implements the framebuffer abstraction.
 
 #include "framebuffer.hpp"
+
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
 #include <cstdio>
 #include <cstring>
 #include <memory>
@@ -42,19 +44,15 @@ Framebuffer* Framebuffer::Open(const std::string& device) {
     goto error;
   }
   fb->_buffer = reinterpret_cast<uint8_t*>(mmap(
-        nullptr,
-        fb->GetBufferSize(),
-        PROT_READ | PROT_WRITE,
-        MAP_SHARED,
-        fb->_fd,
-        0));
+      nullptr, fb->GetBufferSize(), PROT_READ | PROT_WRITE, MAP_SHARED, fb->_fd,
+      0));
   if (fb->_buffer == MAP_FAILED) {
     goto error;
   }
 
   fb->_format.reset(new Format(fb->_vinfo));
-  fb->_pixel_buffer.reset(new PixelBuffer(
-      fb->GetSize(), fb->_format.get(), fb->_buffer));
+  fb->_pixel_buffer.reset(
+      new PixelBuffer(fb->GetSize(), fb->_format.get(), fb->_buffer));
   return fb.release();
 
 error:
@@ -63,11 +61,10 @@ error:
 }
 
 Framebuffer::Framebuffer()
-    : _buffer(nullptr), _format(nullptr), _pixel_buffer(nullptr) {
-}
+    : _buffer(nullptr), _format(nullptr), _pixel_buffer(nullptr) {}
 
 Framebuffer::~Framebuffer() {
-  if (_buffer != MAP_FAILED) {
+  if (_buffer != nullptr && _buffer != MAP_FAILED) {
     memset(_buffer, 0, GetBufferSize());
     munmap(_buffer, GetBufferSize());
   }
@@ -80,9 +77,7 @@ PixelBuffer* Framebuffer::NewPixelBuffer(const PixelBuffer::Size& size) {
   return new PixelBuffer(size, _format.get());
 }
 
-int Framebuffer::GetBufferSize() const {
-  return _finfo.smem_len;
-}
+int Framebuffer::GetBufferSize() const { return _finfo.smem_len; }
 
 PixelBuffer::Size Framebuffer::GetSize() const {
   return PixelBuffer::Size(_vinfo.xres, _vinfo.yres);
@@ -93,9 +88,7 @@ void Framebuffer::Render(
   src.Copy(rect, _pixel_buffer->GetRect(), _pixel_buffer.get());
 }
 
-Framebuffer::Format::Format(const fb_var_screeninfo& vinfo)
-    : _vinfo(vinfo) {
-}
+Framebuffer::Format::Format(const fb_var_screeninfo& vinfo) : _vinfo(vinfo) {}
 
 int Framebuffer::Format::GetDepth() const {
   return (_vinfo.bits_per_pixel + 7) >> 3;

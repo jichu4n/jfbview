@@ -720,7 +720,7 @@ int main(int argc, char* argv[]) {
     fprintf(
         stderr, "Failed to initialize framebuffer device \"%s\".\n",
         state.FramebufferDevice.c_str());
-    fprintf(stderr, FRAMEBUFFER_ERROR_HELP_STR);
+    fprintf(stderr, "%s", FRAMEBUFFER_ERROR_HELP_STR);
     exit(EXIT_FAILURE);
   }
   state.ViewerInst = std::make_unique<Viewer>(
