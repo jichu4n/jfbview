@@ -21,6 +21,7 @@
 #include "search_view.hpp"
 
 #include <curses.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cctype>
@@ -34,6 +35,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+
 #include "cpp_compat.hpp"
 #include "string_utils.hpp"
 
@@ -45,15 +47,16 @@ const char* const SearchView::_NO_RESULTS_PROMPT = "No results found.";
 const char* const SearchView::_PAGE_NUMBER_PREFIX = "p";
 
 SearchView::SearchView(Document* document)
-    : UIView({{
-                  REGULAR_MODE,
-                  std::bind(&SearchView::ProcessKeyRegularMode, this, _1),
-              },
-              {
-                  SEARCH_STRING_FIELD_MODE,
-                  std::bind(
-                      &SearchView::ProcessKeySearchStringFieldMode, this, _1),
-              }}),
+    : UIView(
+          {{
+               REGULAR_MODE,
+               std::bind(&SearchView::ProcessKeyRegularMode, this, _1),
+           },
+           {
+               SEARCH_STRING_FIELD_MODE,
+               std::bind(
+                   &SearchView::ProcessKeySearchStringFieldMode, this, _1),
+           }}),
       _document(document),
       _search_string_field_cursor_position(0) {
   assert(_document != nullptr);
@@ -154,7 +157,7 @@ void SearchView::Render() {
         wattron(_result_window, A_BOLD);
         std::ostringstream buffer;
         buffer << _PAGE_NUMBER_PREFIX << std::setw(_PAGE_NUMBER_WIDTH)
-               << std::left << hit.Page;
+               << std::left << (hit.Page + 1);
         mvwaddstr(_result_window, i, 0, buffer.str().c_str());
         wattroff(_result_window, A_BOLD);
 
