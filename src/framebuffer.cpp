@@ -82,11 +82,17 @@ std::string Framebuffer::GetDebugInfoString() {
   std::ostringstream out;
 
   out << "Device:\t\t\t" << _device << std::endl;
-  out << "Visible resolution:\t" << _vinfo.xres << "x" << _vinfo.yres
+  out << "Visible resolution:\t" << _vinfo.xres << " x " << _vinfo.yres
       << std::endl;
-  out << "Virtual resolution:\t" << _vinfo.xres_virtual << "x"
+  out << "Virtual resolution:\t" << _vinfo.xres_virtual << " x "
       << _vinfo.yres_virtual << std::endl;
   out << "Offset:\t\t\t" << _vinfo.xoffset << ", " << _vinfo.yoffset
+      << std::endl;
+  out << "Buffer size:\t\t" << (_finfo.smem_len / _format->GetDepth()) << " ("
+      << _finfo.smem_len << " bytes)" << std::endl;
+  out << "Buffer width:\t\t" << (_finfo.line_length / _format->GetDepth())
+      << " (" << _finfo.line_length << " bytes)" << std::endl;
+  out << "Buffer height:\t\t" << (_finfo.smem_len / _finfo.line_length)
       << std::endl;
   out << "Bits per pixel:\t\t" << _vinfo.bits_per_pixel << std::endl;
   out << "Bit depth:\t\t" << _format->GetDepth() << std::endl;
@@ -115,7 +121,9 @@ PixelBuffer::Size Framebuffer::GetSize() const {
 }
 
 PixelBuffer::Size Framebuffer::GetAllocatedSize() const {
-  return PixelBuffer::Size(_vinfo.xres_virtual, _vinfo.yres_virtual);
+  return PixelBuffer::Size(
+      _finfo.line_length / _format->GetDepth(),
+      _finfo.smem_len / _finfo.line_length);
 }
 
 PixelBuffer::Size Framebuffer::GetOffset() const {
