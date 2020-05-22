@@ -20,27 +20,42 @@
 // matrix of pixels.
 
 #include "pixel_buffer.hpp"
+
 #include <unistd.h>
+
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+
 #include "multithreading.hpp"
 
 PixelBuffer::PixelBuffer(
     const PixelBuffer::Size& size, const PixelBuffer::Format* format)
-    : _size(size), _format(format), _has_ownership(true) {
+    : _size(size),
+      _allocated_size(size),
+      _offset(0, 0),
+      _format(format),
+      _has_ownership(true) {
   assert(_format != nullptr);
-  _buffer = new uint8_t[GetBufferSize()];
+  _buffer = new uint8_t[GetBufferByteSize()];
   Init();
 }
 
 PixelBuffer::PixelBuffer(
     const PixelBuffer::Size& size, const PixelBuffer::Format* format,
-    uint8_t* buffer)
-    : _size(size), _format(format), _buffer(buffer), _has_ownership(false) {
+    uint8_t* buffer, const PixelBuffer::Size& allocated_size,
+    const PixelBuffer::Size& offset)
+    : _size(size),
+      _allocated_size(allocated_size),
+      _offset(offset),
+      _format(format),
+      _buffer(buffer),
+      _has_ownership(false) {
   assert(_format != nullptr);
   assert(_buffer != nullptr);
+  assert(_size.Width + _offset.Width <= _allocated_size.Width);
+  assert(_size.Height + _offset.Height <= _allocated_size.Height);
   Init();
 }
 
@@ -174,12 +189,14 @@ void PixelBuffer::PixelWriterImpl4::WritePixel(uint32_t value, void* dest) {
   *(reinterpret_cast<uint32_t*>(dest)) = static_cast<uint32_t>(value);
 }
 
-int PixelBuffer::GetBufferSize() const {
+int PixelBuffer::GetBufferByteSize() const {
   return _size.Width * _size.Height * _format->GetDepth();
 }
 
 uint8_t* PixelBuffer::GetPixelAddress(int x, int y) const {
   assert((x >= 0) && (x < _size.Width));
   assert((y >= 0) && (y < _size.Height));
-  return _buffer + (y * _size.Width + x) * _format->GetDepth();
+  return _buffer +
+         ((y + _offset.Height) * _allocated_size.Width + (x + _offset.Width)) *
+             _format->GetDepth();
 }

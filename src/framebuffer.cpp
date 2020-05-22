@@ -45,19 +45,20 @@ Framebuffer* Framebuffer::Open(const std::string& device) {
     goto error;
   }
   fb->_buffer = reinterpret_cast<uint8_t*>(mmap(
-      nullptr, fb->GetBufferSize(), PROT_READ | PROT_WRITE, MAP_SHARED, fb->_fd,
-      0));
+      nullptr, fb->GetBufferByteSize(), PROT_READ | PROT_WRITE, MAP_SHARED,
+      fb->_fd, 0));
   if (fb->_buffer == MAP_FAILED) {
     goto error;
   }
 
   fb->_format.reset(new Format(fb->_vinfo));
-  fb->_pixel_buffer.reset(
-      new PixelBuffer(fb->GetSize(), fb->_format.get(), fb->_buffer));
+  fb->_pixel_buffer.reset(new PixelBuffer(
+      fb->GetSize(), fb->_format.get(), fb->_buffer, fb->GetAllocatedSize(),
+      fb->GetOffset()));
   return fb.release();
 
 error:
-  perror("Error initializing framebuffer");
+  perror(("Error initializing framebuffer device \"" + device + "\"").c_str());
   return nullptr;
 }
 
@@ -69,8 +70,8 @@ Framebuffer::Framebuffer(const std::string& device)
 
 Framebuffer::~Framebuffer() {
   if (_buffer != nullptr && _buffer != MAP_FAILED) {
-    memset(_buffer, 0, GetBufferSize());
-    munmap(_buffer, GetBufferSize());
+    memset(_buffer, 0, GetBufferByteSize());
+    munmap(_buffer, GetBufferByteSize());
   }
   if (_fd != -1) {
     close(_fd);
@@ -107,10 +108,18 @@ PixelBuffer* Framebuffer::NewPixelBuffer(const PixelBuffer::Size& size) {
   return new PixelBuffer(size, _format.get());
 }
 
-int Framebuffer::GetBufferSize() const { return _finfo.smem_len; }
+int Framebuffer::GetBufferByteSize() const { return _finfo.smem_len; }
 
 PixelBuffer::Size Framebuffer::GetSize() const {
   return PixelBuffer::Size(_vinfo.xres, _vinfo.yres);
+}
+
+PixelBuffer::Size Framebuffer::GetAllocatedSize() const {
+  return PixelBuffer::Size(_vinfo.xres_virtual, _vinfo.yres_virtual);
+}
+
+PixelBuffer::Size Framebuffer::GetOffset() const {
+  return PixelBuffer::Size(_vinfo.xoffset, _vinfo.yoffset);
 }
 
 void Framebuffer::Render(

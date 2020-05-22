@@ -60,7 +60,9 @@ class PixelBuffer {
   PixelBuffer(const Size& size, const Format* format);
   // Constructs a new PixelBuffer object, using a pre-allocated buffer. Will NOT
   // take ownership of the buffer. Does NOT take ownership of format.
-  PixelBuffer(const Size& size, const Format* format, uint8_t* buffer);
+  PixelBuffer(
+      const Size& size, const Format* format, uint8_t* buffer,
+      const Size& allocated_size, const Size& offset);
   // Will free buffer if _has_ownship is true.
   ~PixelBuffer();
 
@@ -113,6 +115,15 @@ class PixelBuffer {
 
   // Size of the buffer.
   Size _size;
+  // The allocated size of the buffer. If the buffer was allocated by this
+  // class, _allocated_size is equal to _size. If the buffer was
+  // allocated by the framebuffer device driver, _allocated_size may be
+  // larger than _size.
+  Size _allocated_size;
+  // The offset of the buffer within the allocated buffer. If the buffer was
+  // allocated by this class, this will always be (0, 0). If the buffer was
+  // allocated by the framebuffer device driver, this may be non-zero.
+  Size _offset;
   // Format of current buffer.
   const Format* _format;
   // Pointer to buffer memory. Whether we own this memory depends on the
@@ -127,7 +138,7 @@ class PixelBuffer {
   // Common initialization called by both constructors.
   void Init();
   // Returns the size of the buffer in bytes.
-  int GetBufferSize() const;
+  int GetBufferByteSize() const;
   // Returns the address in memory corresponding to the pixel (x, y).
   uint8_t* GetPixelAddress(int x, int y) const;
 

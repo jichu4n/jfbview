@@ -46,6 +46,12 @@ class Framebuffer {
 
   // Retrieve the dimensions of the current display, in pixels.
   PixelBuffer::Size GetSize() const;
+  // Retrieve the dimensions of the framebuffer device's allocated memory
+  // buffer, a.k.a. its virtual resolution, in pixels.
+  PixelBuffer::Size GetAllocatedSize() const;
+  // Retrieve the offset of the visible area within the device's allocated
+  // memory buffer, in pixels.
+  PixelBuffer::Size GetOffset() const;
 
   // Renders a region in a pixel buffer onto the framebuffer device. The region
   // must be equal to or smaller than the screen size. If smaller, the source
@@ -92,7 +98,7 @@ class Framebuffer {
   Framebuffer& operator=(const Framebuffer&);
 
   // Returns the size of the mmap'd buffer in bytes.
-  int GetBufferSize() const;
+  int GetBufferByteSize() const;
 };
 
 #endif

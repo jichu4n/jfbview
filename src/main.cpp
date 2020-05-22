@@ -715,7 +715,9 @@ Troubleshooting tips:
 
    You will typically need to log out and back in for this to take effect.
 
-2. Try running this command as root, e.g. "sudo jfbview <file>".
+2. Alternatively, try running this command as root, e.g.:
+
+       sudo jfbview <file>
 
 3. Verify that the framebuffer device exists. If not, please supply the correct
    device with "--fb=<path to device>".
@@ -729,9 +731,6 @@ int main(int argc, char* argv[]) {
   ParseCommandLine(argc, argv, &state);
   state.FramebufferInst.reset(Framebuffer::Open(state.FramebufferDevice));
   if (state.FramebufferInst == nullptr) {
-    fprintf(
-        stderr, "Failed to initialize framebuffer device \"%s\".\n",
-        state.FramebufferDevice.c_str());
     fprintf(stderr, "%s", FRAMEBUFFER_ERROR_HELP_STR);
     exit(EXIT_FAILURE);
   }
