@@ -3,6 +3,17 @@
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
+# To support box characters in UTF-8 locales, we need to link against
+# libncursesw rather than libncurses:
+#
+#     https://lists.gnu.org/archive/html/bug-ncurses/2015-02/msg00010.html
+#
+# Unfortunately, the CURSES_NEED_WIDE flag (which enables linking against
+# libncursesw) is only supported in CMake 3.10+. If built using earlier
+# versions of CMake, this flag will have no effect and we'll still end up
+# linking against libncurses. This will cause box characters (e.g. used in
+# search view) to render as x's and q's when running in UTF-8 locales.
+set(CURSES_NEED_WIDE ON)
 set(CURSES_NEED_NCURSES ON)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIRS})

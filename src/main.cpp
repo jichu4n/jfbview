@@ -744,7 +744,7 @@ int main(int argc, char* argv[]) {
     exit(EXIT_FAILURE);
   }
 
-  setlocale(LC_CTYPE, "");
+  setlocale(LC_ALL, "");
   initscr();
   start_color();
   keypad(stdscr, true);

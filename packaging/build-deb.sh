@@ -11,7 +11,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y \
   build-essential cmake file \
-  libncurses-dev libimlib2-dev \
+  libncurses-dev libncursesw5-dev libimlib2-dev \
   libglu1-mesa-dev libxi-dev libxrandr-dev
 
 cd "$(dirname "$0")/.."
