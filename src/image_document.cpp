@@ -23,13 +23,15 @@
 #ifndef JFBVIEW_NO_IMLIB2
 
 #include "image_document.hpp"
+
 #include <stdint.h>
 // For the M_PI constant.
 #define _USE_MATH_DEFINES
-#include <cmath>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
+#include <cmath>
 #include <string>
+
 #include "multithreading.hpp"
 
 // Converts degree angles to radian.
@@ -41,29 +43,25 @@ static inline double ToRadians(int degrees) {
 struct Point {
   double X, Y;
 
-  explicit Point(double x = 0.0, double y = 0.0)
-      : X(x), Y(y) {
-  }
+  explicit Point(double x = 0.0, double y = 0.0) : X(x), Y(y) {}
 };
 
-Point operator + (const Point& a, const Point& b) {
+Point operator+(const Point& a, const Point& b) {
   return Point(a.X + b.X, a.Y + b.Y);
 }
 
-Point operator - (const Point& a, const Point& b) {
+Point operator-(const Point& a, const Point& b) {
   return Point(a.X - b.X, a.Y - b.Y);
 }
 
-Point operator * (const Point& a, double t) {
-  return Point(a.X * t, a.Y * t);
-}
+Point operator*(const Point& a, double t) { return Point(a.X * t, a.Y * t); }
 
 // Rotates a point around the origin.
 static inline Point Rotate(const Point& p, int degrees) {
   const double radians = ToRadians(degrees);
   const double cos_value = cos(radians), sin_value = sin(radians);
-  return Point(p.X * cos_value - p.Y * sin_value,
-               p.X * sin_value + p.Y * cos_value);
+  return Point(
+      p.X * cos_value - p.Y * sin_value, p.X * sin_value + p.Y * cos_value);
 }
 
 struct Rect {
@@ -77,27 +75,65 @@ struct Rect {
 Rect ProjectRect(int width, int height, float zoom, int rotation) {
   Rect result;
   const Point origin(width / 2, height / 2);
-  result.TopLeft =
-      Rotate(Point(0, 0) - origin, rotation) * zoom;
-  result.TopRight =
-      Rotate(Point(width - 1, 0) - origin, rotation) * zoom;
-  result.BottomLeft =
-      Rotate(Point(0, height - 1) - origin, rotation) * zoom;
+  result.TopLeft = Rotate(Point(0, 0) - origin, rotation) * zoom;
+  result.TopRight = Rotate(Point(width - 1, 0) - origin, rotation) * zoom;
+  result.BottomLeft = Rotate(Point(0, height - 1) - origin, rotation) * zoom;
   result.BottomRight =
       Rotate(Point(width - 1, height - 1) - origin, rotation) * zoom;
   return result;
 }
 
+static inline std::string GetImlibLoadErrorName(Imlib_Load_Error load_error) {
+  switch (load_error) {
+    case IMLIB_LOAD_ERROR_NONE:
+      return "None";
+    case IMLIB_LOAD_ERROR_FILE_DOES_NOT_EXIST:
+      return "File does not exist";
+    case IMLIB_LOAD_ERROR_FILE_IS_DIRECTORY:
+      return "File is directory";
+    case IMLIB_LOAD_ERROR_PERMISSION_DENIED_TO_READ:
+      return "Permission denied to read";
+    case IMLIB_LOAD_ERROR_NO_LOADER_FOR_FILE_FORMAT:
+      return "No loader for file format";
+    case IMLIB_LOAD_ERROR_PATH_TOO_LONG:
+      return "Path too long";
+    case IMLIB_LOAD_ERROR_PATH_COMPONENT_NON_EXISTANT:
+      return "Path component non existant";
+    case IMLIB_LOAD_ERROR_PATH_COMPONENT_NOT_DIRECTORY:
+      return "Path component not directory";
+    case IMLIB_LOAD_ERROR_PATH_POINTS_OUTSIDE_ADDRESS_SPACE:
+      return "Path points outside address space";
+    case IMLIB_LOAD_ERROR_TOO_MANY_SYMBOLIC_LINKS:
+      return "Too many symbolic links";
+    case IMLIB_LOAD_ERROR_OUT_OF_MEMORY:
+      return "Out of memory";
+    case IMLIB_LOAD_ERROR_OUT_OF_FILE_DESCRIPTORS:
+      return "Out of file descriptors";
+    case IMLIB_LOAD_ERROR_PERMISSION_DENIED_TO_WRITE:
+      return "Permission denied to write";
+    case IMLIB_LOAD_ERROR_OUT_OF_DISK_SPACE:
+      return "Out of disk space";
+    case IMLIB_LOAD_ERROR_UNKNOWN:
+      return "Unknown error";
+    default:
+      return "Unexpected error: " + std::to_string(load_error);
+  }
+}
+
 Document* ImageDocument::Open(const std::string& path) {
   Imlib_Image image = imlib_load_image_without_cache(path.c_str());
   if (image == nullptr) {
-    return nullptr;
+    Imlib_Load_Error load_error;
+    image = imlib_load_image_with_error_return(path.c_str(), &load_error);
+    if (image == nullptr) {
+      fprintf(stderr, "Error: %s\n", GetImlibLoadErrorName(load_error).c_str());
+      return nullptr;
+    }
   }
   return new ImageDocument(image);
 }
 
-ImageDocument::ImageDocument(Imlib_Image image)
-    : _src(image) {
+ImageDocument::ImageDocument(Imlib_Image image) : _src(image) {
   imlib_context_set_image(_src);
   _src_size.Width = imlib_image_get_width();
   _src_size.Height = imlib_image_get_height();
@@ -145,25 +181,23 @@ void ImageDocument::Render(
   imlib_context_set_color(0, 0, 0, 255);
   imlib_image_fill_rectangle(0, 0, dest_size.Width, dest_size.Height);
 
-  const Point dest_center(static_cast<double>(dest_size.Width) / 2.0,
-                          static_cast<double>(dest_size.Height) / 2.0);
+  const Point dest_center(
+      static_cast<double>(dest_size.Width) / 2.0,
+      static_cast<double>(dest_size.Height) / 2.0);
   const Point& dest_top_left = dest_center + projected.TopLeft;
   const Point& h_angle = projected.TopRight - projected.TopLeft;
 
   imlib_blend_image_onto_image_at_angle(
-      _src, 0,
-      0, 0, _src_size.Width, _src_size.Height,
-      dest_top_left.X, dest_top_left.Y,
-      h_angle.X, h_angle.Y);
+      _src, 0, 0, 0, _src_size.Width, _src_size.Height, dest_top_left.X,
+      dest_top_left.Y, h_angle.X, h_angle.Y);
 
-  uint32_t* buffer = reinterpret_cast<uint32_t*>(
-      imlib_image_get_data_for_reading_only());
+  uint32_t* buffer =
+      reinterpret_cast<uint32_t*>(imlib_image_get_data_for_reading_only());
   ExecuteInParallel([=](int num_threads, int i) {
     const int num_rows_per_thread = dest_size.Height / num_threads;
     const int y_begin = i * num_rows_per_thread;
-    const int y_end = (i == num_threads - 1) ?
-                          dest_size.Height :
-                          (i + 1) * num_rows_per_thread;
+    const int y_end = (i == num_threads - 1) ? dest_size.Height
+                                             : (i + 1) * num_rows_per_thread;
     uint32_t* p = buffer + y_begin * dest_size.Width;
     for (int y = y_begin; y < y_end; ++y) {
       for (int x = 0; x < dest_size.Width; ++x) {
@@ -180,5 +214,4 @@ void ImageDocument::Render(
 }
 
 #endif
-
 
