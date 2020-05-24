@@ -723,7 +723,19 @@ Troubleshooting tips:
    device with "--fb=<path to device>".
 )";
 
+extern int JpdfgrepMain(int argc, char* argv[]);
+extern int JpdfcatMain(int argc, char* argv[]);
+
 int main(int argc, char* argv[]) {
+  // Dispatch to jpdfgrep and jpdfcat.
+  const std::string argv0 = argv[0];
+  const std::string basename = argv0.substr(argv0.find_last_of('/') + 1);
+  if (basename == "jpdfgrep") {
+    return JpdfgrepMain(argc, argv);
+  } else if (basename == "jpdfcat") {
+    return JpdfcatMain(argc, argv);
+  }
+
   // Main program state.
   State state;
 

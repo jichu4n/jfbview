@@ -19,7 +19,9 @@
 // A simple tool to search for text in PDF documents.
 
 #include <curses.h>
+
 #include <climits>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -27,7 +29,7 @@
 
 #include "pdf_document.hpp"
 
-int main(int argc, char* argv[]) {
+int JpdfgrepMain(int argc, char* argv[]) {
   if (argc < 2) {
     std::cerr << "No file specified" << std::endl;
     return 1;
@@ -59,5 +61,5 @@ int main(int argc, char* argv[]) {
     std::cout << buffer.str().substr(0, line_width) << std::endl;
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
