@@ -19,14 +19,16 @@
 // A simple tool to print out text in PDF documents.
 
 #include <cassert>
+#include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
+
 #include "pdf_document.hpp"
 
-int main(int argc, char* argv[]) {
+int JpdfcatMain(int argc, char* argv[]) {
   if (argc < 2) {
     std::cerr << "No file specified" << std::endl;
     return 1;
@@ -64,5 +66,5 @@ int main(int argc, char* argv[]) {
     std::cout << page_text << std::endl;
   }
 
-  return 0;
+  return EXIT_SUCCESS;
 }

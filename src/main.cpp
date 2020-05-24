@@ -505,7 +505,7 @@ static const char* HELP_STRING = JFBVIEW_PROGRAM_NAME
 
 // Parses the command line, and stores settings in state. Crashes the program if
 // the commnad line contains errors.
-void ParseCommandLine(int argc, char* argv[], State* state) {
+static void ParseCommandLine(int argc, char* argv[], State* state) {
   // Tags for long options that don't have short option chars.
   enum {
     RENDER_CACHE_SIZE = 0x1000,
@@ -723,7 +723,19 @@ Troubleshooting tips:
    device with "--fb=<path to device>".
 )";
 
+extern int JpdfgrepMain(int argc, char* argv[]);
+extern int JpdfcatMain(int argc, char* argv[]);
+
 int main(int argc, char* argv[]) {
+  // Dispatch to jpdfgrep and jpdfcat.
+  const std::string argv0 = argv[0];
+  const std::string basename = argv0.substr(argv0.find_last_of('/') + 1);
+  if (basename == "jpdfgrep") {
+    return JpdfgrepMain(argc, argv);
+  } else if (basename == "jpdfcat") {
+    return JpdfcatMain(argc, argv);
+  }
+
   // Main program state.
   State state;
 

@@ -60,56 +60,26 @@ add_custom_target(
 )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
-# Base library for handling PDF files.
+# Base library for handling documents.
 # ------------------------------------
 add_library(
-  jfbview_pdf
+  jfbview_document
   STATIC
   document.cpp
   pdf_document.cpp
+  image_document.cpp
   string_utils.cpp
   multithreading.cpp
 )
 target_link_libraries(
-  jfbview_pdf
+  jfbview_document
   Threads::Threads
   ${vendor_mupdf_libs}
+  ${IMLIB2_LIBRARIES}
 )
 add_dependencies(
-  jfbview_pdf
+  jfbview_document
   detected_mupdf_version.hpp
-)
-
-# jpdfcat
-# -------
-add_executable(jpdfcat jpdfcat.cpp)
-target_link_libraries(
-  jpdfcat
-  jfbview_pdf
-)
-install(TARGETS jpdfcat DESTINATION bin)
-
-# jpdfgrep
-# --------
-add_executable(jpdfgrep jpdfgrep.cpp)
-target_link_libraries(
-  jpdfgrep
-  jfbview_pdf
-  ${CURSES_LIBRARIES}
-)
-install(TARGETS jpdfgrep DESTINATION bin)
-
-# Base library for handling all documents.
-# ----------------------------------------
-add_library(
-  jfbview_document
-  STATIC
-  image_document.cpp
-)
-target_link_libraries(
-  jfbview_document
-  jfbview_pdf
-  ${IMLIB2_LIBRARIES}
 )
 
 # Common viewer code shared by jfbview and jfbpdf.
@@ -133,10 +103,29 @@ target_link_libraries(
 
 # jfbview
 # -------
-set(jfbview_sources main.cpp)
+set(
+  jfbview_sources
+  main.cpp
+  jpdfgrep.cpp
+  jpdfcat.cpp
+)
 add_executable(jfbview ${jfbview_sources})
 target_link_libraries(jfbview jfbview_document_viewer)
 install(TARGETS jfbview DESTINATION bin)
+add_custom_target(
+  jpdfgrep
+  ALL
+  COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ./jfbview ${CMAKE_CURRENT_BINARY_DIR}/jpdfgrep
+)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jpdfgrep DESTINATION bin)
+add_custom_target(
+  jpdfcat
+  ALL
+  COMMAND ${CMAKE_COMMAND} -E create_symlink
+  ./jfbview ${CMAKE_CURRENT_BINARY_DIR}/jpdfcat
+)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jpdfcat DESTINATION bin)
 
 # jfbpdf
 # ------
