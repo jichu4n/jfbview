@@ -24,6 +24,6 @@ jobs:
           dpkg-deb -c upload/*.deb
       - name: Install package
         run: sudo apt install -y ./upload/*.deb
-      - name: Check help message
-        run: jfbview -h || true
+      - name: Post install smoke test
+        run: packaging/post-install-smoke-test.sh
 
