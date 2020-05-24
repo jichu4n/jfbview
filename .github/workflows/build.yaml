@@ -23,7 +23,7 @@ jobs:
           dpkg-deb -I upload/*.deb &&
           dpkg-deb -c upload/*.deb
       - name: Install package
-        run: sudo dpkg -i upload/*.deb
+        run: sudo apt install -y ./upload/*.deb
       - name: Check help message
         run: jfbview -h || true
 
