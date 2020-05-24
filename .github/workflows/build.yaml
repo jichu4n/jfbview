@@ -11,6 +11,8 @@ jobs:
           submodules: recursive
       - name: Build
         run: sudo packaging/build-deb.sh
+      - name: Run tests
+        run: sudo packaging/run-tests-deb.sh
       - name: Upload package
         uses: actions/upload-artifact@v2
         with:

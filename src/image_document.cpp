@@ -74,7 +74,7 @@ struct Rect {
 // rotation and zoom and returns the coordinates of the four vertices.
 Rect ProjectRect(int width, int height, float zoom, int rotation) {
   Rect result;
-  const Point origin(width / 2, height / 2);
+  const Point origin(width / 2.0, height / 2.0);
   result.TopLeft = Rotate(Point(0, 0) - origin, rotation) * zoom;
   result.TopRight = Rotate(Point(width - 1, 0) - origin, rotation) * zoom;
   result.BottomLeft = Rotate(Point(0, height - 1) - origin, rotation) * zoom;
@@ -165,9 +165,10 @@ const Document::PageSize ImageDocument::GetPageSize(
 
   return PageSize(
       static_cast<int>(
-          *std::max_element(xs, xs + 4) - *std::min_element(xs, xs + 4)),
+          *std::max_element(xs, xs + 4) - *std::min_element(xs, xs + 4) + 1),
       static_cast<int>(
-          *std::max_element(ys, ys + 4) - *std::min_element(ys, ys + 4)));
+          *std::max_element(ys, ys + 4) - *std::min_element(ys, ys + 4)) +
+          1);
 }
 
 void ImageDocument::Render(

@@ -99,10 +99,23 @@ target_link_libraries(
 )
 install(TARGETS jpdfgrep DESTINATION bin)
 
+# Base library for handling all documents.
+# ----------------------------------------
+add_library(
+  jfbview_document
+  STATIC
+  image_document.cpp
+)
+target_link_libraries(
+  jfbview_document
+  jfbview_pdf
+  ${IMLIB2_LIBRARIES}
+)
+
 # Common viewer code shared by jfbview and jfbpdf.
 # ------------------------------------------------
 add_library(
-  jfbview_pdf_viewer
+  jfbview_document_viewer
   STATIC
   command.cpp
   framebuffer.cpp
@@ -113,16 +126,16 @@ add_library(
   viewer.cpp
 )
 target_link_libraries(
-  jfbview_pdf_viewer
-  jfbview_pdf
+  jfbview_document_viewer
+  jfbview_document
   ${CURSES_LIBRARIES}
 )
 
 # jfbview
 # -------
-set(jfbview_sources image_document.cpp main.cpp)
+set(jfbview_sources main.cpp)
 add_executable(jfbview ${jfbview_sources})
-target_link_libraries(jfbview jfbview_pdf_viewer ${IMLIB2_LIBRARIES})
+target_link_libraries(jfbview jfbview_document_viewer)
 install(TARGETS jfbview DESTINATION bin)
 
 # jfbpdf
@@ -136,7 +149,7 @@ if(NOT ENABLE_IMAGE_SUPPORT)
     JFBVIEW_PROGRAM_NAME=\"JFBPDF\"
     JFBVIEW_BINARY_NAME=\"jfbpdf\"
   )
-  target_link_libraries(jfbpdf jfbview_pdf_viewer)
+  target_link_libraries(jfbpdf jfbview_document_viewer)
   install(TARGETS jfbpdf DESTINATION bin)
 endif()
 

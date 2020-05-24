@@ -25,6 +25,7 @@ set(
   "jfbview"
   CACHE STRING
   "CPack package file name prefix.")
+option(BUILD_TESTING "Build unit tests." OFF)
 
 # Third-party code in vendor.
 # ---------------------------
@@ -43,4 +44,11 @@ add_subdirectory(doc)
 # Packaging.
 # ----------
 add_subdirectory(packaging)
+
+# Tests.
+# ----------
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+  include(CTest)
+  add_subdirectory(tests)
+endif()
 
