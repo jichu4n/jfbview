@@ -19,6 +19,7 @@
 // A simple tool to search for text in PDF documents.
 
 #include <curses.h>
+#include <getopt.h>
 
 #include <climits>
 #include <cstdlib>
@@ -29,36 +30,93 @@
 
 #include "pdf_document.hpp"
 
+struct Options {
+  int LineWidth;
+  std::string FilePath;
+  std::string SearchString;
+};
+
+// Help text printed by --help or -h.
+static const char* HELP_STRING =
+    "Search for a string in a PDF document.\n"
+    "\n"
+    "Usage: jpdfgrep [OPTIONS] FILE SEARCH_STRING\n"
+    "\n"
+    "Options:\n"
+    "\t--help, -h            Show this message.\n"
+    "\t--width=N, -w N       Specify result line width. The default is to\n"
+    "\t                      autodetect terminal width.\n";
+
+static void ParseCommandLine(int argc, char* argv[], Options* options) {
+  // Command line options.
+  static const option LongFlags[] = {
+      {"help", false, nullptr, 'h'},
+      {"width", true, nullptr, 'w'},
+      {0, 0, 0, 0},
+  };
+  static const char* ShortFlags = "hw:";
+
+  options->LineWidth = 0;
+  for (;;) {
+    int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, nullptr);
+    if (opt_char == -1) {
+      break;
+    }
+    switch (opt_char) {
+      case 'h':
+        fprintf(stdout, "%s", HELP_STRING);
+        exit(EXIT_FAILURE);
+        break;
+      case 'w':
+        if (sscanf(optarg, "%d", &(options->LineWidth)) < 1) {
+          fprintf(stderr, "Invalid line width \"%s\"\n", optarg);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      default:
+        fprintf(stderr, "Try \"-h\" for help.\n");
+        exit(EXIT_FAILURE);
+    }
+  }
+  if (optind >= argc) {
+    fprintf(stderr, "No file specified. Try \"-h\" for help.\n");
+    exit(EXIT_FAILURE);
+  } else if (optind == argc - 1) {
+    fprintf(stderr, "No search string specified. Try \"-h\" for help.\n");
+    exit(EXIT_FAILURE);
+  } else if (optind < argc - 2) {
+    fprintf(stderr, "Too many arguments. Try \"-h\" for help.\n");
+    exit(EXIT_FAILURE);
+  } else {
+    options->FilePath = argv[optind];
+    options->SearchString = argv[optind + 1];
+  }
+}
+
 int JpdfgrepMain(int argc, char* argv[]) {
-  if (argc < 2) {
-    std::cerr << "No file specified" << std::endl;
-    return 1;
-  }
-  if (argc < 3) {
-    std::cerr << "No search string specified" << std::endl;
-    return 1;
-  }
+  Options options;
+  ParseCommandLine(argc, argv, &options);
 
-  const std::string file_path = argv[1];
-  std::unique_ptr<PDFDocument> document(PDFDocument::Open(file_path));
+  std::unique_ptr<PDFDocument> document(PDFDocument::Open(options.FilePath));
   if (!document) {
-    std::cerr << "Failed to open " << file_path;
-    return 1;
+    fprintf(stderr, "Failed to open \"%s\"\n", options.FilePath.c_str());
+    return EXIT_FAILURE;
   }
 
-  // Get terminal window width.
-  initscr();
-  const int line_width = COLS;
-  endwin();
+  if (options.LineWidth <= 0) {
+    // Get terminal window width.
+    initscr();
+    options.LineWidth = COLS;
+    endwin();
+  }
 
-  const std::string search_string = argv[2];
   const Document::SearchResult& result =
-      document->Search(search_string, 0, line_width, INT_MAX);
+      document->Search(options.SearchString, 0, options.LineWidth, INT_MAX);
 
   for (const Document::SearchHit& hit : result.SearchHits) {
     std::ostringstream buffer;
     buffer << (hit.Page + 1) << ": " << hit.ContextText;
-    std::cout << buffer.str().substr(0, line_width) << std::endl;
+    fprintf(stdout, "%s\n", buffer.str().substr(0, options.LineWidth).c_str());
   }
 
   return EXIT_SUCCESS;

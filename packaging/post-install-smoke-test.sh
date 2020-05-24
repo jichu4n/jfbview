@@ -21,7 +21,7 @@ if ! jfbview -h 2>&1 | grep -q 'Options:'; then
 fi
 
 echo 'Checking jpdfgrep...'
-num_search_results=$(jpdfgrep ./bash.pdf 'HISTIGNORE' | wc -l)
+num_search_results=$(jpdfgrep --width=80 ./bash.pdf 'HISTIGNORE' | wc -l)
 if [ $? -ne 0 ] || [ $num_search_results -ne 8 ]; then
   echo 'Invalid output from jpdfgrep:'
   jpdfgrep ./bash.pdf 'HISTIGNORE'

@@ -505,7 +505,7 @@ static const char* HELP_STRING = JFBVIEW_PROGRAM_NAME
 
 // Parses the command line, and stores settings in state. Crashes the program if
 // the commnad line contains errors.
-void ParseCommandLine(int argc, char* argv[], State* state) {
+static void ParseCommandLine(int argc, char* argv[], State* state) {
   // Tags for long options that don't have short option chars.
   enum {
     RENDER_CACHE_SIZE = 0x1000,
