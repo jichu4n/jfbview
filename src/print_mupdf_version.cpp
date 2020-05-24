@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2016 Chuan Ji                                              *
+ *  Copyright (C) 2016-2020 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -31,6 +31,7 @@
 #include <cassert>
 #include <iostream>
 #include <sstream>
+
 #include "mupdf/fitz.h"
 
 // MuPDF 1.3.66 and above defines the FZ_VERSION macro. However, Ubuntu 14.04
