@@ -33,5 +33,6 @@ cmake -H. -Bbuild_tests \
   -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_VERBOSE_MAKEFILE=ON
 cmake --build build_tests
-cmake --build build_tests --target test
+env CTEST_OUTPUT_ON_FAILURE=1 \
+  cmake --build build_tests --target test
 

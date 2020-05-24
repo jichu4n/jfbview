@@ -11,7 +11,7 @@ yum install -y epel-release
 yum install -y \
   cmake make gcc-c++ rpm-build \
   ncurses-devel imlib2-devel \
-  mesa-libGLU-devel libXi-devel libXrandr-devel
+  libjpeg-devel mesa-libGLU-devel libXi-devel libXrandr-devel
 
 cd "$(dirname "$0")/.."
 mkdir -p build upload
