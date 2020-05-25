@@ -63,11 +63,18 @@ jobs:
     - env: package_format=deb docker_image=balenalib/rpi-raspbian:stretch dist=stretch arch=rpi
       arch: arm64
       if: branch = master
-script: |
-  packaging/build-and-check-package-with-docker.sh \
-    "${package_format}" \
-    "${docker_image}" \
-    "${TRAVIS_COMMIT}" "${dist}" "${arch}"
+before_install: gem install mtime_cache
+script:
+  - mtime_cache -c vendor/.mtime_cache/cache.json -V 'vendor/mupdf/**/*'
+  - |
+    packaging/build-and-check-package-with-docker.sh \
+      "${package_format}" \
+      "${docker_image}" \
+      "${TRAVIS_COMMIT}" "${dist}" "${arch}"
+cache:
+  directories:
+    - vendor/mupdf/build
+    - vendor/.mtime_cache
 deploy:
   provider: gcs
   access_key_id: ${GCS_ACCESS_KEY_ID}

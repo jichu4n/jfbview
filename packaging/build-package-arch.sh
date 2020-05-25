@@ -15,13 +15,13 @@ function install_build_deps() {
   echo -e '\nbuilduser ALL=(ALL) NOPASSWD:ALL\n' | tee -a /etc/sudoers
 
   budo git clone https://aur.archlinux.org/jfbview-git.git /home/builduser/jfbview-git
+  cd /home/builduser/jfbview-git
+  budo mkdir -p src
+  budo cp -a "$(dirname "$0")/.." src/jfbview
 }
 
 function build_package() {
   cd /home/builduser/jfbview-git
-
-  budo mkdir -p src
-  budo cp -a "$(dirname "$0")/.." src/jfbview
 
   budo makepkg --syncdeps --noconfirm --noextract
 
@@ -35,14 +35,14 @@ function install_test_deps() {
 }
 
 function run_tests() {
-  cd "$(dirname "$0")/.."
-  mkdir -p build_tests
-  cmake -H. -Bbuild_tests \
+  cd /home/builduser/jfbview-git/src/jfbview
+
+  budo cmake -H. -Bbuild_tests \
     -DBUILD_TESTING=ON \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_VERBOSE_MAKEFILE=ON
-  cmake --build build_tests
-  env CTEST_OUTPUT_ON_FAILURE=1 \
+  budo cmake --build build_tests
+  budo env CTEST_OUTPUT_ON_FAILURE=1 \
     cmake --build build_tests --target test
 }
 
