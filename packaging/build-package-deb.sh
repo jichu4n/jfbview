@@ -21,9 +21,8 @@ function build_package() {
   cmake -H. -Bbuild \
     -DPACKAGE_FORMAT=DEB \
     -DPACKAGE_FILE_PREFIX="$package_file_prefix" \
-    -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_TESTING=OFF \
-    -DCMAKE_VERBOSE_MAKEFILE=ON
+    -DCMAKE_BUILD_TYPE=Release
   cmake --build build --target package
   mv build/*.deb upload/
 }
@@ -56,10 +55,9 @@ function run_tests() {
   cd "$(dirname "$0")/.."
   mkdir -p build_tests
   cmake -H. -Bbuild_tests \
-    -DBUILD_TESTING=ON \
     "${gtest_root_flag[@]}" \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DCMAKE_VERBOSE_MAKEFILE=ON
+    -DBUILD_TESTING=ON \
+    -DCMAKE_BUILD_TYPE=Debug
   cmake --build build_tests
   env CTEST_OUTPUT_ON_FAILURE=1 \
     cmake --build build_tests --target test

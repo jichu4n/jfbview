@@ -44,8 +44,7 @@ function run_tests() {
 
   budo cmake -H. -Bbuild_tests \
     -DBUILD_TESTING=ON \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DCMAKE_VERBOSE_MAKEFILE=ON
+    -DCMAKE_BUILD_TYPE=Debug
   budo cmake --build build_tests
   budo env CTEST_OUTPUT_ON_FAILURE=1 \
     cmake --build build_tests --target test
