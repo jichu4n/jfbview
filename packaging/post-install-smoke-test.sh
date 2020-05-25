@@ -7,6 +7,7 @@ for executable in jfbview jpdfgrep jpdfcat; do
   executable_path=$(which $executable)
   if [ $? -eq 0 ]; then
     echo "Found $executable: $executable_path"
+    (set -x; ldd "$executable_path")
   else
     echo "$executable not found in PATH!"
     exit 1

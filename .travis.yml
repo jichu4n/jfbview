@@ -55,7 +55,7 @@ jobs:
     - env: package_format=deb docker_image=balenalib/rpi-raspbian:stretch dist=stretch arch=rpi
       arch: arm64
 script: |
-  packaging/build-with-docker.sh \
+  packaging/build-and-check-with-docker.sh \
     "${package_format}" \
     "${docker_image}" \
     "${TRAVIS_COMMIT}" "${dist}" "${arch}"

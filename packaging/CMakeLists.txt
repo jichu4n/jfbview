@@ -29,6 +29,13 @@ set(
   CPACK_RPM_PACKAGE_REQUIRES
   "ncurses-libs, imlib2"
 )
+# This is needed to prevent a "conflicts with file from package
+# filesystem-XXXX" error.
+set(
+  CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+  "/usr/share/man"
+  "/usr/share/man/man1"
+)
 
 # Enable CPack.
 # -------------
