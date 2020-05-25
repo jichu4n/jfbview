@@ -8,7 +8,7 @@ function budo() {
 
 function install_build_deps() {
   pacman -Sy --needed --noconfirm \
-    base-devel git sudo
+    base-devel git sudo rsync
 
   useradd -m builduser
   passwd -d builduser
@@ -17,7 +17,7 @@ function install_build_deps() {
   budo git clone https://aur.archlinux.org/jfbview-git.git /home/builduser/jfbview-git
   cd /home/builduser/jfbview-git
   budo mkdir -p src
-  budo cp -a "$(dirname "$0")/.." src/jfbview
+  budo rsync -a "${src_dir}"/ src/jfbview/
 }
 
 function build_package() {
@@ -27,6 +27,9 @@ function build_package() {
 
   mkdir -p "${src_dir}"/upload
   mv *.pkg.tar.xz "${src_dir}"/upload/
+
+  # For caching in Travis CI.
+  rsync -a src/jfbview/vendor/mupdf/build/ "${src_dir}"/vendor/mupdf/build/
 }
 
 function install_test_deps() {
