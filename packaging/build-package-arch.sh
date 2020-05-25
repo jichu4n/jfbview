@@ -7,8 +7,9 @@ function budo() {
 }
 
 function install_build_deps() {
-  pacman -Sy --needed --noconfirm \
-    base-devel git sudo rsync
+  pacman -Syq --needed --noconfirm \
+    base-devel git sudo rsync \
+    > /dev/null  # -q doesn't actually silence pacman -Sy.
 
   useradd -m builduser
   passwd -d builduser
@@ -33,8 +34,9 @@ function build_package() {
 }
 
 function install_test_deps() {
-  pacman -Sy --needed --noconfirm \
-    gtest
+  pacman -Syq --needed --noconfirm \
+    gtest \
+    > /dev/null  # -q doesn't actually silence pacman -Sy.
 }
 
 function run_tests() {
@@ -42,8 +44,7 @@ function run_tests() {
 
   budo cmake -H. -Bbuild_tests \
     -DBUILD_TESTING=ON \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DCMAKE_VERBOSE_MAKEFILE=ON
+    -DCMAKE_BUILD_TYPE=Debug
   budo cmake --build build_tests
   budo env CTEST_OUTPUT_ON_FAILURE=1 \
     cmake --build build_tests --target test

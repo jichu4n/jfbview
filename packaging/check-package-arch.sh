@@ -2,8 +2,11 @@
 
 set -ex
 
-pacman -Sy
-pacman -S --noconfirm which  # Needed by post-install-smoke-test.sh
+pacman -Syq \
+  > /dev/null  # -q doesn't actually silence pacman -Sy.
+# Needed by post-install-smoke-test.sh
+pacman -Sq --noconfirm which \
+  > /dev/null  # -q doesn't actually silence pacman -S.
 
 cd "$(dirname "$0")/.."
 

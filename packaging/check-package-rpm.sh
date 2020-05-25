@@ -2,8 +2,8 @@
 
 set -ex
 
-yum install -y epel-release
-yum install -y which  # Needed by post-install-smoke-test.sh
+yum install -y -q epel-release
+yum install -y -q which  # Needed by post-install-smoke-test.sh
 
 cd "$(dirname "$0")/.."
 

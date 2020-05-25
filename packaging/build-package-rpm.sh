@@ -6,8 +6,8 @@ arch="$3"
 package_file_prefix="jfbview-${version}-${dist}.${arch}"
 
 function install_build_deps() {
-  yum install -y epel-release
-  yum install -y \
+  yum install -y -q epel-release
+  yum install -y -q \
     cmake make gcc-c++ rpm-build \
     ncurses-devel imlib2-devel \
     libjpeg-devel mesa-libGLU-devel libXi-devel libXrandr-devel
@@ -19,19 +19,18 @@ function build_package() {
   cmake -H. -Bbuild \
     -DPACKAGE_FORMAT=RPM \
     -DPACKAGE_FILE_PREFIX="$package_file_prefix" \
-    -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_TESTING=OFF \
-    -DCMAKE_VERBOSE_MAKEFILE=ON
+    -DCMAKE_BUILD_TYPE=Release
   cmake --build build --target package
   mv build/*.rpm upload/
 }
 
 function install_test_deps() {
   if [ -e /etc/centos-release ]; then
-    dnf --enablerepo=PowerTools install -y gtest-devel
+    dnf --enablerepo=PowerTools install -y -q gtest-devel
   else
-    yum install -y epel-release
-    yum install -y gtest-devel
+    yum install -y -q epel-release
+    yum install -y -q gtest-devel
   fi
 }
 
@@ -40,8 +39,7 @@ function run_tests() {
   mkdir -p build_tests
   cmake -H. -Bbuild_tests \
     -DBUILD_TESTING=ON \
-    -DCMAKE_BUILD_TYPE=Debug \
-    -DCMAKE_VERBOSE_MAKEFILE=ON
+    -DCMAKE_BUILD_TYPE=Debug
   cmake --build build_tests
   env CTEST_OUTPUT_ON_FAILURE=1 \
     cmake --build build_tests --target test

@@ -3,7 +3,7 @@
 set -ex
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get update
+apt-get -qq update
 
 cd "$(dirname "$0")/.."
 
