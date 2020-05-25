@@ -65,7 +65,7 @@ jobs:
       if: branch = master
 before_install: gem install mtime_cache
 script:
-  - mtime_cache -c vendor/.mtime_cache/cache.json -V 'vendor/mupdf/**/*'
+  - mtime_cache -c vendor/.mtime_cache/cache.json 'vendor/mupdf/**/*'
   - |
     packaging/build-and-check-package-with-docker.sh \
       "${package_format}" \
