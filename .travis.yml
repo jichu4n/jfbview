@@ -64,7 +64,7 @@ jobs:
       arch: arm64
       if: branch = master
 script: |
-  packaging/build-and-check-with-docker.sh \
+  packaging/build-and-check-package-with-docker.sh \
     "${package_format}" \
     "${docker_image}" \
     "${TRAVIS_COMMIT}" "${dist}" "${arch}"
