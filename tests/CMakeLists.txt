@@ -21,6 +21,19 @@ if(ENABLE_IMAGE_SUPPORT)
   add_test(
     NAME image_document_test
     COMMAND image_document_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
 endif()
+
+add_executable(pdf_document_test pdf_document_test.cpp)
+target_link_libraries(
+  pdf_document_test
+  jfbview_document
+  ${GTEST_BOTH_LIBRARIES}
+)
+add_test(
+  NAME pdf_document_test
+  COMMAND pdf_document_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
