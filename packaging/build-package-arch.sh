@@ -8,25 +8,28 @@ function budo() {
 
 function install_build_deps() {
   pacman -Sy --needed --noconfirm \
-    base-devel git sudo
+    base-devel git sudo rsync
 
   useradd -m builduser
   passwd -d builduser
   echo -e '\nbuilduser ALL=(ALL) NOPASSWD:ALL\n' | tee -a /etc/sudoers
 
   budo git clone https://aur.archlinux.org/jfbview-git.git /home/builduser/jfbview-git
+  cd /home/builduser/jfbview-git
+  budo mkdir -p src
+  budo rsync -a "${src_dir}"/ src/jfbview/
 }
 
 function build_package() {
   cd /home/builduser/jfbview-git
 
-  budo mkdir -p src
-  budo cp -a "$(dirname "$0")/.." src/jfbview
-
   budo makepkg --syncdeps --noconfirm --noextract
 
   mkdir -p "${src_dir}"/upload
   mv *.pkg.tar.xz "${src_dir}"/upload/
+
+  # For caching in Travis CI.
+  rsync -a src/jfbview/vendor/mupdf/build/ "${src_dir}"/vendor/mupdf/build/
 }
 
 function install_test_deps() {
@@ -35,14 +38,14 @@ function install_test_deps() {
 }
 
 function run_tests() {
-  cd "$(dirname "$0")/.."
-  mkdir -p build_tests
-  cmake -H. -Bbuild_tests \
+  cd /home/builduser/jfbview-git/src/jfbview
+
+  budo cmake -H. -Bbuild_tests \
     -DBUILD_TESTING=ON \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_VERBOSE_MAKEFILE=ON
-  cmake --build build_tests
-  env CTEST_OUTPUT_ON_FAILURE=1 \
+  budo cmake --build build_tests
+  budo env CTEST_OUTPUT_ON_FAILURE=1 \
     cmake --build build_tests --target test
 }
 
