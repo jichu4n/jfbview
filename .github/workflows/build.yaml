@@ -9,21 +9,13 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: recursive
-      - name: Build
-        run: sudo packaging/build-deb.sh
-      - name: Run tests
-        run: sudo packaging/run-tests-deb.sh
+      - name: Build package
+        run: sudo packaging/build-package-deb.sh ${{github.sha}} ubuntu amd64
       - name: Upload package
         uses: actions/upload-artifact@v2
         with:
           name: jfbview_${{github.sha}}_amd64.deb
           path: upload/*.deb
-      - name: Inspect package
-        run: >
-          dpkg-deb -I upload/*.deb &&
-          dpkg-deb -c upload/*.deb
-      - name: Install package
-        run: sudo apt install -y ./upload/*.deb
-      - name: Post install smoke test
-        run: packaging/post-install-smoke-test.sh
+      - name: Check package
+        run: sudo packaging/check-package-deb.sh
 

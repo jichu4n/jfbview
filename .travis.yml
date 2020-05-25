@@ -14,6 +14,7 @@ jobs:
     # CentOS armv8
     - env: package_format=rpm docker_image=arm64v8/centos:8 dist=1.el8 arch=aarch64
       arch: arm64
+      if: branch = master
     # Ubuntu amd64
     - env: package_format=deb docker_image=ubuntu:focal dist=focal arch=amd64
       arch: amd64
@@ -27,8 +28,10 @@ jobs:
     #   arch: amd64
     - env: package_format=deb docker_image=i386/ubuntu:bionic dist=bionic arch=i386
       arch: amd64
+      if: branch = master
     - env: package_format=deb docker_image=i386/ubuntu:xenial dist=xenial arch=i386
       arch: amd64
+      if: branch = master
     # Debian amd64
     - env: package_format=deb docker_image=debian:buster dist=buster arch=amd64
       arch: amd64
@@ -37,25 +40,33 @@ jobs:
     # Debian i386
     - env: package_format=deb docker_image=i386/debian:buster dist=buster arch=i386
       arch: amd64
+      if: branch = master
     - env: package_format=deb docker_image=i386/debian:stretch dist=stretch arch=i386
       arch: amd64
+      if: branch = master
     # Debian armv8
     - env: package_format=deb docker_image=arm64v8/debian:buster dist=buster arch=arm64
       arch: arm64
+      if: branch = master
     - env: package_format=deb docker_image=arm64v8/debian:stretch dist=stretch arch=arm64
       arch: arm64
+      if: branch = master
     # Debian armv7
     - env: package_format=deb docker_image=arm32v7/debian:buster dist=buster arch=armhf
       arch: arm64
+      if: branch = master
     - env: package_format=deb docker_image=arm32v7/debian:stretch dist=stretch arch=armhf
       arch: arm64
+      if: branch = master
     # Debian armv6 (Raspberry Pi)
     - env: package_format=deb docker_image=balenalib/rpi-raspbian:buster dist=buster arch=rpi
       arch: arm64
+      if: branch = master
     - env: package_format=deb docker_image=balenalib/rpi-raspbian:stretch dist=stretch arch=rpi
       arch: arm64
+      if: branch = master
 script: |
-  packaging/build-with-docker.sh \
+  packaging/build-and-check-with-docker.sh \
     "${package_format}" \
     "${docker_image}" \
     "${TRAVIS_COMMIT}" "${dist}" "${arch}"

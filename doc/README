@@ -30,11 +30,11 @@ Arch Linux:
 
 Debian / Ubuntu:
   * See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.deb` packages.
-  * To build from source, see [`packaging/build-deb.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-deb.sh).
+  * To build from source, see [`packaging/build-package-deb.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-deb.sh).
 
 CentOS / Fedora:
   * See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.rpm` packages.
-  * To build from source, see [`packaging/build-rpm.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-rpm.sh).
+  * To build from source, see [`packaging/build-package-rpm.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-rpm.sh).
 
 DOCUMENTATION
 -------------

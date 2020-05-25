@@ -12,6 +12,12 @@ docker run \
   --rm \
   -v "$PWD":/work \
   "$docker_image" \
-  "/work/packaging/build-${package_format}.sh" \
+  "/work/packaging/build-package-${package_format}.sh" \
     "$version" "$dist" "$arch"
+
+docker run \
+  --rm \
+  -v "$PWD":/work \
+  "$docker_image" \
+  "/work/packaging/check-package-${package_format}.sh"
 
