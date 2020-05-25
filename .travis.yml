@@ -6,8 +6,6 @@ jobs:
     # Arch x86_64
     - env: package_format=arch docker_image=archlinux:latest dist= arch=
       arch: amd64
-      # The Arch Linux build script builds at master HEAD.
-      if: branch = master
     # CentOS x86_64
     - env: package_format=rpm docker_image=centos:8 dist=1.el8 arch=x86_64
       arch: amd64

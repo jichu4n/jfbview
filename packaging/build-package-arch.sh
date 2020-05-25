@@ -19,7 +19,11 @@ function install_build_deps() {
 
 function build_package() {
   cd /home/builduser/jfbview-git
-  budo makepkg --syncdeps --noconfirm
+
+  budo mkdir -p src
+  budo cp -a "$(dirname "$0")/.." src/jfbview
+
+  budo makepkg --syncdeps --noconfirm --noextract
 
   mkdir -p "${src_dir}"/upload
   mv *.pkg.tar.xz "${src_dir}"/upload/
