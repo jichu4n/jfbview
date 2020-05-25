@@ -6,8 +6,8 @@ arch="$3"
 package_file_prefix="jfbview-${version}-${dist}.${arch}"
 
 function install_build_deps() {
-  yum install -y epel-release
-  yum install -y \
+  yum install -y -q epel-release
+  yum install -y -q \
     cmake make gcc-c++ rpm-build \
     ncurses-devel imlib2-devel \
     libjpeg-devel mesa-libGLU-devel libXi-devel libXrandr-devel
@@ -28,10 +28,10 @@ function build_package() {
 
 function install_test_deps() {
   if [ -e /etc/centos-release ]; then
-    dnf --enablerepo=PowerTools install -y gtest-devel
+    dnf --enablerepo=PowerTools install -y -q gtest-devel
   else
-    yum install -y epel-release
-    yum install -y gtest-devel
+    yum install -y -q epel-release
+    yum install -y -q gtest-devel
   fi
 }
 

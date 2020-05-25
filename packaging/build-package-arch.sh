@@ -7,8 +7,9 @@ function budo() {
 }
 
 function install_build_deps() {
-  pacman -Sy --needed --noconfirm \
-    base-devel git sudo rsync
+  pacman -Syq --needed --noconfirm \
+    base-devel git sudo rsync \
+    > /dev/null  # -q doesn't actually silence pacman -Sy.
 
   useradd -m builduser
   passwd -d builduser
@@ -33,8 +34,9 @@ function build_package() {
 }
 
 function install_test_deps() {
-  pacman -Sy --needed --noconfirm \
-    gtest
+  pacman -Syq --needed --noconfirm \
+    gtest \
+    > /dev/null  # -q doesn't actually silence pacman -Sy.
 }
 
 function run_tests() {
