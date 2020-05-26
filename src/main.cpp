@@ -825,6 +825,12 @@ int main(int argc, char* argv[]) {
 
   // 3. Clean up.
   state.OutlineViewInst.reset();
+  // Hack alert: Calling endwin() immediately after the framebuffer destructor
+  // (which clears the screen) appears to cause a race condition where the next
+  // shell prompt after this program exits would also get erased. Adding a
+  // short sleep appears to fix the issue.
+  state.FramebufferInst.reset();
+  usleep(100 * 1000);
   endwin();
 
   return EXIT_SUCCESS;
