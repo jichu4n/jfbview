@@ -1,0 +1,173 @@
+<HTML>
+<BODY>
+<PRE>
+<!-- Manpage converted by man2html 3.0.1 -->
+<B>man(1)</B>                         jfbview man page                         <B>man(1)</B>
+
+
+
+<B>NAME</B>
+       jfbview - PDF and image viewer for the Linux framebuffer.
+
+<B>SYNOPSIS</B>
+       jfbview [OPTIONS] FILE
+
+<B>DESCRIPTION</B>
+       jfbview  is a PDF and image viewer for the Linux framebuffer. It's fast
+       and has a number of advanced and unique features.
+
+<B>OPTIONS</B>
+       <B>--help</B>, <B>-h</B>
+              Shows help message.
+
+       <B>--fb=</B>/path/to/dev
+              Specifies the path to the output framebuffer device. The default
+              is /dev/fb0.
+
+       <B>--page=</B>n, <B>-p</B> n
+              Go to page n on start up.
+
+       <B>--zoom=</B>n, <B>-z</B> n
+              Set initial zoom to be n percent. For example, "-z 75" sets zoom
+              to 75%.
+
+       <B>--zoom_to_fit</B>
+              Start in zoom-to-fit mode.
+
+       <B>--zoom_to_width</B>
+              Start in zoom-to-width mode. This is the default.
+
+       <B>--rotation=</B>n, <B>-r</B> n
+              Set initial rotation to n degrees clockwise.
+
+       <B>--format=image</B>
+              Forces the program to treat the input file as an image.
+
+       <B>--format=pdf</B>
+              Forces the program to treat the input file as a PDF. By default,
+              the  file format is detected based on its extension. If the file
+              does not have a ".pdf" (case is ignored)  extension,  this  will
+              force jfbview to load it as a PDF.
+
+       <B>--cache_size=</B>n
+              Selects  the  number  of pages to cache. jfbview has a in-memory
+              cache of pages rendered at a particular zoom and  rotation  set‐
+              ting.  However,  you  may  wish to adjust the cache size down if
+              this cache is consuming too much memory, or you may wish to  ad‐
+              just the cache size up for increased performance. If you have an
+              older machine with limited RAM you may want to set it  close  to
+              zero.
+
+<B>KEY</B> <B>BINDINGS</B> <B>-</B> <B>MAIN</B> <B>VIEW</B>
+       jfbview has a set of vi-like key bindings and many commands can be pre‐
+       fixed with a number. These are shown with a [n] prefix below.
+
+       <B>q</B>      Quit.
+
+       <B>Tab</B>    Open <B>OUTLINE</B> <B>VIEW</B> (table of contents, i.e., TOC; see below).
+
+       <B>/</B>      Open <B>SEARCH</B> <B>VIEW</B> (see below).
+
+       [n]<B>arrow</B> <B>keys</B>, [n]<B>h</B>/<B>l</B>/<B>k</B>/<B>j</B>
+              Move left/right/up/down.
+
+       [n]<B>Space</B>/<B>^F</B>
+              Move n screens down. Default is 1.
+
+       [n]<B>^B</B>  Move n screens up. Default is 1.
+
+       [n]<B>PageDown</B>/<B>PageUp</B>
+              Go down / up n pages. Default is 1.
+
+       [n]<B>=</B>/<B>+</B> Zoom in n times. Default is 1.
+
+       [n]<B>-</B>   Zoom out n times. Default is 1.
+
+       <B>s</B>      Zoom to screen width.
+
+       <B>a</B>      Zoom to fit.
+
+       <B>HOME</B>/<B>END</B>
+              Go to first / last page in document.
+
+       [n]<B>G</B>/<B>g</B> Go to page n. Default for <B>G</B> is last page; default for <B>g</B> is first
+              page.
+
+       [n]<B>m</B>   Save current position, zoom and rotation in document in bookmark
+              n. The default is 0.
+
+       [n]<B>`</B>   Restore saved position, zoom and rotation in bookmark n. The de‐
+              fault is 0.
+
+       [n]<B>r</B>   Set rotation to n degrees. Default is 0.
+
+       [n]<B>&gt;</B>/<B>.</B> Rotate 90 degrees clockwise n times. Default is 1.
+
+       [n]<B>&lt;</B>/<B>,</B> Rotate 90 degrees counter-clockwise n times. Default is 1.
+
+       [n]<B>z</B>   Set zoom to n percent.
+
+       <B>e</B>      Reload current file from disk.
+
+<B>KEY</B> <B>BINDINGS</B> <B>-</B> <B>OUTLINE</B> <B>VIEW</B>
+       The outline view is toggled by the <B>Tab</B> key.
+
+       <B>Tab</B>/<B>q</B>/<B>Esc</B>
+              Toggle outline view.
+
+       <B>j</B>/<B>Down</B>, <B>k</B>/<B>Up</B>
+              Move down or up.
+
+       <B>PageDown</B>/<B>PageUp</B>
+              Go down / up one page.
+
+       <B>Enter</B>/<B>g</B>
+              Go to selected item.
+
+       <B>Space</B>  Fold/unfold selected item.
+
+       <B>zR</B>     Unfold all.
+
+       <B>zM</B>     Fold all.
+
+<B>KEY</B> <B>BINDINGS</B> <B>-</B> <B>SEARCH</B> <B>VIEW</B> <B>-</B> <B>SEARCH</B> <B>TEXT</B>
+       <B>Esc</B>    Toggle search view.
+
+       <B>Enter</B>  Start search.
+
+       <B>Tab</B>/<B>Down</B>/<B>PageDown</B>
+              Go to search results.
+
+<B>KEY</B> <B>BINDINGS</B> <B>-</B> <B>SEARCH</B> <B>VIEW</B> <B>-</B> <B>SEARCH</B> <B>RESULTS</B>
+       <B>q</B>/<B>Esc</B>  Toggle search view.
+
+       <B>Space</B>/<B>Enter</B>/<B>g</B>
+              Go to selected item.
+
+       <B>j</B>/<B>Down</B>, <B>k</B>/<B>Up</B>
+              Move down or up.
+
+       <B>PageDown</B>/<B>PageUp</B>
+              Go down / up one page.
+
+       <B>Tab</B>/<B>/</B>  Go to search text.
+
+<B>BUGS</B>
+       Please  submit  any  bugs  or  improvement suggestions to the author at
+       https://github.com/jichu4n/jfbview/issues.
+
+<B>AUTHOR</B>
+       Chuan Ji (chuan@jichu4n.com)
+
+
+
+
+2020-05-25                        25 May 2020                           <B>man(1)</B>
+</PRE>
+<HR>
+<ADDRESS>
+Man(1) output converted with
+<a href="http://www.oac.uci.edu/indiv/ehood/man2html.html">man2html</a>
+</ADDRESS>
+</BODY>
+</HTML>
