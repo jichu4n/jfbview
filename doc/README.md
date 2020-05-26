@@ -89,8 +89,7 @@ enable an alias for `jfbview` called `jfbpdf`.
 DOCUMENTATION
 -------------
 
-The key bindings and command line options available are described in the man
-page of jfbview. To view it, do `man jfbview`.
+See [jfbview man page](https://htmlpreview.github.io/?https://github.com/jichu4n/jfbview/blob/master/doc/jfbview.1.html).
 
 ABOUT
 -----
