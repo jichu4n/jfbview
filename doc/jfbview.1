@@ -1,13 +1,13 @@
-.\" Manpage for JFBView.
-.\" Contact ji@chu4n.com to correct errors or typos.
-.TH man 1 "23 Sep 2014" "2014-09-23" "JFBView Man Page"
+.\" Manpage for jfbview.
+.\" Contact chuan@jichu4n.com to correct errors or typos.
+.TH man 1 "25 May 2020" "2020-05-25" "jfbview man page"
 .SH NAME
-JFBView \- PDF and image viewer for the Linux framebuffer.
+jfbview \- PDF and image viewer for the Linux framebuffer.
 .SH SYNOPSIS
 jfbview [OPTIONS] FILE
 .SH DESCRIPTION
-JFBView is a PDF and image viewer for the Linux framebuffer. It is very fast and
-has a number of advanced and unique features.
+jfbview is a PDF and image viewer for the Linux framebuffer. It's fast and has
+a number of advanced and unique features.
 .SH OPTIONS
 .TP
 \fB--help\fR, \fB-h\fR
@@ -37,16 +37,16 @@ Forces the program to treat the input file as an image.
 \fB--format=pdf\fR
 Forces the program to treat the input file as a PDF. By default, the file format
 is detected based on its extension. If the file does not have a ".pdf" (case is
-ignored) extension, this will force JFBView to load it as a PDF.
+ignored) extension, this will force jfbview to load it as a PDF.
 .TP
 \fB--cache_size=\fRn
-Selects the number of pages to cache. JFBView has a in-memory cache of pages
+Selects the number of pages to cache. jfbview has a in-memory cache of pages
 rendered at a particular zoom and rotation setting. However, you may wish to
 adjust the cache size down if this cache is consuming too much memory, or you
 may wish to adjust the cache size up for increased performance. If you have an
 older machine with limited RAM you may want to set it close to zero.
 .SH KEY BINDINGS - MAIN VIEW
-JFBView has a set of vi-like key bindings and many commands can be prefixed with
+jfbview has a set of vi-like key bindings and many commands can be prefixed with
 a number. These are shown with a [n] prefix below.
 .TP
 \fBq\fR
@@ -160,7 +160,8 @@ Go down / up one page.
 \fBTab\fR/\fB/\fR
 Go to search text.
 .SH BUGS
-This software is still experimental and thus likely contains lots of bugs. You
-are welcome to submit any bugs or improvement suggestions to the author.
+Please submit any bugs or improvement suggestions to the author at
+https://github.com/jichu4n/jfbview/issues.
 .SH AUTHOR
-Chuan Ji (ji@chu4n.com)
+Chuan Ji (chuan@jichu4n.com)
+
