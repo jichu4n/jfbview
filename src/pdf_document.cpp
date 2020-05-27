@@ -20,6 +20,7 @@
 // using MuPDF.
 
 #include <stdint.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -28,11 +29,10 @@
 extern "C" {
 #include "mupdf/pdf.h"
 }
+#include "detected_mupdf_version.hpp"
 #include "multithreading.hpp"
 #include "pdf_document.hpp"
 #include "string_utils.hpp"
-
-#include "detected_mupdf_version.hpp"
 
 #if MUPDF_VERSION < 10009
 #define pdf_drop_document pdf_close_document
@@ -133,6 +133,11 @@ PDFDocument* PDFDocument::Open(const std::string& path, int page_cache_size) {
     fz_drop_context(context);
     return nullptr;
   }
+
+#if MUPDF_VERSION >= 10016
+  fz_set_warning_callback(
+      context, [](void* user, const char* message) {}, nullptr);
+#endif
 
   PDFDocument* document = new PDFDocument(page_cache_size);
   document->_fz_context = context;
