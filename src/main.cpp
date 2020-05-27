@@ -460,22 +460,9 @@ class ReloadCommand : public StateCommand {
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 // Help text printed by --help or -h.
-static const char* HELP_STRING = JFBVIEW_PROGRAM_NAME
-    " " JFBVIEW_VERSION
+static const char* HELP_STRING =
+    "\n" JFBVIEW_PROGRAM_NAME " " JFBVIEW_VERSION
     "\n"
-    "Copyright (C) 2012-2020 Chuan Ji\n"
-    "\n"
-    "Licensed under the Apache License, Version 2.0 (the \"License\");\n"
-    "you may not use this file except in compliance with the License.\n"
-    "You may obtain a copy of the License at\n"
-    "\n"
-    "    http://www.apache.org/licenses/LICENSE-2.0\n"
-    "\n"
-    "Unless required by applicable law or agreed to in writing, software\n"
-    "distributed under the License is distributed on an \"AS IS\" BASIS,\n"
-    "WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
-    "See the License for the specific language governing permissions and\n"
-    "limitations under the License.\n"
     "\n"
     "Usage: " JFBVIEW_BINARY_NAME
     " [OPTIONS] FILE\n"
@@ -501,10 +488,14 @@ static const char* HELP_STRING = JFBVIEW_PROGRAM_NAME
     "\t                      machine with limited RAM, or if you are loading\n"
     "\t                      huge documents, or if you just want to reduce\n"
     "\t                      memory usage, you might want to set this to a\n"
-    "\t                      smaller number.\n";
+    "\t                      smaller number.\n"
+    "\n"
+    "jfbview home page: https://github.com/jichu4n/jfbview\n"
+    "Bug reports & suggestions: https://github.com/jichu4n/jfbview/issues\n"
+    "\n";
 
-// Parses the command line, and stores settings in state. Crashes the program if
-// the commnad line contains errors.
+// Parses the command line, and stores settings in state. Crashes the
+// program if the commnad line contains errors.
 static void ParseCommandLine(int argc, char* argv[], State* state) {
   // Tags for long options that don't have short option chars.
   enum {

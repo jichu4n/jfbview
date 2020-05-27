@@ -33,11 +33,11 @@ Source: https://aur.archlinux.org/packages/jfbview
 
 See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.deb` packages:
 
-  - Debian 10 "buster" - `amd64`, `i386`, `arm64` (ARMv8), `armhf` (ARMv7), `rpi` (Raspbian on ARMv6)
-  - Debian 9 "stretch" - `amd64`, `i386`, `arm64` (ARMv8), `armhf` (ARMv7), `rpi` (Raspbian on ARMv6)
-  - Ubuntu 20.04 LTS Focal - `amd64`
-  - Ubuntu 18.04 LTS Bionic - `amd64`, `i386`
-  - Ubuntu 16.04 LTS Xenial - `amd64`, `i386`
+  - Debian 10 "buster": `amd64`, `i386`, `arm64` (ARMv8), `armhf` (ARMv7), `rpi` (Raspbian on ARMv6)
+  - Debian 9 "stretch": `amd64`, `i386`, `arm64`, `armhf`, `rpi`
+  - Ubuntu 20.04 LTS Focal: `amd64`
+  - Ubuntu 18.04 LTS Bionic: `amd64`, `i386`
+  - Ubuntu 16.04 LTS Xenial: `amd64`, `i386`
 
 To build from source, see [`packaging/build-package-deb.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-deb.sh).
 
@@ -45,13 +45,13 @@ To build from source, see [`packaging/build-package-deb.sh`](https://github.com/
 
 See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.rpm` packages:
 
-  - CentOS 8 - `x86_64`, `aarch64` (ARMv8)
+  - CentOS 8 and Fedora 28+: `x86_64`, `aarch64` (ARMv8)
 
 To build from source, see [`packaging/build-package-rpm.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-rpm.sh).
 
 ### Installing from source
 
-Install dependencies:
+Dependencies:
 
   - [NCURSES](https://invisible-island.net/ncurses/ncurses.html)
 
@@ -59,7 +59,7 @@ Install dependencies:
 
   - [libjpeg](http://libjpeg.sourceforge.net/) or [libjpeg-turbo](https://libjpeg-turbo.org/)
 
-Build-time only dependencies:
+Build-time dependencies:
 
   - C++ compiler with support for C++14 (GCC 4.9+, Clang 3.5+)
 
@@ -76,15 +76,13 @@ git clone https://github.com/jichu4n/jfbview.git
 cd jfbview
 git submodule update --init --recursive
 
-mkdir build && cd build
-cmake ..
+cmake -H. -Bbuild
 make
 make install
 ```
 
 It is also possible to build a variant of jfbview without support for images
-and without dependency on Imlib2, which has a rather large list of dependencies
-itself. To build this variant, specify the CMake flag
+and without dependency on Imlib2. To build this variant, specify the CMake flag
 `-DENABLE_IMAGE_SUPPORT=OFF`. For backwards compatibility, this will also
 enable an alias for `jfbview` called `jfbpdf`.
 
