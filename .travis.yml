@@ -75,14 +75,17 @@ cache:
   directories:
     - vendor/mupdf/build
     - vendor/.mtime_cache
+before_deploy: |
+  sudo chown -R "${USER}" upload && \
+  mkdir upload-gcs && \
+  mv upload "upload-gcs/${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}"
 deploy:
+  skip_cleanup: true
   provider: gcs
-  edge: true
   access_key_id: ${GCS_ACCESS_KEY_ID}
   secret_access_key: ${GCS_SECRET_ACCESS_KEY}
   bucket: ${GCS_BUCKET}
-  local_dir: upload
-  upload_dir: "${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}"
+  local_dir: upload-gcs
   on:
     repo: jichu4n/jfbview
     all_branches: true
