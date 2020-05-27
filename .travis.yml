@@ -77,12 +77,13 @@ cache:
     - vendor/.mtime_cache
 deploy:
   provider: gcs
+  edge: true
   access_key_id: ${GCS_ACCESS_KEY_ID}
   secret_access_key: ${GCS_SECRET_ACCESS_KEY}
   bucket: ${GCS_BUCKET}
   local_dir: upload
+  upload_dir: "${TRAVIS_BUILD_NUMBER}-${TRAVIS_COMMIT}"
   on:
     repo: jichu4n/jfbview
     all_branches: true
-  skip_cleanup: true
 
