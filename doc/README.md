@@ -65,10 +65,6 @@ Build-time dependencies:
 
   - [CMake](https://cmake.org/) 3.2+
 
-  - [Mesa](https://mesa.freedesktop.org/) libGL and libGLU
-
-  - [X11](https://xorg.freedesktop.org/) libXi and libXrandr
-
 Build:
 
 ```
