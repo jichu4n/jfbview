@@ -459,6 +459,24 @@ class ReloadCommand : public StateCommand {
   }
 };
 
+class ToggleInvertedColorModeCommand : public Command {
+ public:
+  void Execute(int repeat, State* state) override {
+    state->ColorMode = state->ColorMode == Viewer::ColorMode::INVERTED
+                           ? Viewer::ColorMode::NORMAL
+                           : Viewer::ColorMode::INVERTED;
+  }
+};
+
+class ToggleSepiaColorModeCommand : public Command {
+ public:
+  void Execute(int repeat, State* state) override {
+    state->ColorMode = state->ColorMode == Viewer::ColorMode::SEPIA
+                           ? Viewer::ColorMode::NORMAL
+                           : Viewer::ColorMode::SEPIA;
+  }
+};
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                               END COMMANDS                                *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -481,6 +499,10 @@ static const char* HELP_STRING =
     "\t--zoom_to_fit         Start in automatic zoom-to-fit mode.\n"
     "\t--zoom_to_width       Start in automatic zoom-to-width mode.\n"
     "\t--rotation=N, -r N    Set initial rotation to N degrees clockwise.\n"
+    "\t--color_mode=invert, -c invert\n"
+    "\t                      Start in inverted color mode.\n"
+    "\t--color_mode=sepia, -c sepia\n"
+    "\t                      Start in sepia color mode.\n"
 #ifndef JFBVIEW_NO_IMLIB2
     "\t--format=image, -f image\n"
     "\t                      Forces the program to treat the input file as an\n"
@@ -520,12 +542,13 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
       {"zoom_to_width", false, nullptr, ZOOM_TO_WIDTH},
       {"zoom_to_fit", false, nullptr, ZOOM_TO_FIT},
       {"rotation", true, nullptr, 'r'},
+      {"color_mode", true, nullptr, 'c'},
       {"format", true, nullptr, 'f'},
       {"cache_size", true, nullptr, RENDER_CACHE_SIZE},
       {"fb_debug_info", false, nullptr, PRINT_FB_DEBUG_INFO_AND_EXIT},
       {0, 0, 0, 0},
   };
-  static const char* ShortFlags = "hP:p:z:r:f:";
+  static const char* ShortFlags = "hP:p:z:r:c:f:";
 
   for (;;) {
     int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, nullptr);
@@ -587,6 +610,20 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
           exit(EXIT_FAILURE);
         }
         break;
+      case 'c': {
+        const std::string arg = ToLower(optarg);
+        if (arg == "normal" || arg == "") {
+          state->ColorMode = Viewer::ColorMode::NORMAL;
+        } else if (arg == "invert" || arg == "inverted") {
+          state->ColorMode = Viewer::ColorMode::INVERTED;
+        } else if (arg == "sepia") {
+          state->ColorMode = Viewer::ColorMode::SEPIA;
+        } else {
+          fprintf(stderr, "Invalid color mode \"%s\"\n", optarg);
+          exit(EXIT_FAILURE);
+        }
+        break;
+      }
       case PRINT_FB_DEBUG_INFO_AND_EXIT:
         state->PrintFBDebugInfoAndExit = true;
         break;
@@ -628,8 +665,9 @@ std::unique_ptr<Registry> BuildRegistry() {
       KEY_RIGHT, std::move(std::make_unique<MoveRightCommand>()));
   registry->Register(' ', std::move(std::make_unique<ScreenDownCommand>()));
   registry->Register(
-      6, std::move(std::make_unique<ScreenDownCommand>()));               // ^F
-  registry->Register(2, std::move(std::make_unique<ScreenUpCommand>()));  // ^B
+      6 /* CTRL-F */, std::move(std::make_unique<ScreenDownCommand>()));  // ^F
+  registry->Register(
+      2 /* CTRL-B */, std::move(std::make_unique<ScreenUpCommand>()));  // ^B
   registry->Register('J', std::move(std::make_unique<PageDownCommand>()));
   registry->Register(KEY_NPAGE, std::move(std::make_unique<PageDownCommand>()));
   registry->Register('K', std::move(std::make_unique<PageUpCommand>()));
@@ -663,6 +701,9 @@ std::unique_ptr<Registry> BuildRegistry() {
   registry->Register('`', std::move(std::make_unique<RestoreStateCommand>()));
 
   registry->Register('e', std::move(std::make_unique<ReloadCommand>()));
+
+  registry->Register('I', std::make_unique<ToggleInvertedColorModeCommand>());
+  registry->Register('S', std::make_unique<ToggleSepiaColorModeCommand>());
 
   return registry;
 }

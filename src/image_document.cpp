@@ -24,7 +24,6 @@
 
 #include "image_document.hpp"
 
-#include <stdint.h>
 // For the M_PI constant.
 #define _USE_MATH_DEFINES
 #include <algorithm>

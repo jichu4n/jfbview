@@ -41,6 +41,13 @@ class Viewer {
     ZOOM_TO_WIDTH = -4,
   };
 
+  // Color mode.
+  enum ColorMode {
+    NORMAL,
+    INVERTED,
+    SEPIA,
+  };
+
   // Maximum zoom ratio.
   static const float MAX_ZOOM;
   // Minimum zoom ratio.
@@ -80,6 +87,9 @@ class Viewer {
     // Render() itself.
     int ScreenHeight;
 
+    // Current color mode.
+    enum ColorMode ColorMode;
+
     State(
         int page = 0, float zoom = ZOOM_TO_WIDTH, int rotation = 0,
         int x_offset = 0, int y_offset = 0)
@@ -87,7 +97,8 @@ class Viewer {
           Zoom(zoom),
           Rotation(rotation),
           XOffset(x_offset),
-          YOffset(y_offset) {}
+          YOffset(y_offset),
+          ColorMode(NORMAL) {}
   };
 
   // Constructs a new Viewer object. Does not take ownership of the document or
@@ -124,9 +135,12 @@ class Viewer {
     float Zoom;
     // Rotation in clockwise degrees.
     int Rotation;
+    // Color mode.
+    enum ColorMode ColorMode;
 
-    RenderCacheKey(int page, float zoom, int rotation)
-        : Page(page), Zoom(zoom), Rotation(rotation) {}
+    RenderCacheKey(
+        int page, float zoom, int rotation, enum ColorMode color_mode)
+        : Page(page), Zoom(zoom), Rotation(rotation), ColorMode(color_mode) {}
 
     // This is required as this class will be inserted into a map.
     bool operator<(const RenderCacheKey& other) const;

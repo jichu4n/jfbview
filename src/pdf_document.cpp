@@ -19,8 +19,6 @@
 // This file defines PDFDocument, an implementation of the Document abstraction
 // using MuPDF.
 
-#include <stdint.h>
-
 #include <algorithm>
 #include <cassert>
 #include <cstring>

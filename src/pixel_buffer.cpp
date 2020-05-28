@@ -71,7 +71,7 @@ PixelBuffer::Rect PixelBuffer::GetRect() const {
   return Rect(0, 0, _size.Width, _size.Height);
 }
 
-void PixelBuffer::WritePixel(int x, int y, int r, int g, int b) {
+void PixelBuffer::WritePixel(int x, int y, uint8_t r, uint8_t g, uint8_t b) {
   _pixel_writer_impl->WritePixel(_format->Pack(r, g, b), GetPixelAddress(x, y));
 }
 
