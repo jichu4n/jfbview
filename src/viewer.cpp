@@ -39,7 +39,7 @@ namespace {
 // stored as three consecutive ints representing the r, g, and b values.
 class PixelBufferWriter : public Document::PixelWriter {
  public:
-  // Constructs a BufferPixel writer with the given settings. buffer_width
+  // Constructs a PixelBuffer writer with the given settings. buffer_width
   // gives the number of pixels in a row in the buffer. buffer is the target
   // buffer.
   PixelBufferWriter(PixelBuffer* buffer, Viewer::ColorMode color_mode)
@@ -49,10 +49,21 @@ class PixelBufferWriter : public Document::PixelWriter {
     switch (_color_mode) {
       case Viewer::ColorMode::NORMAL:
         break;
-      case Viewer::ColorMode::INVERT_COLORS:
+      case Viewer::ColorMode::INVERTED:
         r = UINT8_MAX - r;
         g = UINT8_MAX - g;
         b = UINT8_MAX - b;
+        break;
+      case Viewer::ColorMode::SEPIA:
+        r = ::std::min(
+            static_cast<uint32_t>(r * 0.393f + g * 0.769f + b * 0.189f),
+            static_cast<uint32_t>(UINT8_MAX));
+        g = ::std::min(
+            static_cast<uint32_t>(r * 0.349f + g * 0.686f + b * 0.168f),
+            static_cast<uint32_t>(UINT8_MAX));
+        b = ::std::min(
+            static_cast<uint32_t>(r * 0.272f + g * 0.534f + b * 0.131f),
+            static_cast<uint32_t>(UINT8_MAX));
         break;
       default:
         fprintf(stderr, "Unknown color mode %d", _color_mode);

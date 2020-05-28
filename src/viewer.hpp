@@ -44,7 +44,8 @@ class Viewer {
   // Color mode.
   enum ColorMode {
     NORMAL,
-    INVERT_COLORS,
+    INVERTED,
+    SEPIA,
   };
 
   // Maximum zoom ratio.

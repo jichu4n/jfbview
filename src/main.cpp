@@ -459,12 +459,21 @@ class ReloadCommand : public StateCommand {
   }
 };
 
-class ToggleInvertColorsCommand : public Command {
+class ToggleInvertedColorModeCommand : public Command {
  public:
   void Execute(int repeat, State* state) override {
-    state->ColorMode = state->ColorMode == Viewer::ColorMode::INVERT_COLORS
+    state->ColorMode = state->ColorMode == Viewer::ColorMode::INVERTED
                            ? Viewer::ColorMode::NORMAL
-                           : Viewer::ColorMode::INVERT_COLORS;
+                           : Viewer::ColorMode::INVERTED;
+  }
+};
+
+class ToggleSepiaColorModeCommand : public Command {
+ public:
+  void Execute(int repeat, State* state) override {
+    state->ColorMode = state->ColorMode == Viewer::ColorMode::SEPIA
+                           ? Viewer::ColorMode::NORMAL
+                           : Viewer::ColorMode::SEPIA;
   }
 };
 
@@ -674,7 +683,8 @@ std::unique_ptr<Registry> BuildRegistry() {
 
   registry->Register('e', std::move(std::make_unique<ReloadCommand>()));
 
-  registry->Register('i', std::make_unique<ToggleInvertColorsCommand>());
+  registry->Register('I', std::make_unique<ToggleInvertedColorModeCommand>());
+  registry->Register('S', std::make_unique<ToggleSepiaColorModeCommand>());
 
   return registry;
 }
