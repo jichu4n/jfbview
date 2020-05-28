@@ -26,6 +26,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+
 #include "cache.hpp"
 #include "document.hpp"
 // HACK ALERT: MuPDF is in written C, and due to a stupid incompatibility with
@@ -53,11 +54,14 @@ class PDFDocument : public Document {
   enum { DEFAULT_PAGE_CACHE_SIZE = 5 };
 
   virtual ~PDFDocument();
-  // Factory method to construct an instance of PDFDocument. path gives the path
-  // to a PDF file. page_cache_size specifies the maximum number of pages to
-  // store in memory. Returns nullptr if the file cannot be opened.
+  // Factory method to construct an instance of PDFDocument. path gives the
+  // path to a PDF file. password is the password to use to unlock the
+  // document; specify nullptr if no password was provided. Does not take
+  // ownership of password. page_cache_size specifies the maximum number of
+  // pages to store in memory. Returns nullptr if the file cannot be opened.
   static PDFDocument* Open(
-      const std::string& path, int page_cache_size = DEFAULT_PAGE_CACHE_SIZE);
+      const std::string& path, const std::string* password,
+      int page_cache_size = DEFAULT_PAGE_CACHE_SIZE);
   // See Document.
   int GetNumPages() override;
   // See Document.

@@ -32,6 +32,6 @@ TEST(ImageDocument, CanLoadJPEGImage) {
 // libjpeg-turbo, and this has historically caused errors when loading a JPEG
 // image through Imlib2.
 TEST(ImageDocument, EnsureMuPDFLinkage) {
-  std::unique_ptr<Document> doc(PDFDocument::Open(""));
+  std::unique_ptr<Document> doc(PDFDocument::Open("", nullptr));
 }
 

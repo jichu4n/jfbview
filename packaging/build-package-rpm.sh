@@ -28,9 +28,10 @@ function build_package() {
 function install_test_deps() {
   if [ -e /etc/centos-release ]; then
     dnf --enablerepo=PowerTools install -y -q gtest-devel
+    yum install -y -q which
   else
     yum install -y -q epel-release
-    yum install -y -q gtest-devel
+    yum install -y -q gtest-devel which
   fi
 }
 

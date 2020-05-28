@@ -114,7 +114,8 @@ extern "C" {
 const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
     "TABLE OF CONTENTS";
 
-PDFDocument* PDFDocument::Open(const std::string& path, int page_cache_size) {
+PDFDocument* PDFDocument::Open(
+    const std::string& path, const std::string* password, int page_cache_size) {
   fz_context* context = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
   pdf_document* raw_pdf_document = nullptr;
   fz_try(context) {
@@ -124,6 +125,23 @@ PDFDocument* PDFDocument::Open(const std::string& path, int page_cache_size) {
       fz_throw(
           context, FZ_ERROR_GENERIC,
           const_cast<char*>("Cannot open document \"%s\""), path.c_str());
+    }
+    if (pdf_needs_password(context, raw_pdf_document)) {
+      if (password == nullptr) {
+        fz_throw(
+            context, FZ_ERROR_GENERIC,
+            const_cast<char*>(
+                "Document \"%s\" is password protected.\n"
+                "Please provide the password with \"-P <password>\"."),
+            path.c_str());
+      }
+      if (!pdf_authenticate_password(
+              context, raw_pdf_document, password->c_str())) {
+        fz_throw(
+            context, FZ_ERROR_GENERIC,
+            const_cast<char*>("Incorrect password for document \"%s\"."),
+            path.c_str());
+      }
     }
   }
   fz_catch(context) {
