@@ -141,9 +141,12 @@ int Framebuffer::Format::GetDepth() const {
   return (_vinfo.bits_per_pixel + 7) >> 3;
 }
 
-uint32_t Framebuffer::Format::Pack(int r, int g, int b) const {
-  return ((r >> (8 - _vinfo.red.length)) << _vinfo.red.offset) |
-         ((g >> (8 - _vinfo.green.length)) << _vinfo.green.offset) |
-         ((b >> (8 - _vinfo.blue.length)) << _vinfo.blue.offset);
+uint32_t Framebuffer::Format::Pack(uint8_t r, uint8_t g, uint8_t b) const {
+  return ((static_cast<uint32_t>(r) >> (8 - _vinfo.red.length))
+          << _vinfo.red.offset) |
+         ((static_cast<uint32_t>(g) >> (8 - _vinfo.green.length))
+          << _vinfo.green.offset) |
+         ((static_cast<uint32_t>(b) >> (8 - _vinfo.blue.length))
+          << _vinfo.blue.offset);
 }
 

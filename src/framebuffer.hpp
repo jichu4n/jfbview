@@ -22,8 +22,8 @@
 #define FRAMEBUFFER_HPP
 
 #include <linux/fb.h>
-#include <stdint.h>
 
+#include <cstdint>
 #include <memory>
 #include <string>
 
@@ -72,7 +72,7 @@ class Framebuffer {
     // See PixelBuffer::Format.
     int GetDepth() const override;
     // See PixelBuffer::Format.
-    uint32_t Pack(int r, int g, int b) const override;
+    uint32_t Pack(uint8_t r, uint8_t g, uint8_t b) const override;
 
    private:
     fb_var_screeninfo _vinfo;

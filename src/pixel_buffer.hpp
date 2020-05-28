@@ -22,7 +22,7 @@
 #ifndef PIXEL_BUFFER_HPP
 #define PIXEL_BUFFER_HPP
 
-#include <stdint.h>
+#include <cstdint>
 
 // A class that represents a rectangular matrix of pixels.
 class PixelBuffer {
@@ -40,7 +40,7 @@ class PixelBuffer {
     // Length of a pixel, in bytes. Must be between 0 and 4.
     virtual int GetDepth() const = 0;
     // Method to pack an RGB tuple into a pixel value.
-    virtual uint32_t Pack(int r, int g, int b) const = 0;
+    virtual uint32_t Pack(uint8_t r, uint8_t g, uint8_t b) const = 0;
     // This is required to keep C++ happy.
     virtual ~Format() {}
   };
@@ -72,7 +72,7 @@ class PixelBuffer {
   Rect GetRect() const;
 
   // Writes a pixel value to a location in the buffer.
-  void WritePixel(int x, int y, int r, int g, int b);
+  void WritePixel(int x, int y, uint8_t r, uint8_t g, uint8_t b);
 
   // Copies a region in the current pixel buffer to another pixel buffer. The
   // destination region must be at least as large in both dimensions than the

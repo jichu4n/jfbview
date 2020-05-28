@@ -20,10 +20,13 @@
 // Document page on top of Framebuffer.
 
 #include "viewer.hpp"
+
 #include <unistd.h>
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+
 #include "document.hpp"
 #include "framebuffer.hpp"
 
@@ -41,7 +44,7 @@ class PixelBufferWriter : public Document::PixelWriter {
   // buffer.
   explicit PixelBufferWriter(PixelBuffer* buffer) : _buffer(buffer) {}
   // See PixelWriter.
-  void Write(int x, int y, int r, int g, int b) override {
+  void Write(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
     _buffer->WritePixel(x, y, r, g, b);
   }
 

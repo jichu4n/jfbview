@@ -21,8 +21,9 @@
 #ifndef DOCUMENT_HPP
 #define DOCUMENT_HPP
 
-#include <string>
+#include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 // An abstraction for a document.
@@ -34,8 +35,7 @@ class Document {
     int Height;
 
     explicit PageSize(int width = -1, int height = -1)
-        : Width(width), Height(height) {
-    }
+        : Width(width), Height(height) {}
   };
 
   // An interface for a callback that stores a pixel in a memory buffer.
@@ -43,7 +43,7 @@ class Document {
    public:
     // Writes a pixel value (r, g, b) to position (x, y). It is important that
     // Write be thread-safe when called with different (x, y).
-    virtual void Write(int x, int y, int r, int g, int b) = 0;
+    virtual void Write(int x, int y, uint8_t r, uint8_t g, uint8_t b) = 0;
   };
 
   // An item in a outline. An item may contain further children items.
@@ -73,13 +73,11 @@ class Document {
     int SearchStringPosition;
 
     explicit SearchHit(
-        int page = -1,
-        const std::string& context_text = std::string(),
+        int page = -1, const std::string& context_text = std::string(),
         int search_string_position = -1)
         : Page(page),
           ContextText(context_text),
-          SearchStringPosition(search_string_position) {
-    }
+          SearchStringPosition(search_string_position) {}
   };
   struct SearchResult {
     // The search string.
@@ -119,9 +117,7 @@ class Document {
   // Searches the text of the document. Will return up to max_num_search_hits
   // search hits starting from the given page.
   SearchResult Search(
-      const std::string& search_string,
-      int start_page,
-      int context_length,
+      const std::string& search_string, int start_page, int context_length,
       int max_num_search_hits);
 
  protected:
