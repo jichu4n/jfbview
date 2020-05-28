@@ -11,7 +11,6 @@ function install_build_deps() {
   apt-get -qq install -y \
     build-essential cmake file \
     libncurses-dev libncursesw5-dev libimlib2-dev \
-    libglu1-mesa-dev libxi-dev libxrandr-dev \
     > /dev/null  # -qq doesn't actually silence apt-get install.
 }
 

@@ -10,7 +10,7 @@ function install_build_deps() {
   yum install -y -q \
     cmake make gcc-c++ rpm-build \
     ncurses-devel imlib2-devel \
-    libjpeg-devel mesa-libGLU-devel libXi-devel libXrandr-devel
+    libjpeg-devel
 }
 
 function build_package() {
