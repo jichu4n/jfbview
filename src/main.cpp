@@ -459,6 +459,15 @@ class ReloadCommand : public StateCommand {
   }
 };
 
+class ToggleInvertColorsCommand : public Command {
+ public:
+  void Execute(int repeat, State* state) override {
+    state->ColorMode = state->ColorMode == Viewer::ColorMode::INVERT_COLORS
+                           ? Viewer::ColorMode::NORMAL
+                           : Viewer::ColorMode::INVERT_COLORS;
+  }
+};
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                               END COMMANDS                                *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -628,8 +637,9 @@ std::unique_ptr<Registry> BuildRegistry() {
       KEY_RIGHT, std::move(std::make_unique<MoveRightCommand>()));
   registry->Register(' ', std::move(std::make_unique<ScreenDownCommand>()));
   registry->Register(
-      6, std::move(std::make_unique<ScreenDownCommand>()));               // ^F
-  registry->Register(2, std::move(std::make_unique<ScreenUpCommand>()));  // ^B
+      6 /* CTRL-F */, std::move(std::make_unique<ScreenDownCommand>()));  // ^F
+  registry->Register(
+      2 /* CTRL-B */, std::move(std::make_unique<ScreenUpCommand>()));  // ^B
   registry->Register('J', std::move(std::make_unique<PageDownCommand>()));
   registry->Register(KEY_NPAGE, std::move(std::make_unique<PageDownCommand>()));
   registry->Register('K', std::move(std::make_unique<PageUpCommand>()));
@@ -663,6 +673,8 @@ std::unique_ptr<Registry> BuildRegistry() {
   registry->Register('`', std::move(std::make_unique<RestoreStateCommand>()));
 
   registry->Register('e', std::move(std::make_unique<ReloadCommand>()));
+
+  registry->Register('i', std::make_unique<ToggleInvertColorsCommand>());
 
   return registry;
 }

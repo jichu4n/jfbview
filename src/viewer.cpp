@@ -42,15 +42,30 @@ class PixelBufferWriter : public Document::PixelWriter {
   // Constructs a BufferPixel writer with the given settings. buffer_width
   // gives the number of pixels in a row in the buffer. buffer is the target
   // buffer.
-  explicit PixelBufferWriter(PixelBuffer* buffer) : _buffer(buffer) {}
+  PixelBufferWriter(PixelBuffer* buffer, Viewer::ColorMode color_mode)
+      : _buffer(buffer), _color_mode(color_mode) {}
   // See PixelWriter.
   void Write(int x, int y, uint8_t r, uint8_t g, uint8_t b) override {
+    switch (_color_mode) {
+      case Viewer::ColorMode::NORMAL:
+        break;
+      case Viewer::ColorMode::INVERT_COLORS:
+        r = UINT8_MAX - r;
+        g = UINT8_MAX - g;
+        b = UINT8_MAX - b;
+        break;
+      default:
+        fprintf(stderr, "Unknown color mode %d", _color_mode);
+        abort();
+    }
     _buffer->WritePixel(x, y, r, g, b);
   }
 
  private:
   // The destination buffer.
   PixelBuffer* _buffer;
+  // The current color mode.
+  Viewer::ColorMode _color_mode;
 };
 
 }  // namespace
@@ -90,8 +105,8 @@ void Viewer::Render() {
   zoom = std::max(MIN_ZOOM, std::min(MAX_ZOOM, zoom));
 
   // 2. Render page to buffer.
-  PixelBuffer* buffer =
-      _render_cache.Get(RenderCacheKey(page, zoom, _state.Rotation));
+  PixelBuffer* buffer = _render_cache.Get(
+      RenderCacheKey(page, zoom, _state.Rotation, _state.ColorMode));
 
   // 3. Compute the area actually visible on screen.
   const PixelBuffer::Size &screen_size = _fb->GetSize(),
@@ -123,7 +138,8 @@ void Viewer::Render() {
 
   // 6. Preload.
   if ((_render_cache.GetSize() > 1) && (page < _doc->GetNumPages() - 1)) {
-    _render_cache.Prepare(RenderCacheKey(page + 1, zoom, _state.Rotation));
+    _render_cache.Prepare(
+        RenderCacheKey(page + 1, zoom, _state.Rotation, _state.ColorMode));
   }
 }
 
@@ -139,6 +155,7 @@ void Viewer::GetState(Viewer::State* state) const {
   state->PageHeight = _state.PageHeight;
   state->ScreenWidth = _state.ScreenWidth;
   state->ScreenHeight = _state.ScreenHeight;
+  state->ColorMode = _state.ColorMode;
 }
 
 void Viewer::SetState(const State& state) { _state = state; }
@@ -156,6 +173,9 @@ bool Viewer::RenderCacheKey::operator<(
   if (fabs(Zoom / other.Zoom - 1.0f) >= 0.1f) {
     return Zoom < other.Zoom;
   }
+  if (ColorMode != other.ColorMode) {
+    return ColorMode < other.ColorMode;
+  }
   return false;
 }
 
@@ -170,7 +190,7 @@ PixelBuffer* Viewer::RenderCache::Load(const RenderCacheKey& key) {
 
   PixelBuffer* buffer = _parent->_fb->NewPixelBuffer(
       PixelBuffer::Size(page_size.Width, page_size.Height));
-  PixelBufferWriter writer(buffer);
+  PixelBufferWriter writer(buffer, key.ColorMode);
   _parent->_doc->Render(&writer, key.Page, key.Zoom, key.Rotation);
 
   return buffer;
