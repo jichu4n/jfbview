@@ -18,6 +18,8 @@
 
 // A simple tool to print out text in PDF documents.
 
+#include <getopt.h>
+
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
@@ -28,42 +30,101 @@
 
 #include "pdf_document.hpp"
 
-int JpdfcatMain(int argc, char* argv[]) {
-  if (argc < 2) {
-    std::cerr << "No file specified" << std::endl;
-    return 1;
+namespace {
+
+struct Options {
+  std::string FilePath;
+  std::unique_ptr<std::string> FilePassword;
+  std::vector<int> Pages;
+};
+
+// Help text printed by --help or -h.
+const char* HELP_STRING =
+    "Extract and print the text content in a PDF document.\n"
+    "\n"
+    "Usage: jpdfcat [OPTIONS] FILE [PAGE]...\n"
+    "\n"
+    "Options:\n"
+    "\t--help, -h            Show this message.\n"
+    "\t--password=xx, -P xx  Unlock PDF document with the given password.\n";
+
+void ParseCommandLine(int argc, char* argv[], Options* options) {
+  // Command line options.
+  static const option LongFlags[] = {
+      {"help", false, nullptr, 'h'},
+      {"password", true, nullptr, 'P'},
+      {0, 0, 0, 0},
+  };
+  static const char* ShortFlags = "hP:";
+
+  for (;;) {
+    int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, nullptr);
+    if (opt_char == -1) {
+      break;
+    }
+    switch (opt_char) {
+      case 'h':
+        fprintf(stdout, "%s", HELP_STRING);
+        exit(EXIT_FAILURE);
+        break;
+      case 'P':
+        options->FilePassword = std::make_unique<std::string>(optarg);
+        break;
+      default:
+        fprintf(stderr, "Try \"-h\" for help.\n");
+        exit(EXIT_FAILURE);
+    }
   }
-  const std::string file_path = argv[1];
-  std::unique_ptr<PDFDocument> document(PDFDocument::Open(file_path));
+  if (optind >= argc) {
+    fprintf(stderr, "No file specified. Try \"-h\" for help.\n");
+    exit(EXIT_FAILURE);
+  } else {
+    options->FilePath = argv[optind];
+  }
+  for (int i = optind + 1; i < argc; ++i) {
+    int page;
+    if (sscanf(argv[i], "%d", &page) < 1) {
+      fprintf(stderr, "Invalid page number \"%s\"\n", optarg);
+      exit(EXIT_FAILURE);
+    }
+    options->Pages.push_back(page);
+  }
+}
+
+}  // namespace
+
+int JpdfcatMain(int argc, char* argv[]) {
+  Options options;
+  ParseCommandLine(argc, argv, &options);
+
+  std::unique_ptr<PDFDocument> document(
+      PDFDocument::Open(options.FilePath, options.FilePassword.get()));
   if (!document) {
-    std::cerr << "Failed to open " << file_path;
-    return 1;
+    fprintf(stderr, "Failed to open \"%s\"\n", options.FilePath.c_str());
+    return EXIT_FAILURE;
   }
 
-  std::vector<int> pages;
-  if (argc >= 3) {
-    for (int i = 2; i < argc; ++i) {
-      int page;
-      std::istringstream in(argv[i]);
-      in >> page;
-      --page;
-      if (page < 0 || page > document->GetNumPages()) {
-        std::cerr << "Invalid page number " << (page + 1)
-                  << ". Please specify a number between 1 and "
-                  << document->GetNumPages() << std::endl;
-        return 1;
-      }
-      pages.push_back(page);
+  if (options.Pages.empty()) {
+    for (int i = 0; i < document->GetNumPages(); ++i) {
+      options.Pages.push_back(i);
     }
   } else {
-    for (int i = 0; i < document->GetNumPages(); ++i) {
-      pages.push_back(i);
+    for (int& page : options.Pages) {
+      if (page < 1 || page > document->GetNumPages()) {
+        fprintf(
+            stderr,
+            "Invalid page number %d. "
+            "Please specify a number between 1 and %d.\n",
+            page, document->GetNumPages());
+        return EXIT_FAILURE;
+      }
+      --page;
     }
   }
 
-  for (int page : pages) {
+  for (int page : options.Pages) {
     const std::string& page_text = document->GetPageText(page);
-    std::cout << page_text << std::endl;
+    fprintf(stdout, "%s\n", page_text.c_str());
   }
 
   return EXIT_SUCCESS;

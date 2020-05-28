@@ -35,7 +35,7 @@ function build_package() {
 
 function install_test_deps() {
   pacman -Syq --needed --noconfirm \
-    gtest \
+    gtest which \
     > /dev/null  # -q doesn't actually silence pacman -Sy.
 }
 

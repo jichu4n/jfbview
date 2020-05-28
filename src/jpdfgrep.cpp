@@ -30,31 +30,36 @@
 
 #include "pdf_document.hpp"
 
+namespace {
+
 struct Options {
   int LineWidth;
   std::string FilePath;
+  std::unique_ptr<std::string> FilePassword;
   std::string SearchString;
 };
 
 // Help text printed by --help or -h.
-static const char* HELP_STRING =
+const char* HELP_STRING =
     "Search for a string in a PDF document.\n"
     "\n"
     "Usage: jpdfgrep [OPTIONS] FILE SEARCH_STRING\n"
     "\n"
     "Options:\n"
     "\t--help, -h            Show this message.\n"
+    "\t--password=xx, -P xx  Unlock PDF document with the given password.\n"
     "\t--width=N, -w N       Specify result line width. The default is to\n"
     "\t                      autodetect terminal width.\n";
 
-static void ParseCommandLine(int argc, char* argv[], Options* options) {
+void ParseCommandLine(int argc, char* argv[], Options* options) {
   // Command line options.
   static const option LongFlags[] = {
       {"help", false, nullptr, 'h'},
+      {"password", true, nullptr, 'P'},
       {"width", true, nullptr, 'w'},
       {0, 0, 0, 0},
   };
-  static const char* ShortFlags = "hw:";
+  static const char* ShortFlags = "hP:w:";
 
   options->LineWidth = 0;
   for (;;) {
@@ -66,6 +71,9 @@ static void ParseCommandLine(int argc, char* argv[], Options* options) {
       case 'h':
         fprintf(stdout, "%s", HELP_STRING);
         exit(EXIT_FAILURE);
+        break;
+      case 'P':
+        options->FilePassword = std::make_unique<std::string>(optarg);
         break;
       case 'w':
         if (sscanf(optarg, "%d", &(options->LineWidth)) < 1) {
@@ -91,13 +99,20 @@ static void ParseCommandLine(int argc, char* argv[], Options* options) {
     options->FilePath = argv[optind];
     options->SearchString = argv[optind + 1];
   }
+  if (options->SearchString.empty()) {
+    fprintf(stderr, "Empty search string specified. Try \"-h\" for help.\n");
+    exit(EXIT_FAILURE);
+  }
 }
+
+}  // namespace
 
 int JpdfgrepMain(int argc, char* argv[]) {
   Options options;
   ParseCommandLine(argc, argv, &options);
 
-  std::unique_ptr<PDFDocument> document(PDFDocument::Open(options.FilePath));
+  std::unique_ptr<PDFDocument> document(
+      PDFDocument::Open(options.FilePath, options.FilePassword.get()));
   if (!document) {
     fprintf(stderr, "Failed to open \"%s\"\n", options.FilePath.c_str());
     return EXIT_FAILURE;

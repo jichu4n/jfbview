@@ -37,3 +37,10 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+add_test(
+  NAME smoke_test
+  COMMAND
+    sh -c
+      "env PATH=$PATH:${CMAKE_BINARY_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/smoke-test.sh"
+)
+

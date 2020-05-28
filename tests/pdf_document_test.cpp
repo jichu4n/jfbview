@@ -7,12 +7,13 @@
 #include <vector>
 
 TEST(PDFDocument, ReturnsNullptrIfLoadingEmptyDocument) {
-  std::unique_ptr<Document> doc(PDFDocument::Open(""));
+  std::unique_ptr<Document> doc(PDFDocument::Open("", nullptr));
   EXPECT_EQ(doc.get(), nullptr);
 }
 
 TEST(PDFDocument, CanLoadDocument) {
-  std::unique_ptr<Document> doc(PDFDocument::Open("testdata/bash.pdf"));
+  std::unique_ptr<Document> doc(
+      PDFDocument::Open("testdata/bash.pdf", nullptr));
   EXPECT_NE(doc.get(), nullptr);
   EXPECT_EQ(doc->GetNumPages(), 186);
   const Document::PageSize page_size = doc->GetPageSize(0);
@@ -22,7 +23,8 @@ TEST(PDFDocument, CanLoadDocument) {
 }
 
 TEST(PDFDocument, CanLoadOutline) {
-  std::unique_ptr<Document> doc(PDFDocument::Open("testdata/bash.pdf"));
+  std::unique_ptr<Document> doc(
+      PDFDocument::Open("testdata/bash.pdf", nullptr));
   EXPECT_NE(doc.get(), nullptr);
   std::unique_ptr<const Document::OutlineItem> outline(doc->GetOutline());
   EXPECT_NE(outline.get(), nullptr);
@@ -51,7 +53,8 @@ TEST(PDFDocument, CanLoadOutline) {
 }
 
 TEST(PDFDocument, CanSearch) {
-  std::unique_ptr<Document> doc(PDFDocument::Open("testdata/bash.pdf"));
+  std::unique_ptr<Document> doc(
+      PDFDocument::Open("testdata/bash.pdf", nullptr));
   EXPECT_NE(doc.get(), nullptr);
   const Document::SearchResult result = doc->Search("HISTIGNORE", 0, 80, 100);
   EXPECT_EQ(result.SearchString, "HISTIGNORE");
@@ -65,5 +68,17 @@ TEST(PDFDocument, CanSearch) {
     EXPECT_LE(hit.ContextText.length(), 80);
     EXPECT_NE(hit.ContextText.find("HISTIGNORE"), std::string::npos);
   }
+}
+
+TEST(PDFDocument, CanLoadPasswordProtectedDocument) {
+  std::unique_ptr<Document> doc(
+      PDFDocument::Open("testdata/password-test.pdf", nullptr));
+  EXPECT_EQ(doc.get(), nullptr);
+  const std::string password = "abracadabra";
+  doc.reset(PDFDocument::Open("testdata/password-test.pdf", &password));
+  EXPECT_NE(doc.get(), nullptr);
+  EXPECT_EQ(doc->GetNumPages(), 1);
+  const Document::SearchResult result = doc->Search("SUCCESS", 0, 80, 100);
+  EXPECT_EQ(result.SearchHits.size(), 1);
 }
 

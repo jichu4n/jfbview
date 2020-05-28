@@ -83,6 +83,9 @@ struct State : public Viewer::State {
   int RenderCacheSize;
   // Input file.
   std::string FilePath;
+  // Password for the input file. If no password is provided, this will be
+  // nullptr.
+  std::unique_ptr<std::string> FilePassword;
   // Framebuffer device.
   std::string FramebufferDevice;
   // Document instance.
@@ -105,6 +108,7 @@ struct State : public Viewer::State {
         DocumentType(AUTO_DETECT),
         RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE),
         FilePath(""),
+        FilePassword(),
         FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
         OutlineViewInst(nullptr),
         SearchViewInst(nullptr),
@@ -150,7 +154,7 @@ static bool LoadFile(State* state) {
   Document* doc = nullptr;
   switch (state->DocumentType) {
     case State::PDF:
-      doc = PDFDocument::Open(state->FilePath);
+      doc = PDFDocument::Open(state->FilePath, state->FilePassword.get());
       break;
 #ifndef JFBVIEW_NO_IMLIB2
     case State::IMAGE:
@@ -470,6 +474,7 @@ static const char* HELP_STRING =
     "Options:\n"
     "\t--help, -h            Show this message.\n"
     "\t--fb=/path/to/dev     Specify output framebuffer device.\n"
+    "\t--password=xx, -P xx  Unlock PDF document with the given password.\n"
     "\t--page=N, -p N        Open page N on start up.\n"
     "\t--zoom=N, -z N        Set initial zoom to N. E.g., -z 150 sets \n"
     "\t                      zoom level to 150%.\n"
@@ -509,6 +514,7 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
   static const option LongFlags[] = {
       {"help", false, nullptr, 'h'},
       {"fb", true, nullptr, FB},
+      {"password", true, nullptr, 'P'},
       {"page", true, nullptr, 'p'},
       {"zoom", true, nullptr, 'z'},
       {"zoom_to_width", false, nullptr, ZOOM_TO_WIDTH},
@@ -519,7 +525,7 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
       {"fb_debug_info", false, nullptr, PRINT_FB_DEBUG_INFO_AND_EXIT},
       {0, 0, 0, 0},
   };
-  static const char* ShortFlags = "hp:z:r:f:";
+  static const char* ShortFlags = "hP:p:z:r:f:";
 
   for (;;) {
     int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, nullptr);
@@ -544,6 +550,9 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
           fprintf(stderr, "Invalid file format \"%s\"\n", optarg);
           exit(EXIT_FAILURE);
         }
+        break;
+      case 'P':
+        state->FilePassword = std::make_unique<std::string>(optarg);
         break;
       case RENDER_CACHE_SIZE:
         if (sscanf(optarg, "%d", &(state->RenderCacheSize)) < 1) {
