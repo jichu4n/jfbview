@@ -31,7 +31,8 @@ Source: https://aur.archlinux.org/packages/jfbview
 
 ### Debian / Ubuntu
 
-See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.deb` packages:
+See [Releases](https://github.com/jichu4n/jfbview/releases) for pre-built
+`.deb` packages for the following environments:
 
   - Debian 10 "buster": `amd64`, `i386`, `arm64` (ARMv8), `armhf` (ARMv7), `rpi` (Raspbian on ARMv6)
   - Debian 9 "stretch": `amd64`, `i386`, `arm64`, `armhf`, `rpi`
@@ -39,19 +40,21 @@ See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `
   - Ubuntu 18.04 LTS Bionic: `amd64`, `i386`
   - Ubuntu 16.04 LTS Xenial: `amd64`, `i386`
 
-To build from source, see [`packaging/build-package-deb.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-deb.sh).
+To build from source, see
+[`packaging/build-package-deb.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-deb.sh).
 
 ### CentOS / Fedora
 
-See [Releases page](https://github.com/jichu4n/jfbview/releases) for pre-built `.rpm` packages:
+See [Releases](https://github.com/jichu4n/jfbview/releases) for pre-built `.rpm` packages for the following environments:
 
   - CentOS 8 and Fedora 28+: `x86_64`, `aarch64` (ARMv8)
 
-To build from source, see [`packaging/build-package-rpm.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-rpm.sh).
+To build from source, see
+[`packaging/build-package-rpm.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-rpm.sh).
 
 ### Installing from source
 
-Dependencies:
+#### Dependencies
 
   - [NCURSES](https://invisible-island.net/ncurses/ncurses.html)
 
@@ -65,14 +68,25 @@ Build-time dependencies:
 
   - [CMake](https://cmake.org/) 3.2+
 
-Build:
+#### Source code
+
+To fetch the source code with `git`:
 
 ```
 git clone https://github.com/jichu4n/jfbview.git
 cd jfbview
 git submodule update --init --recursive
+```
 
+Alternatively, see [Releases](https://github.com/jichu4n/jfbview/releases) for
+full source code archives including all transitive dependencies
+(`jfbview-<VERSION>-full-source.zip`).
+
+#### Build & install
+
+```
 cmake -H. -Bbuild
+cd build
 make
 make install
 ```
