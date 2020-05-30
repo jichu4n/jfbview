@@ -1,12 +1,7 @@
 .*.swp
 *.o
 *.d
-*.pyc
-jfbview.1.gz
-tags
-config.mk
-mupdf_version
-jfbview
-jfbpdf
-jpdfcat
-jpdfgrep
+/build/
+/upload/
+/.ccls-cache/
+/.vscode/
