@@ -69,6 +69,7 @@ add_library(
   pdf_document.cpp
   image_document.cpp
   fitz_document.cpp
+  fitz_utils.cpp
   string_utils.cpp
   multithreading.cpp
 )

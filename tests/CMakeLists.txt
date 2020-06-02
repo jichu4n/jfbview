@@ -37,6 +37,18 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+add_executable(fitz_document_test fitz_document_test.cpp)
+target_link_libraries(
+  fitz_document_test
+  jfbview_document
+  ${GTEST_BOTH_LIBRARIES}
+)
+add_test(
+  NAME fitz_document_test
+  COMMAND fitz_document_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_test(
   NAME smoke_test
   COMMAND
