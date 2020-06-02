@@ -5,9 +5,15 @@ dist="$2"
 arch="$3"
 package_file_prefix="jfbview-${version}-${dist}.${arch}"
 
+if [ "$EUID" -eq 0 ]; then
+  sudo=
+else
+  sudo='sudo'
+fi
+
 function install_build_deps() {
-  yum install -y -q epel-release
-  yum install -y -q \
+  $sudo yum install -y -q epel-release
+  $sudo yum install -y -q \
     cmake make gcc-c++ rpm-build \
     ncurses-devel imlib2-devel \
     libjpeg-devel
@@ -27,11 +33,11 @@ function build_package() {
 
 function install_test_deps() {
   if [ -e /etc/centos-release ]; then
-    dnf --enablerepo=PowerTools install -y -q gtest-devel
-    yum install -y -q which
+    $sudo dnf --enablerepo=PowerTools install -y -q gtest-devel
+    $sudo yum install -y -q which
   else
-    yum install -y -q epel-release
-    yum install -y -q gtest-devel which
+    $sudo yum install -y -q epel-release
+    $sudo yum install -y -q gtest-devel which
   fi
 }
 

@@ -5,10 +5,16 @@ dist="$2"
 arch="$3"
 package_file_prefix="jfbview_${version}~${dist}_${arch}"
 
+if [ "$EUID" -eq 0 ]; then
+  sudo=
+else
+  sudo='sudo'
+fi
+
 function install_build_deps() {
   export DEBIAN_FRONTEND=noninteractive
-  apt-get -qq update
-  apt-get -qq install -y \
+  $sudo apt-get -qq update
+  $sudo apt-get -qq install -y \
     build-essential cmake file \
     libncurses-dev libncursesw5-dev libimlib2-dev \
     > /dev/null  # -qq doesn't actually silence apt-get install.
@@ -28,7 +34,7 @@ function build_package() {
 
 function install_test_deps() {
   export DEBIAN_FRONTEND=noninteractive
-  apt-get -qq install -y \
+  $sudo apt-get -qq install -y \
     libgtest-dev \
     > /dev/null  # -qq doesn't actually silence apt-get install.
 
