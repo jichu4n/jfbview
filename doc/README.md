@@ -40,7 +40,7 @@ See [Releases](https://github.com/jichu4n/jfbview/releases) for pre-built
   - Ubuntu 18.04 LTS Bionic: `amd64`, `i386`
   - Ubuntu 16.04 LTS Xenial: `amd64`, `i386`
 
-To build from source, see
+To build from source, fetch the source code along with transitive dependencies as described in the [Source code](#source-code) section below, then see
 [`packaging/build-package-deb.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-deb.sh).
 
 ### CentOS / Fedora
@@ -49,7 +49,7 @@ See [Releases](https://github.com/jichu4n/jfbview/releases) for pre-built `.rpm`
 
   - CentOS 8 and Fedora 28+: `x86_64`, `aarch64` (ARMv8)
 
-To build from source, see
+To build from source, fetch the source code along with transitive dependencies as described in the [Source code](#source-code) section below, then see
 [`packaging/build-package-rpm.sh`](https://github.com/jichu4n/jfbview/blob/master/packaging/build-package-rpm.sh).
 
 ### Installing from source
@@ -70,7 +70,7 @@ Build-time dependencies:
 
 #### Source code
 
-To fetch the source code with `git`:
+To fetch the source code along with all transitive dependencies with `git`:
 
 ```
 git clone https://github.com/jichu4n/jfbview.git
