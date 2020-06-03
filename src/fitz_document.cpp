@@ -158,7 +158,7 @@ int FitzDocument::Lookup(const OutlineItem* item) {
 std::string FitzDocument::GetPageText(int page, int line_sep) {
   std::lock_guard<std::recursive_mutex> lock(_fz_mutex);
   FitzPageScopedPtr page_ptr(_fz_ctx, fz_load_page(_fz_ctx, _fz_doc, page));
-  return ::GetPageText(_fz_ctx, page_ptr.get(), ' ');
+  return ::GetPageText(_fz_ctx, page_ptr.get(), line_sep);
 }
 
 std::vector<Document::SearchHit> FitzDocument::SearchOnPage(
