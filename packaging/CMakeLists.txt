@@ -16,7 +16,7 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Chuan Ji <chuan@jichu4n.com>")
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/jichu4n/jfbview")
 set(
   CPACK_DEBIAN_PACKAGE_DEPENDS
-  "libncurses5, libncursesw5, ${LIBJPEG_PACKAGE_NAME}, libharfbuzz0b, libfreetype6"
+  "libncurses5, libncursesw5, ${LIBJPEG_PACKAGE_NAME}, libharfbuzz0b, libfreetype6, zlib1g"
 )
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 
@@ -27,7 +27,7 @@ set(CPACK_RPM_PACKAGE_GROUP "Applications/Text")
 set(CPACK_RPM_PACKAGE_URL "https://github.com/jichu4n/jfbview")
 set(
   CPACK_RPM_PACKAGE_REQUIRES
-  "ncurses-libs, ${LIBJPEG_PACKAGE_NAME}, harfbuzz, freetype"
+  "ncurses-libs, ${LIBJPEG_PACKAGE_NAME}, harfbuzz, freetype, zlib"
 )
 # This is needed to prevent a "conflicts with file from package
 # filesystem-XXXX" error.
