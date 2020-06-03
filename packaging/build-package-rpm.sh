@@ -16,7 +16,7 @@ function install_build_deps() {
   $sudo yum install -y -q \
     cmake make gcc-c++ rpm-build \
     ncurses-devel libjpeg-turbo-devel \
-    harfbuzz-devel
+    harfbuzz-devel freetype-devel
 }
 
 function build_package() {

@@ -2,6 +2,7 @@
 # -------------
 find_package(JPEG REQUIRED)
 find_package(HarfBuzz REQUIRED)
+find_package(Freetype REQUIRED)
 
 # MuPDF provides its own version of libjpeg in thirdparty. However, we are
 # linking against the system version of Imlib2, which links against the system
@@ -15,6 +16,7 @@ add_custom_command(
       "USE_SYSTEM_LIBS=no"
       "USE_SYSTEM_LIBJPEG=yes"
       "USE_SYSTEM_HARFBUZZ=yes"
+      "USE_SYSTEM_FREETYPE=yes"
       "prefix=${CMAKE_CURRENT_BINARY_DIR}/mupdf"
       libs
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/mupdf"
@@ -28,6 +30,7 @@ set(
   "${CMAKE_CURRENT_SOURCE_DIR}/mupdf/include"
   "${JPEG_INCLUDE_DIR}"
   "${HarfBuzz_INCLUDE_DIRS}"
+  "${FREETYPE_INCLUDE_DIRS}"
   PARENT_SCOPE
 )
 set(vendor_mupdf_link_dirs "${CMAKE_CURRENT_SOURCE_DIR}/mupdf/build/release" PARENT_SCOPE)
@@ -37,6 +40,7 @@ set(
   "mupdf-third"
   ${JPEG_LIBRARIES}
   ${HarfBuzz_LIBRARIES}
+  ${FREETYPE_LIBRARIES}
   PARENT_SCOPE
 )
 

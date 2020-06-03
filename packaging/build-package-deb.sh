@@ -23,9 +23,9 @@ function install_build_deps() {
   export DEBIAN_FRONTEND=noninteractive
   $sudo apt-get -qq update
   $sudo apt-get -qq install -y \
-    build-essential cmake file \
+    build-essential cmake file pkg-config \
     libncurses-dev libncursesw5-dev ${libjpeg_dev} \
-    libharfbuzz-dev \
+    libharfbuzz-dev libfreetype6-dev \
     > /dev/null  # -qq doesn't actually silence apt-get install.
 }
 
