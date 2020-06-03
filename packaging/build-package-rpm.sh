@@ -16,7 +16,7 @@ function install_build_deps() {
   $sudo yum install -y -q \
     cmake make gcc-c++ rpm-build \
     ncurses-devel \
-    libjpeg-devel
+    libjpeg-turbo-devel
 }
 
 function build_package() {
@@ -24,6 +24,7 @@ function build_package() {
   mkdir -p build upload
   cmake -H. -Bbuild \
     -DPACKAGE_FORMAT=RPM \
+    -DLIBJPEG_PACKAGE_NAME=libjpeg-turbo \
     -DPACKAGE_FILE_PREFIX="$package_file_prefix" \
     -DBUILD_TESTING=OFF \
     -DCMAKE_BUILD_TYPE=Release

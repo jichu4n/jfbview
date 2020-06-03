@@ -19,7 +19,12 @@ set(
   PACKAGE_FORMAT
   "DEB"
   CACHE STRING
-  "CPack package generator(s) to enable.")
+  "CPack package generator to enable.")
+set(
+  LIBJPEG_PACKAGE_NAME
+  "libjpeg62-turbo"
+  CACHE STRING
+  "The name of the libjpeg package to include as a dependency in the generated package.")
 set(
   PACKAGE_FILE_PREFIX
   "jfbview"
