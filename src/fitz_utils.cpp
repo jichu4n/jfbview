@@ -21,8 +21,6 @@
 
 #include "fitz_utils.hpp"
 
-#include "detected_mupdf_version.hpp"
-
 fz_matrix ComputeTransformMatrix(float zoom, int rotation) {
   fz_matrix transformation_matrix, scale_matrix, rotate_matrix;
   scale_matrix = fz_scale(zoom, zoom);

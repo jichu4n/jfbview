@@ -1,17 +1,17 @@
-#include "../src/fitz_document.hpp"
-
 #include <gtest/gtest.h>
 
 #include <cmath>
 #include <memory>
 #include <vector>
 
-TEST(FitzDocument, ReturnsNullptrIfLoadingEmptyDocument) {
+#include "../src/fitz_document.hpp"
+
+TEST(FitzDocumentPDF, ReturnsNullptrIfLoadingEmptyDocument) {
   std::unique_ptr<Document> doc(FitzDocument::Open("", nullptr));
   EXPECT_EQ(doc.get(), nullptr);
 }
 
-TEST(FitzDocument, CanLoadDocument) {
+TEST(FitzDocumentPDF, CanLoadDocument) {
   std::unique_ptr<Document> doc(
       FitzDocument::Open("testdata/bash.pdf", nullptr));
   EXPECT_NE(doc.get(), nullptr);
@@ -23,7 +23,7 @@ TEST(FitzDocument, CanLoadDocument) {
 }
 
 /*
-TEST(FitzDocument, CanLoadOutline) {
+TEST(FitzDocumentPDF, CanLoadOutline) {
   std::unique_ptr<Document> doc(
       FitzDocument::Open("testdata/bash.pdf", nullptr));
   EXPECT_NE(doc.get(), nullptr);
@@ -53,7 +53,7 @@ TEST(FitzDocument, CanLoadOutline) {
   EXPECT_EQ(doc->Lookup(item), 11);
 }
 
-TEST(FitzDocument, CanSearch) {
+TEST(FitzDocumentPDF, CanSearch) {
   std::unique_ptr<Document> doc(
       FitzDocument::Open("testdata/bash.pdf", nullptr));
   EXPECT_NE(doc.get(), nullptr);
@@ -73,7 +73,7 @@ TEST(FitzDocument, CanSearch) {
 
 */
 
-TEST(FitzDocument, CanLoadPasswordProtectedDocument) {
+TEST(FitzDocumentPDF, CanLoadPasswordProtectedDocument) {
   std::unique_ptr<Document> doc(
       FitzDocument::Open("testdata/password-test.pdf", nullptr));
   EXPECT_EQ(doc.get(), nullptr);

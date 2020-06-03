@@ -33,6 +33,7 @@ fz_irect GetPageBoundingBox(
     const fz_matrix& m) {
   assert(page_struct != nullptr);
   std::lock_guard<std::mutex> lock(*fz_mutex);
+  const auto r = fz_bound_page(ctx, page_struct);
   return fz_round_rect(fz_transform_rect(fz_bound_page(ctx, page_struct), m));
 }
 
@@ -157,6 +158,7 @@ void FitzDocument::Render(
   fz_page* page_struct = GetPage(page);
   const fz_irect& bbox =
       GetPageBoundingBox(_fz_ctx, &_fz_mutex, page_struct, m);
+
   std::lock_guard<std::mutex> lock(_fz_mutex);
   fz_pixmap* pixmap = fz_new_pixmap_with_bbox(
       _fz_ctx, fz_device_rgb(_fz_ctx), bbox, nullptr, 1);

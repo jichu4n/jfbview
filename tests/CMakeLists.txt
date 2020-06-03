@@ -37,15 +37,27 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_executable(fitz_document_test fitz_document_test.cpp)
+add_executable(fitz_document_pdf_test fitz_document_pdf_test.cpp)
 target_link_libraries(
-  fitz_document_test
+  fitz_document_pdf_test
   jfbview_document
   ${GTEST_BOTH_LIBRARIES}
 )
 add_test(
-  NAME fitz_document_test
-  COMMAND fitz_document_test
+  NAME fitz_document_pdf_test
+  COMMAND fitz_document_pdf_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(fitz_document_image_test fitz_document_image_test.cpp)
+target_link_libraries(
+  fitz_document_image_test
+  jfbview_document
+  ${GTEST_BOTH_LIBRARIES}
+)
+add_test(
+  NAME fitz_document_image_test
+  COMMAND fitz_document_image_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
