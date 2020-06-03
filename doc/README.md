@@ -58,8 +58,6 @@ To build from source, fetch the source code along with transitive dependencies a
 
   - [NCURSES](https://invisible-island.net/ncurses/ncurses.html)
 
-  - [Imlib2](https://docs.enlightenment.org/api/imlib2/html/index.html)
-
   - [libjpeg](http://libjpeg.sourceforge.net/) or [libjpeg-turbo](https://libjpeg-turbo.org/)
 
 Build-time dependencies:
@@ -90,12 +88,6 @@ cd build
 make
 make install
 ```
-
-It is also possible to build a variant of jfbview without support for images
-and without dependency on Imlib2. To build this variant, specify the CMake flag
-`-DENABLE_IMAGE_SUPPORT=OFF`. For backwards compatibility, this will also
-enable an alias for `jfbview` called `jfbpdf`.
-
 
 DOCUMENTATION
 -------------
