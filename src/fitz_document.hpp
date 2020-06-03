@@ -54,23 +54,21 @@ class FitzDocument : public Document {
   // See Document. Thread-safe.
   void Render(PixelWriter* pw, int page, float zoom, int rotation) override;
   // See Document.
-  const OutlineItem* GetOutline() override { return nullptr; }
+  const OutlineItem* GetOutline() override;
   // See Document.
-  int Lookup(const OutlineItem* item) override { return -1; }
+  int Lookup(const OutlineItem* item) override;
 
  protected:
   // See Document.
   std::vector<SearchHit> SearchOnPage(
-      const std::string& search_string, int page, int context_length) override {
-    return std::vector<SearchHit>();
-  }
+      const std::string& search_string, int page, int context_length) override;
 
  private:
   // MuPDF structures.
   fz_context* _fz_ctx;
   fz_document* _fz_doc;
   // Mutex guarding MuPDF structures.
-  std::mutex _fz_mutex;
+  std::recursive_mutex _fz_mutex;
   // Cache for loaded pages.
   std::unique_ptr<Cache<int, fz_page*>> _page_cache;
 
