@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                           *
- *  Copyright (C) 2012-2020 Chuan Ji                                         *
+ *  Copyright (C) 2020-2020 Chuan Ji                                         *
  *                                                                           *
  *  Licensed under the Apache License, Version 2.0 (the "License");          *
  *  you may not use this file except in compliance with the License.         *
@@ -16,60 +16,60 @@
  *                                                                           *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-// This file declares ImageDocument, an implementation of the Document
-// abstraction using Imlib2. If the macro JFBVIEW_NO_IMLIB2 is defined, this
-// class is disabled.
+// This file declares FitzDocument, an implementation of the Document
+// abstraction using Fitz.
 
-#if defined(JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL) && !defined(JFBVIEW_NO_IMLIB2)
+#ifndef FITZ_DOCUMENT_HPP
+#define FITZ_DOCUMENT_HPP
 
-#ifndef IMAGE_DOCUMENT_HPP
-#define IMAGE_DOCUMENT_HPP
-
+#include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
-#include "Imlib2.h"
 #include "document.hpp"
+#include "fitz_utils.hpp"
 
-// Document implementation using Imlib2.
-class ImageDocument : public Document {
+// Document implementation using Fitz.
+class FitzDocument : public Document {
  public:
-  virtual ~ImageDocument();
-  // Factory method to construct an instance of ImageDocument. path gives the
-  // path to an image file. Returns nullptr if the file cannot be opened.
-  static Document* Open(const std::string& path);
+  virtual ~FitzDocument();
+  // Factory method to construct an instance of FitzDocument. path gives the
+  // path to a file. password is the password to use to unlock the document;
+  // specify nullptr if no password was provided. Does not take ownership of
+  // password. Returns nullptr if the file cannot be opened.
+  static FitzDocument* Open(
+      const std::string& path, const std::string* password);
   // See Document.
-  int GetNumPages() override { return 1; }
+  int GetNumPages() override;
   // See Document.
   const PageSize GetPageSize(int page, float zoom, int rotation) override;
   // See Document. Thread-safe.
   void Render(PixelWriter* pw, int page, float zoom, int rotation) override;
   // See Document.
-  const OutlineItem* GetOutline() override { return nullptr; }
+  const OutlineItem* GetOutline() override;
   // See Document.
-  int Lookup(const OutlineItem* item) override { return -1; }
+  int Lookup(const OutlineItem* item) override;
+  // Returns the text content of a page, using line_sep to separate lines.
+  std::string GetPageText(int page, int line_sep = '\n');
 
  protected:
   // See Document.
   std::vector<SearchHit> SearchOnPage(
-      const std::string& search_string, int page, int context_length) override {
-    return std::vector<SearchHit>();
-  }
+      const std::string& search_string, int page, int context_length) override;
 
  private:
-  // Handle to the source Imlib2 image, without zoom or rotation.
-  Imlib_Image _src;
-  // Original (unscaled, unrotated) size of _src.
-  PageSize _src_size;
+  // MuPDF structures.
+  fz_context* _fz_ctx;
+  fz_document* _fz_doc;
+  // Mutex guarding MuPDF structures.
+  std::recursive_mutex _fz_mutex;
 
   // We disallow the constructor; use the factory method Open() instead.
-  explicit ImageDocument(Imlib_Image image);
+  FitzDocument(fz_context* _fz_context, fz_document* fz_document);
   // We disallow copying because we store lots of heap allocated state.
-  explicit ImageDocument(const ImageDocument& other);
-  ImageDocument& operator=(const ImageDocument& other);
+  explicit FitzDocument(const FitzDocument& other);
+  FitzDocument& operator=(const FitzDocument& other);
 };
 
 #endif
-
-#endif
-

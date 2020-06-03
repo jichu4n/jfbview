@@ -28,6 +28,7 @@
 #include <sstream>
 #include <string>
 
+#include "fitz_document.hpp"
 #include "pdf_document.hpp"
 
 namespace {
@@ -111,8 +112,13 @@ int JpdfgrepMain(int argc, char* argv[]) {
   Options options;
   ParseCommandLine(argc, argv, &options);
 
-  std::unique_ptr<PDFDocument> document(
-      PDFDocument::Open(options.FilePath, options.FilePassword.get()));
+  std::unique_ptr<Document> document(
+#ifdef JFBVIEW_ENABLE_LEGACY_PDF_IMPL
+      PDFDocument::Open(options.FilePath, options.FilePassword.get())
+#else
+      FitzDocument::Open(options.FilePath, options.FilePassword.get())
+#endif
+  );
   if (!document) {
     fprintf(stderr, "Failed to open \"%s\"\n", options.FilePath.c_str());
     return EXIT_FAILURE;

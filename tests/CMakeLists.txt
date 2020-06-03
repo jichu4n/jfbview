@@ -11,7 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Tests.
 # ------
 
-if(ENABLE_IMAGE_SUPPORT)
+if(ENABLE_LEGACY_IMAGE_IMPL AND ENABLE_IMAGE_SUPPORT)
   add_executable(image_document_test image_document_test.cpp)
   target_link_libraries(
     image_document_test
@@ -25,15 +25,41 @@ if(ENABLE_IMAGE_SUPPORT)
   )
 endif()
 
-add_executable(pdf_document_test pdf_document_test.cpp)
+if(ENABLE_LEGACY_PDF_IMPL)
+  add_executable(pdf_document_test pdf_document_test.cpp)
+  target_link_libraries(
+    pdf_document_test
+    jfbview_document
+    ${GTEST_BOTH_LIBRARIES}
+  )
+  add_test(
+    NAME pdf_document_test
+    COMMAND pdf_document_test
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+endif()
+
+add_executable(fitz_document_pdf_test fitz_document_pdf_test.cpp)
 target_link_libraries(
-  pdf_document_test
+  fitz_document_pdf_test
   jfbview_document
   ${GTEST_BOTH_LIBRARIES}
 )
 add_test(
-  NAME pdf_document_test
-  COMMAND pdf_document_test
+  NAME fitz_document_pdf_test
+  COMMAND fitz_document_pdf_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(fitz_document_image_test fitz_document_image_test.cpp)
+target_link_libraries(
+  fitz_document_image_test
+  jfbview_document
+  ${GTEST_BOTH_LIBRARIES}
+)
+add_test(
+  NAME fitz_document_image_test
+  COMMAND fitz_document_image_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

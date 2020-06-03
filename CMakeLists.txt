@@ -19,13 +19,28 @@ set(
   PACKAGE_FORMAT
   "DEB"
   CACHE STRING
-  "CPack package generator(s) to enable.")
+  "CPack package generator to enable.")
+set(
+  LIBJPEG_PACKAGE_NAME
+  "libjpeg62-turbo"
+  CACHE STRING
+  "The name of the libjpeg package to include as a dependency in the generated package.")
 set(
   PACKAGE_FILE_PREFIX
   "jfbview"
   CACHE STRING
   "CPack package file name prefix.")
 option(BUILD_TESTING "Build unit tests." OFF)
+option(
+  ENABLE_LEGACY_PDF_IMPL
+  "If ON, enables legacy PDF document implementation based on low-level MuPDF APIs."
+  OFF
+)
+option(
+  ENABLE_LEGACY_IMAGE_IMPL
+  "If ON, enables legacy image document implementation based on Imlib2."
+  OFF
+)
 
 # Third-party code in vendor.
 # ---------------------------

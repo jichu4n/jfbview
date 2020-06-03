@@ -19,6 +19,8 @@
 // This file defines PDFDocument, an implementation of the Document abstraction
 // using MuPDF.
 
+#ifdef JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -114,50 +116,48 @@ const char* const PDFDocument::DEFAULT_ROOT_OUTLINE_ITEM_TITLE =
 
 PDFDocument* PDFDocument::Open(
     const std::string& path, const std::string* password, int page_cache_size) {
-  fz_context* context = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
-  pdf_document* raw_pdf_document = nullptr;
-  fz_try(context) {
-    raw_pdf_document = pdf_open_document(context, path.c_str());
-    if ((raw_pdf_document == nullptr) ||
-        (!pdf_count_pages(context, raw_pdf_document))) {
+  fz_context* ctx = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
+  pdf_document* doc = nullptr;
+  fz_try(ctx) {
+    doc = pdf_open_document(ctx, path.c_str());
+    if ((doc == nullptr) || (!pdf_count_pages(ctx, doc))) {
       fz_throw(
-          context, FZ_ERROR_GENERIC,
+          ctx, FZ_ERROR_GENERIC,
           const_cast<char*>("Cannot open document \"%s\""), path.c_str());
     }
-    if (pdf_needs_password(context, raw_pdf_document)) {
+    if (pdf_needs_password(ctx, doc)) {
       if (password == nullptr) {
         fz_throw(
-            context, FZ_ERROR_GENERIC,
+            ctx, FZ_ERROR_GENERIC,
             const_cast<char*>(
                 "Document \"%s\" is password protected.\n"
                 "Please provide the password with \"-P <password>\"."),
             path.c_str());
       }
-      if (!pdf_authenticate_password(
-              context, raw_pdf_document, password->c_str())) {
+      if (!pdf_authenticate_password(ctx, doc, password->c_str())) {
         fz_throw(
-            context, FZ_ERROR_GENERIC,
+            ctx, FZ_ERROR_GENERIC,
             const_cast<char*>("Incorrect password for document \"%s\"."),
             path.c_str());
       }
     }
   }
-  fz_catch(context) {
-    if (raw_pdf_document != nullptr) {
-      pdf_drop_document(context, raw_pdf_document);
+  fz_catch(ctx) {
+    if (doc != nullptr) {
+      pdf_drop_document(ctx, doc);
     }
-    fz_drop_context(context);
+    fz_drop_context(ctx);
     return nullptr;
   }
 
 #if MUPDF_VERSION >= 10016
   fz_set_warning_callback(
-      context, [](void* user, const char* message) {}, nullptr);
+      ctx, [](void* user, const char* message) {}, nullptr);
 #endif
 
   PDFDocument* document = new PDFDocument(page_cache_size);
-  document->_fz_context = context;
-  document->_pdf_document = raw_pdf_document;
+  document->_fz_context = ctx;
+  document->_pdf_document = doc;
   return document;
 }
 
@@ -453,3 +453,6 @@ fz_irect PDFDocument::GetBoundingBox(
           pdf_bound_page(_fz_context, _pdf_document, page_struct, &bbox), &m));
 #endif
 }
+
+#endif
+

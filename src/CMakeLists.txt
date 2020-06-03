@@ -18,14 +18,19 @@ set(CURSES_NEED_NCURSES ON)
 find_package(Curses REQUIRED)
 include_directories(${CURSES_INCLUDE_DIRS})
 
-if(ENABLE_IMAGE_SUPPORT)
-  find_package(Imlib2 REQUIRED)
-  include_directories(${IMLIB2_INCLUDE_DIR})
+if(ENABLE_LEGACY_IMAGE_IMPL)
+  if(ENABLE_IMAGE_SUPPORT)
+    find_package(Imlib2 REQUIRED)
+    include_directories(${IMLIB2_INCLUDE_DIR})
+  else()
+    add_definitions(
+      -DJFBVIEW_NO_IMLIB2
+    )
+    set(IMLIB2_LIBRARIES)
+  endif()
+  set(imlib2_libs ${IMLIB2_LIBRARIES})
 else()
-  add_definitions(
-    -DJFBVIEW_NO_IMLIB2
-  )
-  set(IMLIB2_LIBRARIES)
+  set(imlib2_libs)
 endif()
 
 # Build settings.
@@ -35,6 +40,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_definitions(
   -DJFBVIEW_VERSION=\"${PROJECT_VERSION}\"
 )
+if(ENABLE_LEGACY_IMAGE_IMPL)
+  add_definitions(
+    -DJFBVIEW_ENABLE_LEGACY_IMAGE_IMPL
+  )
+endif()
+if(ENABLE_LEGACY_PDF_IMPL)
+  add_definitions(
+    -DJFBVIEW_ENABLE_LEGACY_PDF_IMPL
+  )
+endif()
 
 # Detect MuPDF version.
 # ---------------------
@@ -66,8 +81,10 @@ add_library(
   jfbview_document
   STATIC
   document.cpp
-  pdf_document.cpp
+  fitz_document.cpp
+  fitz_utils.cpp
   image_document.cpp
+  pdf_document.cpp
   string_utils.cpp
   multithreading.cpp
 )
@@ -75,12 +92,14 @@ target_link_libraries(
   jfbview_document
   Threads::Threads
   ${vendor_mupdf_libs}
-  ${IMLIB2_LIBRARIES}
+  ${imlib2_libs}
 )
-add_dependencies(
-  jfbview_document
-  detected_mupdf_version.hpp
-)
+if(ENABLE_LEGACY_PDF_IMPL)
+  add_dependencies(
+    jfbview_document
+    detected_mupdf_version.hpp
+  )
+endif()
 
 # Common viewer code shared by jfbview and jfbpdf.
 # ------------------------------------------------
@@ -129,16 +148,18 @@ install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jpdfcat DESTINATION bin)
 
 # jfbpdf
 # ------
-if(NOT ENABLE_IMAGE_SUPPORT)
-  add_executable(jfbpdf ${jfbview_sources})
-  target_compile_definitions(
-    jfbpdf
-    PRIVATE
-    JFBVIEW_NO_IMLIB2
-    JFBVIEW_PROGRAM_NAME=\"JFBPDF\"
-    JFBVIEW_BINARY_NAME=\"jfbpdf\"
-  )
-  target_link_libraries(jfbpdf jfbview_document_viewer)
-  install(TARGETS jfbpdf DESTINATION bin)
+if(ENABLE_LEGACY_IMAGE_IMPL)
+  if(NOT ENABLE_IMAGE_SUPPORT)
+    add_executable(jfbpdf ${jfbview_sources})
+    target_compile_definitions(
+      jfbpdf
+      PRIVATE
+      JFBVIEW_NO_IMLIB2
+      JFBVIEW_PROGRAM_NAME=\"JFBPDF\"
+      JFBVIEW_BINARY_NAME=\"jfbpdf\"
+    )
+    target_link_libraries(jfbpdf jfbview_document_viewer)
+    install(TARGETS jfbpdf DESTINATION bin)
+  endif()
 endif()
 

@@ -11,12 +11,20 @@ else
   sudo='sudo'
 fi
 
+if grep -qi ubuntu /etc/os-release; then
+  libjpeg=libjpeg8
+  libjpeg_dev=libjpeg8-dev
+else
+  libjpeg=libjpeg62-turbo
+  libjpeg_dev=libjpeg62-turbo-dev
+fi
+
 function install_build_deps() {
   export DEBIAN_FRONTEND=noninteractive
   $sudo apt-get -qq update
   $sudo apt-get -qq install -y \
     build-essential cmake file \
-    libncurses-dev libncursesw5-dev libimlib2-dev \
+    libncurses-dev libncursesw5-dev ${libjpeg_dev} \
     > /dev/null  # -qq doesn't actually silence apt-get install.
 }
 
@@ -25,6 +33,7 @@ function build_package() {
   mkdir -p build upload
   cmake -H. -Bbuild \
     -DPACKAGE_FORMAT=DEB \
+    -DLIBJPEG_PACKAGE_NAME=${libjpeg} \
     -DPACKAGE_FILE_PREFIX="$package_file_prefix" \
     -DBUILD_TESTING=OFF \
     -DCMAKE_BUILD_TYPE=Release
