@@ -107,7 +107,7 @@ TEST(FitzDocumentPDF, MultithreadedAccess) {
   EXPECT_NE(doc.get(), nullptr);
   std::vector<std::thread> threads;
   srand(time(nullptr));
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < 20; ++i) {
     threads.push_back(std::thread([&doc, i]() {
       for (int page = 0; page < doc->GetNumPages(); ++page) {
         const Document::PageSize page_size = doc->GetPageSize(page);
@@ -115,7 +115,7 @@ TEST(FitzDocumentPDF, MultithreadedAccess) {
             << " on page " << (page + 1) << " in thread " << i;
         EXPECT_GT(page_size.Width, 0)
             << " on page " << (page + 1) << " in thread " << i;
-        if (!(rand() % 5)) {
+        if (!(rand() % 10)) {
           DummyPixelWriter dummy_pixel_writer;
           doc->Render(&dummy_pixel_writer, page, 1.0f, 0);
           EXPECT_EQ(
@@ -123,6 +123,8 @@ TEST(FitzDocumentPDF, MultithreadedAccess) {
               page_size.Width * page_size.Height)
               << " on page " << (page + 1) << " in thread " << i;
         }
+        std::unique_ptr<const Document::OutlineItem> outline(doc->GetOutline());
+        EXPECT_NE(outline.get(), nullptr);
       }
     }));
   }

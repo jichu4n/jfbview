@@ -27,26 +27,18 @@
 #include <string>
 #include <vector>
 
-#include "cache.hpp"
 #include "document.hpp"
-extern "C" {
-#include "mupdf/fitz.h"
-}
+#include "fitz_utils.hpp"
 
 // Document implementation using Fitz.
 class FitzDocument : public Document {
  public:
-  // Default size of page cache.
-  enum { DEFAULT_PAGE_CACHE_SIZE = 5 };
-
   virtual ~FitzDocument();
   // Factory method to construct an instance of FitzDocument. path gives the
   // path to a file. password is the password to use to unlock the document;
   // specify nullptr if no password was provided. Does not take ownership of
   // password. Returns nullptr if the file cannot be opened.
-  static Document* Open(
-      const std::string& path, const std::string* password,
-      int page_cache_size = DEFAULT_PAGE_CACHE_SIZE);
+  static Document* Open(const std::string& path, const std::string* password);
   // See Document.
   int GetNumPages() override;
   // See Document.
@@ -69,20 +61,12 @@ class FitzDocument : public Document {
   fz_document* _fz_doc;
   // Mutex guarding MuPDF structures.
   std::recursive_mutex _fz_mutex;
-  // Cache for loaded pages.
-  std::unique_ptr<Cache<int, fz_page*>> _page_cache;
 
   // We disallow the constructor; use the factory method Open() instead.
-  FitzDocument(
-      fz_context* _fz_context, fz_document* fz_document, int page_cache_size);
+  FitzDocument(fz_context* _fz_context, fz_document* fz_document);
   // We disallow copying because we store lots of heap allocated state.
   explicit FitzDocument(const FitzDocument& other);
   FitzDocument& operator=(const FitzDocument& other);
-
-  // Wrapper around fz_load_page that implements caching. If _page_cache_size
-  // is reached, throw out the oldest page. Will also attempt to load the pages
-  // before and after specified page. Returns the loaded page.
-  fz_page* GetPage(int page);
 };
 
 #endif

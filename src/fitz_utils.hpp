@@ -63,5 +63,46 @@ class FitzOutlineItem : public Document::OutlineItem {
 extern std::string GetPageText(
     fz_context* ctx, fz_page* page_struct, int line_sep = '\n');
 
+// Generic smart pointer for Fitz resources.
+template <typename FzT, void (*fz_drop_fn)(fz_context*, FzT*)>
+class FitzScopedPtr {
+ public:
+  FitzScopedPtr(fz_context* ctx, FzT* raw_ptr) : _ctx(ctx), _raw_ptr(raw_ptr) {}
+  ~FitzScopedPtr() { reset(); }
+
+  FzT* get() const { return _raw_ptr; };
+  FzT& operator*() const { return *_raw_ptr; }
+  FzT* operator->() const { return _raw_ptr; }
+
+  void reset(FzT* new_raw_ptr = nullptr) {
+    if (_raw_ptr != nullptr) {
+      (*fz_drop_fn)(_ctx, _raw_ptr);
+    }
+    _raw_ptr = new_raw_ptr;
+  }
+
+ private:
+  fz_context* const _ctx;
+  FzT* _raw_ptr;
+
+  FitzScopedPtr(const FitzScopedPtr<FzT, fz_drop_fn>& other);
+  FitzScopedPtr<FzT, fz_drop_fn>& operator=(
+      const FitzScopedPtr<FzT, fz_drop_fn>& other);
+};
+
+// Smart pointer for fz_document.
+typedef FitzScopedPtr<fz_document, &fz_drop_document> FitzDocumentScopedPtr;
+// Smart pointer for fz_page.
+typedef FitzScopedPtr<fz_page, &fz_drop_page> FitzPageScopedPtr;
+// Smart pointer for fz_outline.
+typedef FitzScopedPtr<fz_outline, &fz_drop_outline> FitzOutlineScopedPtr;
+// Smart pointer for fz_device.
+typedef FitzScopedPtr<fz_device, &fz_drop_device> FitzDeviceScopedPtr;
+// Smart pointer for fz_pixmap.
+typedef FitzScopedPtr<fz_pixmap, &fz_drop_pixmap> FitzPixmapScopedPtr;
+// Smart pointer for fz_stext_page.
+typedef FitzScopedPtr<fz_stext_page, &fz_drop_stext_page>
+    FitzStextPageScopedPtr;
+
 #endif
 

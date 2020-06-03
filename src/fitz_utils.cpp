@@ -88,8 +88,8 @@ void FitzOutlineItem::BuildRecursive(
 std::string GetPageText(fz_context* ctx, fz_page* page_struct, int line_sep) {
   // 1. Render page.
   fz_stext_options stext_options = {0};
-  fz_stext_page* text_page =
-      fz_new_stext_page_from_page(ctx, page_struct, &stext_options);
+  FitzStextPageScopedPtr text_page(
+      ctx, fz_new_stext_page_from_page(ctx, page_struct, &stext_options));
 
   // 2. Build text.
   std::string r;
@@ -118,9 +118,6 @@ std::string GetPageText(fz_context* ctx, fz_page* page_struct, int line_sep) {
       }
     }
   }
-
-  // 3. Clean up.
-  fz_drop_stext_page(ctx, text_page);
 
   return r;
 }

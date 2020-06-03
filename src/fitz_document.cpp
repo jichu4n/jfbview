@@ -23,41 +23,11 @@
 
 #include <cassert>
 
-#include "fitz_utils.hpp"
 #include "multithreading.hpp"
 #include "string_utils.hpp"
 
-namespace {
-
-// Cache for managing FitzDocument loaded pages. NOT thread-safe.
-class FitzDocumentPageCache : public Cache<int, fz_page*> {
- public:
-  FitzDocumentPageCache(
-      fz_context* fz_ctx, fz_document* fz_doc, int page_cache_size)
-      : Cache<int, fz_page*>(page_cache_size),
-        _fz_ctx(fz_ctx),
-        _fz_doc(fz_doc) {}
-  virtual ~FitzDocumentPageCache() { Clear(); }
-
- protected:
-  fz_page* Load(const int& page) override {
-    return fz_load_page(_fz_ctx, _fz_doc, page);
-  }
-
-  void Discard(const int& page, fz_page* const& page_struct) override {
-    fz_drop_page(_fz_ctx, page_struct);
-  }
-
- private:
-  // Pointer to parent FitzDocument's MuPDF structures. Does NOT have ownerhip.
-  fz_context* _fz_ctx;
-  fz_document* _fz_doc;
-};
-
-}  // namespace
-
 Document* FitzDocument::Open(
-    const std::string& path, const std::string* password, int page_cache_size) {
+    const std::string& path, const std::string* password) {
   fz_context* fz_ctx = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
   fz_register_document_handlers(fz_ctx);
   // Disable warning messages in the console.
@@ -97,26 +67,17 @@ Document* FitzDocument::Open(
     return nullptr;
   }
 
-  return new FitzDocument(fz_ctx, fz_doc, page_cache_size);
+  return new FitzDocument(fz_ctx, fz_doc);
 }
 
-FitzDocument::FitzDocument(
-    fz_context* fz_ctx, fz_document* fz_doc, int page_cache_size)
-    : _fz_ctx(fz_ctx),
-      _fz_doc(fz_doc),
-      _page_cache(new FitzDocumentPageCache(fz_ctx, fz_doc, page_cache_size)) {
+FitzDocument::FitzDocument(fz_context* fz_ctx, fz_document* fz_doc)
+    : _fz_ctx(fz_ctx), _fz_doc(fz_doc) {
   assert(_fz_ctx != nullptr);
   assert(_fz_doc != nullptr);
 }
 
 FitzDocument::~FitzDocument() {
   std::lock_guard<std::recursive_mutex> lock(_fz_mutex);
-
-  // Must destroy page cache explicitly first, since destroying cached pages
-  // involves clearing MuPDF state, which requires document structures
-  // (_fz_doc, _fz_ctx) to still exist.
-  _page_cache.reset();
-
   fz_drop_document(_fz_ctx, _fz_doc);
   fz_drop_context(_fz_ctx);
 }
@@ -130,9 +91,9 @@ const Document::PageSize FitzDocument::GetPageSize(
     int page, float zoom, int rotation) {
   std::lock_guard<std::recursive_mutex> lock(_fz_mutex);
   assert((page >= 0) && (page < GetNumPages()));
-  fz_page* page_struct = GetPage(page);
+  FitzPageScopedPtr page_ptr(_fz_ctx, fz_load_page(_fz_ctx, _fz_doc, page));
   const fz_irect& bbox = GetPageBoundingBox(
-      _fz_ctx, page_struct, ComputeTransformMatrix(zoom, rotation));
+      _fz_ctx, page_ptr.get(), ComputeTransformMatrix(zoom, rotation));
   return PageSize(bbox.x1 - bbox.x0, bbox.y1 - bbox.y0);
 }
 
@@ -143,23 +104,25 @@ void FitzDocument::Render(
 
   // 1. Init MuPDF structures.
   const fz_matrix& m = ComputeTransformMatrix(zoom, rotation);
-  fz_page* page_struct = GetPage(page);
-  const fz_irect& bbox = GetPageBoundingBox(_fz_ctx, page_struct, m);
-  fz_pixmap* pixmap = fz_new_pixmap_with_bbox(
-      _fz_ctx, fz_device_rgb(_fz_ctx), bbox, nullptr, 1);
-  fz_device* dev = fz_new_draw_device(_fz_ctx, fz_identity, pixmap);
+  FitzPageScopedPtr page_ptr(_fz_ctx, fz_load_page(_fz_ctx, _fz_doc, page));
+  const fz_irect& bbox = GetPageBoundingBox(_fz_ctx, page_ptr.get(), m);
+  FitzPixmapScopedPtr pixmap_ptr(
+      _fz_ctx, fz_new_pixmap_with_bbox(
+                   _fz_ctx, fz_device_rgb(_fz_ctx), bbox, nullptr, 1));
+  FitzDeviceScopedPtr dev_ptr(
+      _fz_ctx, fz_new_draw_device(_fz_ctx, fz_identity, pixmap_ptr.get()));
 
   // 2. Render page.
-  fz_clear_pixmap_with_value(_fz_ctx, pixmap, 0xff);
-  fz_run_page(_fz_ctx, page_struct, dev, m, nullptr);
+  fz_clear_pixmap_with_value(_fz_ctx, pixmap_ptr.get(), 0xff);
+  fz_run_page(_fz_ctx, page_ptr.get(), dev_ptr.get(), m, nullptr);
 
   // 3. Write pixmap to buffer. The page is vertically divided into n equal
   // stripes, each copied to pw by one thread.
-  assert(fz_pixmap_components(_fz_ctx, pixmap) == 4);
+  assert(fz_pixmap_components(_fz_ctx, pixmap_ptr.get()) == 4);
   uint8_t* buffer =
-      reinterpret_cast<uint8_t*>(fz_pixmap_samples(_fz_ctx, pixmap));
-  const int num_cols = fz_pixmap_width(_fz_ctx, pixmap);
-  const int num_rows = fz_pixmap_height(_fz_ctx, pixmap);
+      reinterpret_cast<uint8_t*>(fz_pixmap_samples(_fz_ctx, pixmap_ptr.get()));
+  const int num_cols = fz_pixmap_width(_fz_ctx, pixmap_ptr.get());
+  const int num_rows = fz_pixmap_height(_fz_ctx, pixmap_ptr.get());
   ExecuteInParallel([=](int num_threads, int i) {
     const int num_rows_per_thread = num_rows / num_threads;
     const int y_begin = i * num_rows_per_thread;
@@ -175,19 +138,16 @@ void FitzDocument::Render(
   });
 
   // 4. Clean up.
-  fz_close_device(_fz_ctx, dev);
-  fz_drop_device(_fz_ctx, dev);
-  fz_drop_pixmap(_fz_ctx, pixmap);
+  fz_close_device(_fz_ctx, dev_ptr.get());
 }
 
 const Document::OutlineItem* FitzDocument::GetOutline() {
   std::lock_guard<std::recursive_mutex> lock(_fz_mutex);
-  fz_outline* outline_struct = fz_load_outline(_fz_ctx, _fz_doc);
-  if (outline_struct == nullptr) {
+  FitzOutlineScopedPtr outline_ptr(_fz_ctx, fz_load_outline(_fz_ctx, _fz_doc));
+  if (outline_ptr.get() == nullptr) {
     return nullptr;
   }
-  FitzOutlineItem* root = FitzOutlineItem::Build(_fz_ctx, outline_struct);
-  fz_drop_outline(_fz_ctx, outline_struct);
+  FitzOutlineItem* root = FitzOutlineItem::Build(_fz_ctx, outline_ptr.get());
   return root;
 }
 
@@ -204,8 +164,8 @@ std::vector<Document::SearchHit> FitzDocument::SearchOnPage(
           ? (context_length - search_string.length() + 1) / 2
           : 0;
 
-  fz_page* page_struct = GetPage(page);
-  const std::string page_text = GetPageText(_fz_ctx, page_struct, ' ');
+  FitzPageScopedPtr page_ptr(_fz_ctx, fz_load_page(_fz_ctx, _fz_doc, page));
+  const std::string page_text = GetPageText(_fz_ctx, page_ptr.get(), ' ');
   std::vector<SearchHit> search_hits;
   for (size_t pos = 0;; ++pos) {
     if ((pos = CaseInsensitiveSearch(page_text, search_string, pos)) ==
@@ -218,11 +178,5 @@ std::vector<Document::SearchHit> FitzDocument::SearchOnPage(
         pos - context_start_pos);
   }
   return search_hits;
-}
-
-fz_page* FitzDocument::GetPage(int page) {
-  std::lock_guard<std::recursive_mutex> lock(_fz_mutex);
-  assert((page >= 0) && (page < GetNumPages()));
-  return _page_cache->Get(page);
 }
 
