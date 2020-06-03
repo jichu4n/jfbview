@@ -7,4 +7,5 @@ vendor/mupdf/thirdparty/freetype/** export-ignore
 vendor/mupdf/thirdparty/lcms2/doc/** export-ignore
 vendor/mupdf/thirdparty/lcms2/testbed/** export-ignore
 vendor/mupdf/thirdparty/zlib/** export-ignore
+vendor/mupdf/thirdparty/openjpeg/** export-ignore
 
