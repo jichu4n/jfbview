@@ -2,7 +2,7 @@ vendor/mupdf/doc/** export-ignore
 vendor/mupdf/thirdparty/curl/** export-ignore
 vendor/mupdf/thirdparty/freeglut/** export-ignore
 vendor/mupdf/thirdparty/libjpeg/** export-ignore
-vendor/mupdf/thirdparty/harfbuzz/test/*/** export-ignore
+vendor/mupdf/thirdparty/harfbuzz/** export-ignore
 vendor/mupdf/thirdparty/lcms2/doc/** export-ignore
 vendor/mupdf/thirdparty/lcms2/testbed/** export-ignore
 vendor/mupdf/thirdparty/zlib/contrib/** export-ignore

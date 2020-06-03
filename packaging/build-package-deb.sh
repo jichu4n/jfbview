@@ -25,6 +25,7 @@ function install_build_deps() {
   $sudo apt-get -qq install -y \
     build-essential cmake file \
     libncurses-dev libncursesw5-dev ${libjpeg_dev} \
+    libharfbuzz-dev \
     > /dev/null  # -qq doesn't actually silence apt-get install.
 }
 

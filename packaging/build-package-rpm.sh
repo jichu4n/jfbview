@@ -15,8 +15,8 @@ function install_build_deps() {
   $sudo yum install -y -q epel-release
   $sudo yum install -y -q \
     cmake make gcc-c++ rpm-build \
-    ncurses-devel \
-    libjpeg-turbo-devel
+    ncurses-devel libjpeg-turbo-devel \
+    harfbuzz-devel
 }
 
 function build_package() {
