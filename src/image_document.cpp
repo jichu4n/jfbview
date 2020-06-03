@@ -20,7 +20,7 @@
 // abstraction using Imlib2. If the macro JFBVIEW_NO_IMLIB2 is defined, this
 // file is disabled.
 
-#ifndef JFBVIEW_NO_IMLIB2
+#if defined(JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL) && !defined(JFBVIEW_NO_IMLIB2)
 
 #include "image_document.hpp"
 

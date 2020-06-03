@@ -26,7 +26,7 @@
 #include "multithreading.hpp"
 #include "string_utils.hpp"
 
-Document* FitzDocument::Open(
+FitzDocument* FitzDocument::Open(
     const std::string& path, const std::string* password) {
   fz_context* fz_ctx = fz_new_context(nullptr, nullptr, FZ_STORE_DEFAULT);
   fz_register_document_handlers(fz_ctx);
@@ -155,17 +155,20 @@ int FitzDocument::Lookup(const OutlineItem* item) {
   return (dynamic_cast<const FitzOutlineItem*>(item))->GetDestPage();
 }
 
+std::string FitzDocument::GetPageText(int page, int line_sep) {
+  std::lock_guard<std::recursive_mutex> lock(_fz_mutex);
+  FitzPageScopedPtr page_ptr(_fz_ctx, fz_load_page(_fz_ctx, _fz_doc, page));
+  return ::GetPageText(_fz_ctx, page_ptr.get(), ' ');
+}
+
 std::vector<Document::SearchHit> FitzDocument::SearchOnPage(
     const std::string& search_string, int page, int context_length) {
-  std::lock_guard<std::recursive_mutex> lock(_fz_mutex);
-
   const size_t margin =
       context_length > static_cast<int>(search_string.length())
           ? (context_length - search_string.length() + 1) / 2
           : 0;
 
-  FitzPageScopedPtr page_ptr(_fz_ctx, fz_load_page(_fz_ctx, _fz_doc, page));
-  const std::string page_text = GetPageText(_fz_ctx, page_ptr.get(), ' ');
+  const std::string page_text = GetPageText(page, ' ');
   std::vector<SearchHit> search_hits;
   for (size_t pos = 0;; ++pos) {
     if ((pos = CaseInsensitiveSearch(page_text, search_string, pos)) ==

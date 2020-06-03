@@ -19,6 +19,8 @@
 // This file defines PDFDocument, an implementation of the Document abstraction
 // using MuPDF.
 
+#ifdef JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL
+
 #include <algorithm>
 #include <cassert>
 #include <cstring>
@@ -451,3 +453,6 @@ fz_irect PDFDocument::GetBoundingBox(
           pdf_bound_page(_fz_context, _pdf_document, page_struct, &bbox), &m));
 #endif
 }
+
+#endif
+

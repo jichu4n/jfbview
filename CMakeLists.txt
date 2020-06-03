@@ -26,6 +26,16 @@ set(
   CACHE STRING
   "CPack package file name prefix.")
 option(BUILD_TESTING "Build unit tests." OFF)
+option(
+  ENABLE_LEGACY_PDF_IMPL
+  "If ON, enables legacy PDF document implementation based on low-level MuPDF APIs."
+  OFF
+)
+option(
+  ENABLE_LEGACY_IMAGE_IMPL
+  "If ON, enables legacy image document implementation based on Imlib2."
+  OFF
+)
 
 # Third-party code in vendor.
 # ---------------------------

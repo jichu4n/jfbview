@@ -15,7 +15,7 @@ function install_build_deps() {
   $sudo yum install -y -q epel-release
   $sudo yum install -y -q \
     cmake make gcc-c++ rpm-build \
-    ncurses-devel imlib2-devel \
+    ncurses-devel \
     libjpeg-devel
 }
 

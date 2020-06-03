@@ -20,13 +20,14 @@
 // abstraction using Imlib2. If the macro JFBVIEW_NO_IMLIB2 is defined, this
 // class is disabled.
 
-#ifndef JFBVIEW_NO_IMLIB2
+#if defined(JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL) && !defined(JFBVIEW_NO_IMLIB2)
 
 #ifndef IMAGE_DOCUMENT_HPP
 #define IMAGE_DOCUMENT_HPP
 
 #include <string>
 #include <vector>
+
 #include "Imlib2.h"
 #include "document.hpp"
 
@@ -38,21 +39,15 @@ class ImageDocument : public Document {
   // path to an image file. Returns nullptr if the file cannot be opened.
   static Document* Open(const std::string& path);
   // See Document.
-  int GetNumPages() override {
-    return 1;
-  }
+  int GetNumPages() override { return 1; }
   // See Document.
   const PageSize GetPageSize(int page, float zoom, int rotation) override;
   // See Document. Thread-safe.
   void Render(PixelWriter* pw, int page, float zoom, int rotation) override;
   // See Document.
-  const OutlineItem* GetOutline()  override {
-    return nullptr;
-  }
+  const OutlineItem* GetOutline() override { return nullptr; }
   // See Document.
-  int Lookup(const OutlineItem* item)  override {
-    return -1;
-  }
+  int Lookup(const OutlineItem* item) override { return -1; }
 
  protected:
   // See Document.
@@ -71,7 +66,7 @@ class ImageDocument : public Document {
   explicit ImageDocument(Imlib_Image image);
   // We disallow copying because we store lots of heap allocated state.
   explicit ImageDocument(const ImageDocument& other);
-  ImageDocument& operator = (const ImageDocument& other);
+  ImageDocument& operator=(const ImageDocument& other);
 };
 
 #endif

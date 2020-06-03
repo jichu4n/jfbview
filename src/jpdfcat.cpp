@@ -28,6 +28,7 @@
 #include <string>
 #include <vector>
 
+#include "fitz_document.hpp"
 #include "pdf_document.hpp"
 
 namespace {
@@ -97,8 +98,13 @@ int JpdfcatMain(int argc, char* argv[]) {
   Options options;
   ParseCommandLine(argc, argv, &options);
 
+#ifdef JFBVIEW_ENABLE_LEGACY_PDF_IMPL
   std::unique_ptr<PDFDocument> document(
       PDFDocument::Open(options.FilePath, options.FilePassword.get()));
+#else
+  std::unique_ptr<FitzDocument> document(
+      FitzDocument::Open(options.FilePath, options.FilePassword.get()));
+#endif
   if (!document) {
     fprintf(stderr, "Failed to open \"%s\"\n", options.FilePath.c_str());
     return EXIT_FAILURE;

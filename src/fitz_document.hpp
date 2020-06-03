@@ -38,7 +38,8 @@ class FitzDocument : public Document {
   // path to a file. password is the password to use to unlock the document;
   // specify nullptr if no password was provided. Does not take ownership of
   // password. Returns nullptr if the file cannot be opened.
-  static Document* Open(const std::string& path, const std::string* password);
+  static FitzDocument* Open(
+      const std::string& path, const std::string* password);
   // See Document.
   int GetNumPages() override;
   // See Document.
@@ -49,6 +50,8 @@ class FitzDocument : public Document {
   const OutlineItem* GetOutline() override;
   // See Document.
   int Lookup(const OutlineItem* item) override;
+  // Returns the text content of a page, using line_sep to separate lines.
+  std::string GetPageText(int page, int line_sep = '\n');
 
  protected:
   // See Document.

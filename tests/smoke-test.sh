@@ -51,14 +51,14 @@ if ! jpdfcat -h 2>&1 | grep -q 'Options:'; then
 fi
 
 echo 'Checking jpdfcat with test PDF file...'
-num_search_results=$(jpdfcat ./bash.pdf | grep 'HISTIGNORE' | wc -l)
+num_search_results=$(jpdfcat ./bash.pdf | grep -o 'HISTIGNORE' | wc -l)
 if [ $? -ne 0 ] || [ $num_search_results -ne 8 ]; then
   echo 'Invalid output from jpdfcat'
   exit 1
 fi
 
 echo 'Checking jpdfcat with page arguments...'
-num_search_results=$(jpdfcat ./bash.pdf 86 131 | grep 'HISTIGNORE' | wc -l)
+num_search_results=$(jpdfcat ./bash.pdf 86 131 | grep -o 'HISTIGNORE' | wc -l)
 if [ $? -ne 0 ] || [ $num_search_results -ne 4 ]; then
   echo 'Invalid output from jpdfcat'
   exit 1

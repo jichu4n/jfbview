@@ -55,6 +55,7 @@
 
 #include "command.hpp"
 #include "cpp_compat.hpp"
+#include "fitz_document.hpp"
 #include "framebuffer.hpp"
 #include "image_document.hpp"
 #include "outline_view.hpp"
@@ -136,6 +137,11 @@ static std::string GetFileExtension(const std::string& path) {
 // Loads the file specified in a state. Returns true if the file has been
 // loaded.
 static bool LoadFile(State* state) {
+#if !defined(JFBVIEW_ENABLE_LEGACY_PDF_IMPL) && \
+    !defined(JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL)
+  Document* doc =
+      FitzDocument::Open(state->FilePath, state->FilePassword.get());
+#else
   if (state->DocumentType == State::AUTO_DETECT) {
     if (GetFileExtension(state->FilePath) == "pdf") {
       state->DocumentType = State::PDF;
@@ -154,16 +160,27 @@ static bool LoadFile(State* state) {
   Document* doc = nullptr;
   switch (state->DocumentType) {
     case State::PDF:
+#ifdef JFBVIEW_ENABLE_LEGACY_PDF_IMPL
       doc = PDFDocument::Open(state->FilePath, state->FilePassword.get());
+#else
+      doc = FitzDocument::Open(state->FilePath, state->FilePassword.get());
+#endif
       break;
+#ifdef JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL
 #ifndef JFBVIEW_NO_IMLIB2
     case State::IMAGE:
       doc = ImageDocument::Open(state->FilePath);
       break;
 #endif
+#else
+    case State::IMAGE:
+      doc = FitzDocument::Open(state->FilePath, state->FilePassword.get());
+      break;
+#endif
     default:
       abort();
   }
+#endif
   if (doc == nullptr) {
     fprintf(
         stderr, "Failed to open document \"%s\".\n", state->FilePath.c_str());
@@ -503,14 +520,15 @@ static const char* HELP_STRING =
     "\t                      Start in inverted color mode.\n"
     "\t--color_mode=sepia, -c sepia\n"
     "\t                      Start in sepia color mode.\n"
-#ifndef JFBVIEW_NO_IMLIB2
+#if defined(JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL) && \
+    defined(JFBVIEW_ENABLE_LEGACY_PDF_IMPL) && !defined(JFBVIEW_NO_IMLIB2)
     "\t--format=image, -f image\n"
     "\t                      Forces the program to treat the input file as an\n"
     "\t                      image.\n"
-#endif
     "\t--format=pdf, -f pdf  Forces the program to treat the input file as a\n"
     "\t                      PDF document. Use this if your PDF file does not\n"
     "\t                      end in \".pdf\" (case is ignored).\n"
+#endif
     "\t--cache_size=N        Cache at most N pages. If you have an older\n"
     "\t                      machine with limited RAM, or if you are loading\n"
     "\t                      huge documents, or if you just want to reduce\n"

@@ -19,6 +19,8 @@
 // This file declares PDFDocument, an implementation of the Document abstraction
 // using MuPDF.
 
+#ifdef JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL
+
 #ifndef PDF_DOCUMENT_HPP
 #define PDF_DOCUMENT_HPP
 
@@ -148,3 +150,6 @@ class PDFDocument : public Document {
 };
 
 #endif
+
+#endif
+
