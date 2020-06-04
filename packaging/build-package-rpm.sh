@@ -15,8 +15,13 @@ function install_build_deps() {
   $sudo yum install -y -q epel-release
   $sudo yum install -y -q \
     cmake make gcc-c++ rpm-build \
-    ncurses-devel \
-    libjpeg-turbo-devel
+    ncurses-devel libjpeg-turbo-devel \
+    harfbuzz-devel freetype-devel zlib-devel
+  if [ -e /etc/centos-release ]; then
+    $sudo dnf --enablerepo=PowerTools install -y -q openjpeg2-devel
+  else
+    $sudo yum install -y -q openjpeg2-devel
+  fi
 }
 
 function build_package() {

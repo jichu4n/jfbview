@@ -60,11 +60,19 @@ To build from source, fetch the source code along with transitive dependencies a
 
   - [libjpeg](http://libjpeg.sourceforge.net/) or [libjpeg-turbo](https://libjpeg-turbo.org/)
 
+  - [OpenJPEG / openjp2](https://github.com/uclouvain/openjpeg)
+
+  - [FreeType](https://www.freetype.org/)
+
+  - [HarfBuzz](https://www.freedesktop.org/wiki/Software/HarfBuzz)
+
+  - [zlib](https://www.zlib.net/)
+
 Build-time dependencies:
 
   - C++ compiler with support for C++14 (GCC 4.9+, Clang 3.5+)
 
-  - [CMake](https://cmake.org/) 3.2+
+  - [CMake](https://cmake.org/) 3.3+
 
 #### Source code
 
