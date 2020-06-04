@@ -37,6 +37,14 @@ class Settings {
   // Write current settings to disk.
   void Save();
 
+  // Default JSON parsing flags. We want to be generally permissive with
+  // settings files as they are hand edited.
+  enum {
+    PERMISSIVE_JSON_PARSE_FLAGS =
+        rapidjson::kParseCommentsFlag | rapidjson::kParseTrailingCommasFlag |
+        rapidjson::kParseEscapedApostropheFlag | rapidjson::kParseNanAndInfFlag
+  };
+
   // Returns the default configuration.
   static const rapidjson::Document& GetDefaultConfig();
 

@@ -30,6 +30,7 @@
 #include "rapidjson/filewritestream.h"
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/writer.h"
+#include "settings.hpp"
 
 int main() {
   // 1. Read JSON into doc.
@@ -38,7 +39,8 @@ int main() {
     char read_buffer[64 * 1024];
     rapidjson::FileReadStream read_stream(
         stdin, read_buffer, sizeof(read_buffer));
-    const rapidjson::ParseResult parse_result = doc.ParseStream(read_stream);
+    const rapidjson::ParseResult parse_result =
+        doc.ParseStream<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(read_stream);
     if (!parse_result) {
       fprintf(
           stderr, "Failed to parse input at position %lu: %s",

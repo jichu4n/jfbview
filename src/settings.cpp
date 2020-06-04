@@ -100,7 +100,7 @@ void LoadJsonFromFile(const std::string& file_path, rapidjson::Document* doc) {
   if (file_path.length() && (file = fopen(file_path.c_str(), "r")) != nullptr) {
     char buffer[IO_BUFFER_SIZE];
     rapidjson::FileReadStream read_stream(file, buffer, sizeof(buffer));
-    doc->ParseStream(read_stream);
+    doc->ParseStream<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(read_stream);
     fclose(file);
   }
 }
@@ -130,7 +130,8 @@ void ParseDefaultConfig() {
   }
   std::unique_ptr<rapidjson::Document> doc =
       std::make_unique<rapidjson::Document>();
-  const rapidjson::ParseResult parse_result = doc->Parse(DEFAULT_CONFIG_JSON);
+  const rapidjson::ParseResult parse_result =
+      doc->Parse<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(DEFAULT_CONFIG_JSON);
   if (!parse_result) {
     fprintf(
         stderr, "Failed to parse default config at position %lu: %s",
