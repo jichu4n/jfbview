@@ -63,10 +63,22 @@ add_test(
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+add_executable(settings_test settings_test.cpp)
+target_link_libraries(
+  settings_test
+  jfbview_document_viewer
+  ${GTEST_BOTH_LIBRARIES}
+)
+add_test(
+  NAME settings_test
+  COMMAND settings_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_test(
   NAME smoke_test
   COMMAND
     sh -c
-      "env PATH=$PATH:${CMAKE_BINARY_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/smoke-test.sh"
+      "env PATH=${CMAKE_BINARY_DIR}/src:$PATH ${CMAKE_CURRENT_SOURCE_DIR}/smoke-test.sh"
 )
 

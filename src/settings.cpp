@@ -1,0 +1,168 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *                                                                           *
+ *  Copyright (C) 2020-2020 Chuan Ji                                         *
+ *                                                                           *
+ *  Licensed under the Apache License, Version 2.0 (the "License");          *
+ *  you may not use this file except in compliance with the License.         *
+ *  You may obtain a copy of the License at                                  *
+ *                                                                           *
+ *   http://www.apache.org/licenses/LICENSE-2.0                              *
+ *                                                                           *
+ *  Unless required by applicable law or agreed to in writing, software      *
+ *  distributed under the License is distributed on an "AS IS" BASIS,        *
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. *
+ *  See the License for the specific language governing permissions and      *
+ *  limitations under the License.                                           *
+ *                                                                           *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+// This file declares the Settings class, which manages this app's persistent
+// settings.
+
+#include "settings.hpp"
+
+#include <pwd.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <memory>
+#include <mutex>
+
+#include "rapidjson/error/en.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/rapidjson.h"
+
+// Default config. This is generated during the build process from
+// "default_config.json" by "generate_default_config_cpp.cpp".
+extern const char* DEFAULT_CONFIG_JSON;
+
+namespace {
+
+// Default file name of the config file.
+const char* DEFAULT_CONFIG_FILE_NAME = "config.json";
+// Default file name of the history file.
+const char* DEFAULT_HISTORY_FILE_NAME = "history.json";
+
+const size_t IO_BUFFER_SIZE = 64 * 1024;
+
+// Returns the user's home directory path.
+std::string GetHomeDirPath() {
+  const char* home_env_var = getenv("HOME");
+  if (home_env_var != nullptr && strnlen(home_env_var, 1)) {
+    return home_env_var;
+  }
+  const passwd* passwd_entry = getpwuid(getuid());
+  if (passwd_entry != nullptr) {
+    return passwd_entry->pw_dir;
+  }
+  return "";
+}
+
+std::string GetConfigDirPath() {
+  std::string config_root_dir_path;
+  const char* xdg_config_home_env_var = getenv("XDG_CONFIG_HOME");
+  if (xdg_config_home_env_var != nullptr &&
+      strnlen(xdg_config_home_env_var, 1)) {
+    config_root_dir_path = xdg_config_home_env_var;
+  } else {
+    const std::string home_dir_path = GetHomeDirPath();
+    if (home_dir_path.empty()) {
+      return "";
+    }
+    config_root_dir_path = home_dir_path + "/.config";
+  }
+  return config_root_dir_path + "/jfbview";
+}
+
+std::string GetDefaultConfigFilePath() {
+  const std::string config_root_dir_path = GetConfigDirPath();
+  if (config_root_dir_path.empty()) {
+    return "";
+  }
+  return config_root_dir_path + "/" + DEFAULT_CONFIG_FILE_NAME;
+}
+
+std::string GetDefaultHistoryFilePath() {
+  const std::string config_root_dir_path = GetConfigDirPath();
+  if (config_root_dir_path.empty()) {
+    return "";
+  }
+  return config_root_dir_path + "/" + DEFAULT_HISTORY_FILE_NAME;
+}
+
+void LoadJsonFromFile(const std::string& file_path, rapidjson::Document* doc) {
+  FILE* file;
+  if (file_path.length() && (file = fopen(file_path.c_str(), "r")) != nullptr) {
+    char buffer[IO_BUFFER_SIZE];
+    rapidjson::FileReadStream read_stream(file, buffer, sizeof(buffer));
+    doc->ParseStream(read_stream);
+    fclose(file);
+  }
+}
+
+void WriteJsonToFile(
+    const rapidjson::Document& doc, const std::string& file_path) {
+  FILE* file;
+  if (file_path.empty() || (file = fopen(file_path.c_str(), "w")) == nullptr) {
+    return;
+  }
+  char buffer[IO_BUFFER_SIZE];
+  rapidjson::FileWriteStream write_stream(file, buffer, sizeof(buffer));
+  rapidjson::PrettyWriter<rapidjson::FileWriteStream> writer(write_stream);
+  doc.Accept(writer);
+  fclose(file);
+}
+
+// Parsed default config.
+std::unique_ptr<rapidjson::Document> DefaultConfig;
+// Mutex guarding default config.
+std::mutex DefaultConfigMutex;
+// Parse DEFAULT_CONFIG_JSON into DefaultConfig if not already parsed.
+void ParseDefaultConfig() {
+  std::lock_guard<std::mutex> lock(DefaultConfigMutex);
+  if (DefaultConfig != nullptr) {
+    return;
+  }
+  std::unique_ptr<rapidjson::Document> doc =
+      std::make_unique<rapidjson::Document>();
+  const rapidjson::ParseResult parse_result = doc->Parse(DEFAULT_CONFIG_JSON);
+  if (!parse_result) {
+    fprintf(
+        stderr, "Failed to parse default config at position %lu: %s",
+        parse_result.Offset(),
+        rapidjson::GetParseError_En(parse_result.Code()));
+    abort();
+  }
+  DefaultConfig = std::move(doc);
+}
+
+}  // namespace
+
+Settings* Settings::Open(
+    const std::string& config_file_path, const std::string& history_file_path) {
+  ParseDefaultConfig();
+
+  Settings* settings = new Settings();
+  settings->_config_file_path =
+      config_file_path.length() ? config_file_path : GetDefaultConfigFilePath();
+  settings->_history_file_path = history_file_path.length()
+                                     ? history_file_path
+                                     : GetDefaultHistoryFilePath();
+  LoadJsonFromFile(settings->_config_file_path, &settings->_config);
+  LoadJsonFromFile(settings->_history_file_path, &settings->_history);
+  return settings;
+}
+
+void Settings::Save() { WriteJsonToFile(_config, _config_file_path); }
+
+const rapidjson::Document& Settings::GetDefaultConfig() {
+  ParseDefaultConfig();
+  assert(DefaultConfig.get() != nullptr);
+  return *DefaultConfig;
+}
+

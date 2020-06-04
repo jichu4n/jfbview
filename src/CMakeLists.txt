@@ -75,6 +75,21 @@ add_custom_target(
 )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+# Generate default config.
+# ------------------------
+add_executable(
+  generate_default_config_cpp
+  generate_default_config_cpp.cpp
+)
+add_custom_command(
+  OUTPUT default_config.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/default_config.json
+  COMMAND
+    generate_default_config_cpp 
+      < ${CMAKE_CURRENT_SOURCE_DIR}/default_config.json 
+      > default_config.cpp
+)
+
 # Base library for handling documents.
 # ------------------------------------
 add_library(
@@ -117,6 +132,8 @@ add_library(
   search_view.cpp
   ui_view.cpp
   viewer.cpp
+  settings.cpp
+  default_config.cpp
 )
 target_link_libraries(
   jfbview_document_viewer
