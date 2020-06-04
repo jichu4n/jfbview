@@ -94,6 +94,10 @@ target_link_libraries(
   ${vendor_mupdf_libs}
   ${imlib2_libs}
 )
+add_dependencies(
+  jfbview_document
+  vendor_mupdf
+)
 if(ENABLE_LEGACY_PDF_IMPL)
   add_dependencies(
     jfbview_document
