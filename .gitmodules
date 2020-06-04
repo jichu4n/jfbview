@@ -1,3 +1,6 @@
 [submodule "vendor/mupdf"]
 	path = vendor/mupdf
 	url = https://github.com/ArtifexSoftware/mupdf.git
+[submodule "vendor/rapidjson"]
+	path = vendor/rapidjson
+	url = https://github.com/Tencent/rapidjson/

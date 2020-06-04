@@ -45,7 +45,10 @@ option(
 # Third-party code in vendor.
 # ---------------------------
 add_subdirectory(vendor)
-include_directories(${vendor_mupdf_include_dirs})
+include_directories(
+  ${vendor_mupdf_include_dirs}
+  ${vendor_rapidjson_include_dirs}
+)
 link_directories(${vendor_mupdf_link_dirs})
 
 # Project source code.

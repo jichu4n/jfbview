@@ -52,3 +52,9 @@ set(
   PARENT_SCOPE
 )
 
+set(
+  vendor_rapidjson_include_dirs
+  "${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/include"
+  PARENT_SCOPE
+)
+

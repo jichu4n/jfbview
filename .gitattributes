@@ -8,4 +8,9 @@ vendor/mupdf/thirdparty/lcms2/doc/** export-ignore
 vendor/mupdf/thirdparty/lcms2/testbed/** export-ignore
 vendor/mupdf/thirdparty/zlib/** export-ignore
 vendor/mupdf/thirdparty/openjpeg/** export-ignore
+vendor/rapidjson/thirdparty/** export-ignore
+vendor/rapidjson/bin/** export-ignore
+vendor/rapidjson/doc/** export-ignore
+vendor/rapidjson/test/** export-ignore
+vendor/rapidjson/example/** export-ignore
 
