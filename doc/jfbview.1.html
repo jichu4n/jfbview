@@ -19,14 +19,6 @@
        <B>--help</B>, <B>-h</B>
               Shows help message.
 
-       <B>--config=</B>.../config.json, <B>-C</B> .../config.json
-              Specifies  the config file to use. The default is ~/.config/jfb‐
-              view/config.json.
-
-       <B>--history=</B>.../history.json, <B>-H</B> .../history.json
-              Specifies the history file to use. The default is ~/.config/jfb‐
-              view/history.json.
-
        <B>--fb=</B>/dev/fbX
               Specifies the path to the output framebuffer device. The default
               is /dev/fb0.
@@ -64,6 +56,18 @@
               just the cache size up for increased performance. If you have an
               older machine with limited RAM you may want to set it  close  to
               zero.
+
+       <B>--config=</B>.../config.json, <B>-C</B> .../config.json
+              Specifies the configuration file to use. The default is
+              "~/.config/jfbview/config.json". See CONFIGURATION section below
+              for more details.
+
+       <B>--print_default_config</B>
+              Display the default configuration.
+
+       <B>--history=</B>.../history.json, <B>-H</B> .../history.json
+              Specifies the history file to use. The default is
+              "~/.config/jfbview/history.json".
 
 <B>KEY</B> <B>BINDINGS</B> <B>-</B> <B>MAIN</B> <B>VIEW</B>
        jfbview has a set of vi-like key bindings and many commands can be pre‐
@@ -163,8 +167,21 @@
 
        <B>Tab</B>/<B>/</B>  Go to search text.
 
+<B>CONFIGURATION</B>
+       jfbview will look for a configuration file at the following location:
+
+              <B>~/.config/jfbview/config.json</B>
+
+       You can also specify a  custom  configuration  file  location  via  the
+       <B>--config</B>/<B>-C</B> flag.
+
+       The  configuration  file  should  be a valid JSON file. To see the full
+       list of available options and their default values, run
+
+              jfbview <B>--print_default_config</B>
+
 <B>BUGS</B>
-       Please  submit  bugs  reports  and  any  suggestions for improvement at
+       Please submit bugs reports  and  any  suggestions  for  improvement  at
        https://github.com/jichu4n/jfbview/issues.
 
 <B>AUTHOR</B>

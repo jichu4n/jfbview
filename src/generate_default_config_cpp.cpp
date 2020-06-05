@@ -23,6 +23,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 
 #include "rapidjson/document.h"
 #include "rapidjson/error/en.h"
@@ -33,14 +34,22 @@
 #include "settings.hpp"
 
 int main() {
-  // 1. Read JSON into doc.
+  // 1. Read stdin into a string.
+  std::string stdin_contents;
+  {
+    while (!feof(stdin)) {
+      char read_buffer[1024] = {0};
+      fgets(read_buffer, sizeof(read_buffer), stdin);
+      stdin_contents += read_buffer;
+    }
+  }
+
+  // 2. Validate JSON.
   rapidjson::Document doc;
   {
-    char read_buffer[64 * 1024];
-    rapidjson::FileReadStream read_stream(
-        stdin, read_buffer, sizeof(read_buffer));
     const rapidjson::ParseResult parse_result =
-        doc.ParseStream<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(read_stream);
+        doc.Parse<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(
+            stdin_contents.c_str());
     if (!parse_result) {
       fprintf(
           stderr, "Failed to parse input at position %lu: %s\n",
@@ -50,21 +59,12 @@ int main() {
     }
   }
 
-  // 2. Serialize doc into a string.
-  std::string serialized_doc;
-  {
-    rapidjson::StringBuffer output_buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(output_buffer);
-    doc.Accept(writer);
-    serialized_doc = output_buffer.GetString();
-  }
-
-  // 3. Serialize serialized doc as string.
+  // 3. Serialize read input as string.
   std::string quoted_serialized_doc;
   {
     rapidjson::StringBuffer output_buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(output_buffer);
-    writer.String(serialized_doc.c_str());
+    writer.String(stdin_contents.c_str());
     quoted_serialized_doc = output_buffer.GetString();
   }
 

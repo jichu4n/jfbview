@@ -26,6 +26,10 @@
 
 #include "rapidjson/document.h"
 
+// Default config. This is generated during the build process from
+// "default_config.json" by "generate_default_config_cpp.cpp".
+extern const char* DEFAULT_CONFIG_JSON;
+
 class Settings {
  public:
   // Default JSON parsing flags. We want to be generally permissive with
@@ -33,7 +37,8 @@ class Settings {
   enum {
     PERMISSIVE_JSON_PARSE_FLAGS =
         rapidjson::kParseCommentsFlag | rapidjson::kParseTrailingCommasFlag |
-        rapidjson::kParseEscapedApostropheFlag | rapidjson::kParseNanAndInfFlag
+        rapidjson::kParseEscapedApostropheFlag |
+        rapidjson::kParseNanAndInfFlag | rapidjson::kParseStopWhenDoneFlag
   };
 
   // Factory method to create and initialize a Settings instance.

@@ -61,6 +61,7 @@ class SettingsTest : public ::testing::Test {
 };
 
 TEST_F(SettingsTest, CanLoadDefaultSettings) {
+  fprintf(stderr, "Default settings:\n%s", DEFAULT_CONFIG_JSON);
   const rapidjson::Document& default_config = Settings::GetDefaultConfig();
   rapidjson::StringBuffer output_buffer;
   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(output_buffer);

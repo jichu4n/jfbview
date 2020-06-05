@@ -83,7 +83,9 @@ add_executable(
 )
 add_custom_command(
   OUTPUT default_config.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/default_config.json
+  DEPENDS
+    generate_default_config_cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/default_config.json
   COMMAND
     generate_default_config_cpp 
       < ${CMAKE_CURRENT_SOURCE_DIR}/default_config.json 

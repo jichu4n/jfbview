@@ -10,13 +10,7 @@ jfbview is a PDF and image viewer for the Linux framebuffer.
 .SH OPTIONS
 .TP
 \fB--help\fR, \fB-h\fR
-Shows help message.
-.TP
-\fB--config=\fR.../config.json, \fB\-C\fR .../config.json
-Specifies the config file to use. The default is ~/.config/jfbview/config.json.
-.TP
-\fB--history=\fR.../history.json, \fB\-H\fR .../history.json
-Specifies the history file to use. The default is ~/.config/jfbview/history.json.
+Display help message.
 .TP
 \fB--fb=\fR/dev/fbX
 Specifies the path to the output framebuffer device. The default is /dev/fb0.
@@ -51,6 +45,20 @@ rendered at a particular zoom and rotation setting. However, you may wish to
 adjust the cache size down if this cache is consuming too much memory, or you
 may wish to adjust the cache size up for increased performance. If you have an
 older machine with limited RAM you may want to set it close to zero.
+.TP
+\fB--config=\fR.../config.json, \fB\-C\fR .../config.json
+Specifies the configuration file to use. The default is
+.br
+"~/.config/jfbview/config.json". See CONFIGURATION section below for more
+details.
+.TP
+\fB--print_default_config\fR
+Show the default configuration.
+.TP
+\fB--history=\fR.../history.json, \fB\-H\fR .../history.json
+Specifies the history file to use. The default is
+.br
+"~/.config/jfbview/history.json".
 .SH KEY BINDINGS - MAIN VIEW
 jfbview has a set of vi-like key bindings and many commands can be prefixed with
 a number. These are shown with a [n] prefix below.
@@ -171,6 +179,19 @@ Go down / up one page.
 .TP
 \fBTab\fR/\fB/\fR
 Go to search text.
+.SH CONFIGURATION
+.P
+jfbview will look for a configuration file at the following location:
+.IP
+\fB~/.config/jfbview/config.json\fR
+.P
+You can also specify a custom configuration file location via the
+\fB--config\fR/\fB-C\fR flag.
+.P
+The configuration file should be a valid JSON file. To see the full list of
+available options and their default values, run
+.IP
+jfbview \fB--print_default_config\fR
 .SH BUGS
 Please submit bugs reports and any suggestions for improvement at
 https://github.com/jichu4n/jfbview/issues.

@@ -37,10 +37,6 @@
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/rapidjson.h"
 
-// Default config. This is generated during the build process from
-// "default_config.json" by "generate_default_config_cpp.cpp".
-extern const char* DEFAULT_CONFIG_JSON;
-
 namespace {
 
 // Default file name of the config file.

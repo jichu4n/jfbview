@@ -516,10 +516,6 @@ static const char* HELP_STRING =
     "\n"
     "Options:\n"
     "\t--help, -h            Show this message.\n"
-    "\t--config=.../config.json, -C .../config.json\n"
-    "\t                      Specify the config file to use.\n"
-    "\t--history=.../history.json, -H .../history.json\n"
-    "\t                      Specify the history file to use.\n"
     "\t--fb=/dev/fbX         Specify output framebuffer device.\n"
     "\t--password=xx, -P xx  Unlock PDF document with the given password.\n"
     "\t--page=N, -p N        Open page N on start up.\n"
@@ -546,6 +542,12 @@ static const char* HELP_STRING =
     "\t                      huge documents, or if you just want to reduce\n"
     "\t                      memory usage, you might want to set this to a\n"
     "\t                      smaller number.\n"
+    "\t--config=.../config.json, -C .../config.json\n"
+    "\t                      Specify the configuration file to use.\n"
+    "\t--print_default_config\n"
+    "\t                      Show the default configuration.\n"
+    "\t--history=.../history.json, -H .../history.json\n"
+    "\t                      Specify the history file to use.\n"
     "\n"
     "jfbview home page: https://github.com/jichu4n/jfbview\n"
     "Bug reports & suggestions: https://github.com/jichu4n/jfbview/issues\n"
@@ -561,6 +563,7 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
     ZOOM_TO_FIT,
     FB,
     PRINT_FB_DEBUG_INFO_AND_EXIT,
+    PRINT_DEFAULT_CONFIG_AND_EXIT,
   };
   // Command line options.
   static const option LongFlags[] = {
@@ -578,6 +581,7 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
       {"format", true, nullptr, 'f'},
       {"cache_size", true, nullptr, RENDER_CACHE_SIZE},
       {"fb_debug_info", false, nullptr, PRINT_FB_DEBUG_INFO_AND_EXIT},
+      {"print_default_config", false, nullptr, PRINT_DEFAULT_CONFIG_AND_EXIT},
       {0, 0, 0, 0},
   };
   static const char* ShortFlags = "hC:H:P:p:z:r:c:f:";
@@ -665,13 +669,17 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
       case PRINT_FB_DEBUG_INFO_AND_EXIT:
         state->PrintFBDebugInfoAndExit = true;
         break;
+      case PRINT_DEFAULT_CONFIG_AND_EXIT:
+        fprintf(stdout, "%s", DEFAULT_CONFIG_JSON);
+        exit(EXIT_FAILURE);
+        break;
       default:
         fprintf(stderr, "Try \"-h\" for help.\n");
         exit(EXIT_FAILURE);
     }
   }
   if (optind == argc) {
-    if (!state->PrintFBDebugInfoAndExit) {
+    if (!(state->PrintFBDebugInfoAndExit)) {
       fprintf(stderr, "No file specified. Try \"-h\" for help.\n");
       exit(EXIT_FAILURE);
     }
