@@ -73,20 +73,20 @@ TEST_F(SettingsTest, CanLoadDefaultSettings) {
 }
 
 TEST_F(SettingsTest, GetValuesWithEmptyConfig) {
-  const std::string fb = _settings->GetString("fb");
+  const std::string fb = _settings->GetStringSetting("fb");
   EXPECT_GT(fb.length(), 0);
   EXPECT_EQ(fb, Settings::GetDefaultConfig()["fb"].GetString());
 
-  int cache_size = _settings->GetInt("cacheSize");
+  int cache_size = _settings->GetIntSetting("cacheSize");
   EXPECT_GT(cache_size, 0);
   EXPECT_EQ(cache_size, Settings::GetDefaultConfig()["cacheSize"].GetInt());
 
-  float zoom_mode =
-      _settings->GetEnum<float>("zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
+  float zoom_mode = _settings->GetEnumSetting<float>(
+      "zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
   EXPECT_NE(zoom_mode, 0.0f);
 
   int color_mode = -1;
-  color_mode = _settings->GetEnum<Viewer::ColorMode>(
+  color_mode = _settings->GetEnumSetting<Viewer::ColorMode>(
       "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
   EXPECT_GE(color_mode, 0);
 }
@@ -108,18 +108,18 @@ TEST_F(SettingsTest, GetValuesWithCustomConfig) {
 
   ReloadSettings();
 
-  const std::string fb = _settings->GetString("fb");
+  const std::string fb = _settings->GetStringSetting("fb");
   EXPECT_EQ(fb, custom_fb_value);
 
-  const int cache_size = _settings->GetInt("cacheSize");
+  const int cache_size = _settings->GetIntSetting("cacheSize");
   EXPECT_EQ(cache_size, custom_cache_size);
 
-  float zoom_mode =
-      _settings->GetEnum<float>("zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
+  float zoom_mode = _settings->GetEnumSetting<float>(
+      "zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
   EXPECT_EQ(zoom_mode, Viewer::ZOOM_MODE_ENUM_OPTIONS.at(custom_zoom_mode));
 
   int color_mode = -1;
-  color_mode = _settings->GetEnum<Viewer::ColorMode>(
+  color_mode = _settings->GetEnumSetting<Viewer::ColorMode>(
       "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
   EXPECT_EQ(color_mode, Viewer::COLOR_MODE_ENUM_OPTIONS.at(custom_color_mode));
 }
@@ -135,14 +135,14 @@ TEST_F(SettingsTest, GetEnumWithInvalidCustomConfig) {
 
   ReloadSettings();
 
-  float zoom_mode =
-      _settings->GetEnum<float>("zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
+  float zoom_mode = _settings->GetEnumSetting<float>(
+      "zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
   EXPECT_EQ(
       zoom_mode, Viewer::ZOOM_MODE_ENUM_OPTIONS.at(
                      default_config["zoomMode"].GetString()));
 
   int color_mode = -1;
-  color_mode = _settings->GetEnum<Viewer::ColorMode>(
+  color_mode = _settings->GetEnumSetting<Viewer::ColorMode>(
       "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
   EXPECT_EQ(
       color_mode, Viewer::COLOR_MODE_ENUM_OPTIONS.at(

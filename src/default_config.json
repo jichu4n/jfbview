@@ -7,7 +7,7 @@
   // Override on the command line with --cache_size=N.
   "cacheSize": 10,
 
-  // Default color mode. Valid values are "normal", "inverted", and "sepia".
+  // Default color mode. Valid values are "normal", "invert", and "sepia".
   // Override on the command line with --color_mode=X.
   "colorMode": "normal",
 

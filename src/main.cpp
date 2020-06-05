@@ -702,18 +702,19 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
 void LoadSettings(State* state) {
   state->Settings.reset(
       Settings::Open(state->ConfigFilePath, state->HistoryFilePath));
+  const Settings& settings = *state->Settings;
   if (state->FramebufferDevice.empty()) {
-    state->FramebufferDevice = state->Settings->GetString("fb");
+    state->FramebufferDevice = settings.GetStringSetting("fb");
   }
   if (state->RenderCacheSize <= 0) {
-    state->RenderCacheSize = state->Settings->GetInt("cacheSize");
+    state->RenderCacheSize = settings.GetIntSetting("cacheSize");
   }
   if (state->Zoom == 0) {
-    state->Zoom = state->Settings->GetEnum<float>(
+    state->Zoom = settings.GetEnumSetting<float>(
         "zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
   }
   if (state->ColorMode < 0) {
-    state->ColorMode = state->Settings->GetEnum<Viewer::ColorMode>(
+    state->ColorMode = settings.GetEnumSetting<Viewer::ColorMode>(
         "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
   }
 }

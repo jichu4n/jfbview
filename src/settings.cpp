@@ -185,11 +185,11 @@ Settings* Settings::Open(
   return settings;
 }
 
-std::string Settings::GetString(const std::string& key) {
+std::string Settings::GetStringSetting(const std::string& key) const {
   return GetConfigValueOrDefault<const char*>(_config, key);
 }
 
-int Settings::GetInt(const std::string& key) {
+int Settings::GetIntSetting(const std::string& key) const {
   return GetConfigValueOrDefault<int>(_config, key);
 }
 

@@ -50,14 +50,19 @@ class Settings {
       const std::string& history_file_path);
 
   // Gets the value of a string setting, with default config as fallback.
-  std::string GetString(const std::string& key);
+  std::string GetStringSetting(const std::string& key) const;
+  // Gets the value of a string setting from 1) history, 2) user config, or 3)
+  // default config in that order.
+  std::string GetStringSettingForFile(
+      const std::string& file_path, const std::string& key) const;
   // Gets the value of an integer setting, with default config as fallback.
-  int GetInt(const std::string& key);
-  // Gets the value of an enum setting, with default config as fallback. Enum
-  // options are specified as a STL map or unordered_map from string to value.
+  int GetIntSetting(const std::string& key) const;
+  // Gets the value of an enum setting, with default config as fallback.
+  // Possible enum options are specified as a STL map or unordered_map from
+  // string to value.
   template <
       typename V = int, typename MapT = std::unordered_map<std::string, V> >
-  V GetEnum(const std::string& key, const MapT& enum_map);
+  V GetEnumSetting(const std::string& key, const MapT& enum_map) const;
 
   // Returns the default configuration.
   static const rapidjson::Document& GetDefaultConfig();
@@ -82,8 +87,8 @@ class Settings {
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 template <typename V, typename MapT>
-V Settings::GetEnum(const std::string& key, const MapT& enum_map) {
-  const std::string string_value = GetString(key);
+V Settings::GetEnumSetting(const std::string& key, const MapT& enum_map) const {
+  const std::string string_value = GetStringSetting(key);
   typename MapT::const_iterator it = enum_map.find(string_value);
   if (it != enum_map.end()) {
     return it->second;
