@@ -23,6 +23,7 @@
 #define SETTINGS_HPP
 
 #include <string>
+#include <unordered_map>
 
 #include "rapidjson/document.h"
 
@@ -52,6 +53,11 @@ class Settings {
   std::string GetString(const std::string& key);
   // Gets the value of an integer setting, with default config as fallback.
   int GetInt(const std::string& key);
+  // Gets the value of an enum setting, with default config as fallback. Enum
+  // options are specified as a STL map or unordered_map from string to value.
+  template <
+      typename V = int, typename MapT = std::unordered_map<std::string, V> >
+  V GetEnum(const std::string& key, const MapT& enum_map);
 
   // Returns the default configuration.
   static const rapidjson::Document& GetDefaultConfig();
@@ -70,6 +76,29 @@ class Settings {
   // Use factory method Open() to create and initialize an instance.
   Settings(){};
 };
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *                              Implementation                               *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+template <typename V, typename MapT>
+V Settings::GetEnum(const std::string& key, const MapT& enum_map) {
+  const std::string string_value = GetString(key);
+  typename MapT::const_iterator it = enum_map.find(string_value);
+  if (it != enum_map.end()) {
+    return it->second;
+  }
+  const rapidjson::Document& default_config = GetDefaultConfig();
+  if (default_config.HasMember(key.c_str()) &&
+      default_config[key.c_str()].IsString()) {
+    it = enum_map.find(default_config[key.c_str()].GetString());
+    if (it != enum_map.end()) {
+      return it->second;
+    }
+  }
+  fprintf(stderr, "Unable to get enum config value \'%s\'\n", key.c_str());
+  abort();
+}
 
 #endif
 

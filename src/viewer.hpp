@@ -22,6 +22,9 @@
 #ifndef VIEWER_HPP
 #define VIEWER_HPP
 
+#include <string>
+#include <unordered_map>
+
 #include "cache.hpp"
 
 class Document;
@@ -37,6 +40,7 @@ class Viewer {
     // Automatically zoom to fit current page width.
     ZOOM_TO_WIDTH = -4,
   };
+  static const std::unordered_map<std::string, float> ZOOM_MODE_ENUM_OPTIONS;
 
   // Color mode.
   enum ColorMode {
@@ -44,6 +48,8 @@ class Viewer {
     INVERTED,
     SEPIA,
   };
+  static const std::unordered_map<std::string, ColorMode>
+      COLOR_MODE_ENUM_OPTIONS;
 
   // Maximum zoom ratio.
   static const float MAX_ZOOM;

@@ -30,6 +30,20 @@
 #include "document.hpp"
 #include "framebuffer.hpp"
 
+const std::unordered_map<std::string, float> Viewer::ZOOM_MODE_ENUM_OPTIONS{
+    {"zoomToFit", Viewer::ZOOM_TO_FIT},
+    {"zoomToWidth", Viewer::ZOOM_TO_WIDTH},
+    {"original", 1.0f},
+};
+
+const std::unordered_map<std::string, Viewer::ColorMode>
+    Viewer::COLOR_MODE_ENUM_OPTIONS{
+        {"normal", Viewer::ColorMode::NORMAL},
+        {"inverted", Viewer::ColorMode::INVERTED},
+        {"invert", Viewer::ColorMode::INVERTED},
+        {"sepia", Viewer::ColorMode::SEPIA},
+    };
+
 const float Viewer::MAX_ZOOM = 10.0f;
 const float Viewer::MIN_ZOOM = 0.1f;
 

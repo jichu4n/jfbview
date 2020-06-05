@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 
+#include "../src/viewer.hpp"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/rapidjson.h"
 
@@ -79,14 +80,31 @@ TEST_F(SettingsTest, GetValuesWithEmptyConfig) {
   int cache_size = _settings->GetInt("cacheSize");
   EXPECT_GT(cache_size, 0);
   EXPECT_EQ(cache_size, Settings::GetDefaultConfig()["cacheSize"].GetInt());
+
+  float zoom_mode =
+      _settings->GetEnum<float>("zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
+  EXPECT_NE(zoom_mode, 0.0f);
+
+  int color_mode = -1;
+  color_mode = _settings->GetEnum<Viewer::ColorMode>(
+      "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
+  EXPECT_GE(color_mode, 0);
 }
 
 TEST_F(SettingsTest, GetValuesWithCustomConfig) {
   const char* custom_fb_value = "/dev/foobar";
   const int custom_cache_size = 42;
+  const char* custom_zoom_mode = "original";
+  const char* custom_color_mode = "sepia";
   fprintf(
-      _config_file->FilePtr, "{\"fb\": \"%s\", \"cacheSize\": %d}",
-      custom_fb_value, custom_cache_size);
+      _config_file->FilePtr,
+      "{"
+      "\"fb\": \"%s\","
+      "\"cacheSize\": %d,"
+      "\"zoomMode\": \"%s\","
+      "\"colorMode\": \"%s\","
+      "}",
+      custom_fb_value, custom_cache_size, custom_zoom_mode, custom_color_mode);
 
   ReloadSettings();
 
@@ -95,5 +113,39 @@ TEST_F(SettingsTest, GetValuesWithCustomConfig) {
 
   const int cache_size = _settings->GetInt("cacheSize");
   EXPECT_EQ(cache_size, custom_cache_size);
+
+  float zoom_mode =
+      _settings->GetEnum<float>("zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
+  EXPECT_EQ(zoom_mode, Viewer::ZOOM_MODE_ENUM_OPTIONS.at(custom_zoom_mode));
+
+  int color_mode = -1;
+  color_mode = _settings->GetEnum<Viewer::ColorMode>(
+      "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
+  EXPECT_EQ(color_mode, Viewer::COLOR_MODE_ENUM_OPTIONS.at(custom_color_mode));
+}
+
+TEST_F(SettingsTest, GetEnumWithInvalidCustomConfig) {
+  const rapidjson::Document& default_config = Settings::GetDefaultConfig();
+  fprintf(
+      _config_file->FilePtr,
+      "{"
+      "\"zoomMode\": \"\","
+      "\"colorMode\": \"asdf\","
+      "}");
+
+  ReloadSettings();
+
+  float zoom_mode =
+      _settings->GetEnum<float>("zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
+  EXPECT_EQ(
+      zoom_mode, Viewer::ZOOM_MODE_ENUM_OPTIONS.at(
+                     default_config["zoomMode"].GetString()));
+
+  int color_mode = -1;
+  color_mode = _settings->GetEnum<Viewer::ColorMode>(
+      "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
+  EXPECT_EQ(
+      color_mode, Viewer::COLOR_MODE_ENUM_OPTIONS.at(
+                      default_config["colorMode"].GetString()));
 }
 

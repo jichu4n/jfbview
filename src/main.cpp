@@ -122,7 +122,11 @@ struct State : public Viewer::State {
         OutlineViewInst(nullptr),
         SearchViewInst(nullptr),
         FramebufferInst(nullptr),
-        ViewerInst(nullptr) {}
+        ViewerInst(nullptr) {
+    // These will be initialized from settings.
+    Zoom = 0;
+    ColorMode = static_cast<Viewer::ColorMode>(-1);
+  }
 };
 
 // Returns the all lowercase version of a string.
@@ -703,6 +707,14 @@ void LoadSettings(State* state) {
   }
   if (state->RenderCacheSize <= 0) {
     state->RenderCacheSize = state->Settings->GetInt("cacheSize");
+  }
+  if (state->Zoom == 0) {
+    state->Zoom = state->Settings->GetEnum<float>(
+        "zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
+  }
+  if (state->ColorMode < 0) {
+    state->ColorMode = state->Settings->GetEnum<Viewer::ColorMode>(
+        "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
   }
 }
 
