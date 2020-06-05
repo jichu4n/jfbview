@@ -32,12 +32,10 @@
 // An abstraction for a framebuffer device.
 class Framebuffer {
  public:
-  static const char* const DEFAULT_FRAMEBUFFER_DEVICE;
   // Factory method to initialize a framebuffer device and returns an
   // abstraction object. Returns nullptr if the initialization failed. Caller
   // owns returned object.
-  static Framebuffer* Open(
-      const std::string& device = DEFAULT_FRAMEBUFFER_DEVICE);
+  static Framebuffer* Open(const std::string& device);
   virtual ~Framebuffer();
 
   // Creates a new pixel buffer with the given size. The pixel buffer will have

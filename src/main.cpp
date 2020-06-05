@@ -61,6 +61,7 @@
 #include "outline_view.hpp"
 #include "pdf_document.hpp"
 #include "search_view.hpp"
+#include "settings.hpp"
 #include "viewer.hpp"
 
 // Main program state.
@@ -87,6 +88,12 @@ struct State : public Viewer::State {
   // Password for the input file. If no password is provided, this will be
   // nullptr.
   std::unique_ptr<std::string> FilePassword;
+  // Config file path.
+  std::string ConfigFilePath;
+  // History file path.
+  std::string HistoryFilePath;
+  // Loaded settings.
+  std::unique_ptr<::Settings> Settings;
   // Framebuffer device.
   std::string FramebufferDevice;
   // Document instance.
@@ -110,7 +117,8 @@ struct State : public Viewer::State {
         RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE),
         FilePath(""),
         FilePassword(),
-        FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
+        Settings(nullptr),
+        FramebufferDevice(),
         OutlineViewInst(nullptr),
         SearchViewInst(nullptr),
         FramebufferInst(nullptr),
@@ -508,6 +516,10 @@ static const char* HELP_STRING =
     "\n"
     "Options:\n"
     "\t--help, -h            Show this message.\n"
+    "\t--config=/path/to/config.json, -C /path/to/config.json\n"
+    "\t                      Specify the config file to use.\n"
+    "\t--history=/path/to/history.json, -H /path/to/history.json\n"
+    "\t                      Specify the history file to use.\n"
     "\t--fb=/path/to/dev     Specify output framebuffer device.\n"
     "\t--password=xx, -P xx  Unlock PDF document with the given password.\n"
     "\t--page=N, -p N        Open page N on start up.\n"
@@ -553,6 +565,8 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
   // Command line options.
   static const option LongFlags[] = {
       {"help", false, nullptr, 'h'},
+      {"config", true, nullptr, 'C'},
+      {"history", true, nullptr, 'H'},
       {"fb", true, nullptr, FB},
       {"password", true, nullptr, 'P'},
       {"page", true, nullptr, 'p'},
@@ -566,7 +580,7 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
       {"fb_debug_info", false, nullptr, PRINT_FB_DEBUG_INFO_AND_EXIT},
       {0, 0, 0, 0},
   };
-  static const char* ShortFlags = "hP:p:z:r:c:f:";
+  static const char* ShortFlags = "hC:H:P:p:z:r:c:f:";
 
   for (;;) {
     int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, nullptr);
@@ -577,6 +591,12 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
       case 'h':
         fprintf(stdout, "%s", HELP_STRING);
         exit(EXIT_FAILURE);
+      case 'C':
+        state->ConfigFilePath = optarg;
+        break;
+      case 'H':
+        state->HistoryFilePath = optarg;
+        break;
       case FB:
         state->FramebufferDevice = optarg;
         break;
@@ -663,6 +683,15 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
     exit(EXIT_FAILURE);
   } else {
     state->FilePath = argv[optind];
+  }
+}
+
+// Initialize settings and update state accordingly.
+void LoadSettings(State* state) {
+  state->Settings.reset(
+      Settings::Open(state->ConfigFilePath, state->HistoryFilePath));
+  if (state->FramebufferDevice.empty()) {
+    state->FramebufferDevice = state->Settings->GetString("fb");
   }
 }
 
@@ -800,6 +829,7 @@ int main(int argc, char* argv[]) {
 
   // 1. Initialization.
   ParseCommandLine(argc, argv, &state);
+  LoadSettings(&state);
   state.FramebufferInst.reset(Framebuffer::Open(state.FramebufferDevice));
   if (state.FramebufferInst == nullptr) {
     fprintf(stderr, "%s", FRAMEBUFFER_ERROR_HELP_STR);

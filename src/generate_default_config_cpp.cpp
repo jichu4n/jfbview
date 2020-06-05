@@ -43,7 +43,7 @@ int main() {
         doc.ParseStream<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(read_stream);
     if (!parse_result) {
       fprintf(
-          stderr, "Failed to parse input at position %lu: %s",
+          stderr, "Failed to parse input at position %lu: %s\n",
           parse_result.Offset(),
           rapidjson::GetParseError_En(parse_result.Code()));
       return EXIT_FAILURE;

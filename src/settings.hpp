@@ -28,15 +28,6 @@
 
 class Settings {
  public:
-  // Factory method to create and initialize a Settings instance. Caller owns
-  // returned instance.
-  static Settings* Open(
-      const std::string& config_file_path = "",
-      const std::string& history_file_path = "");
-
-  // Write current settings to disk.
-  void Save();
-
   // Default JSON parsing flags. We want to be generally permissive with
   // settings files as they are hand edited.
   enum {
@@ -44,6 +35,18 @@ class Settings {
         rapidjson::kParseCommentsFlag | rapidjson::kParseTrailingCommasFlag |
         rapidjson::kParseEscapedApostropheFlag | rapidjson::kParseNanAndInfFlag
   };
+
+  // Factory method to create and initialize a Settings instance. Caller owns
+  // returned instance.
+  static Settings* Open(
+      const std::string& config_file_path = "",
+      const std::string& history_file_path = "");
+
+  // Gets the value of a string setting, with default config as fallback.
+  std::string GetString(const std::string& key);
+
+  // Write current settings to disk.
+  void Save();
 
   // Returns the default configuration.
   static const rapidjson::Document& GetDefaultConfig();

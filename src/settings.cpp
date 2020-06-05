@@ -63,6 +63,7 @@ std::string GetHomeDirPath() {
   return "";
 }
 
+// Returns our config directory path.
 std::string GetConfigDirPath() {
   std::string config_root_dir_path;
   const char* xdg_config_home_env_var = getenv("XDG_CONFIG_HOME");
@@ -79,6 +80,7 @@ std::string GetConfigDirPath() {
   return config_root_dir_path + "/jfbview";
 }
 
+// Returns the default location of our config file.
 std::string GetDefaultConfigFilePath() {
   const std::string config_root_dir_path = GetConfigDirPath();
   if (config_root_dir_path.empty()) {
@@ -87,6 +89,7 @@ std::string GetDefaultConfigFilePath() {
   return config_root_dir_path + "/" + DEFAULT_CONFIG_FILE_NAME;
 }
 
+// Returns the default location of our history file.
 std::string GetDefaultHistoryFilePath() {
   const std::string config_root_dir_path = GetConfigDirPath();
   if (config_root_dir_path.empty()) {
@@ -134,12 +137,37 @@ void ParseDefaultConfig() {
       doc->Parse<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(DEFAULT_CONFIG_JSON);
   if (!parse_result) {
     fprintf(
-        stderr, "Failed to parse default config at position %lu: %s",
+        stderr, "Failed to parse default config at position %lu: %s\n",
         parse_result.Offset(),
         rapidjson::GetParseError_En(parse_result.Code()));
     abort();
   }
   DefaultConfig = std::move(doc);
+}
+
+// Returns a value from the default config. Fails if the key could not be found
+// or is of the wrong type.
+template <typename T>
+T GetDefaultConfigValue(const std::string& key) {
+  ParseDefaultConfig();
+  assert(DefaultConfig.get() != nullptr);
+  if (DefaultConfig->HasMember(key.c_str()) &&
+      (*DefaultConfig)[key.c_str()].Is<T>()) {
+    return (*DefaultConfig)[key.c_str()].Get<T>();
+  }
+  fprintf(
+      stderr, "Unable to locate default config value \'%s\'\n", key.c_str());
+  abort();
+}
+
+// Returns a value from the provided config or fall back to the default config.
+template <typename T>
+T GetConfigValueOrDefault(
+    const rapidjson::Value& config, const std::string& key) {
+  if (config.HasMember(key.c_str()) && config[key.c_str()].Is<T>()) {
+    return config[key.c_str()].Get<T>();
+  }
+  return GetDefaultConfigValue<T>(key);
 }
 
 }  // namespace
@@ -157,6 +185,10 @@ Settings* Settings::Open(
   LoadJsonFromFile(settings->_config_file_path, &settings->_config);
   LoadJsonFromFile(settings->_history_file_path, &settings->_history);
   return settings;
+}
+
+std::string Settings::GetString(const std::string& key) {
+  return GetConfigValueOrDefault<const char*>(_config, key);
 }
 
 void Settings::Save() { WriteJsonToFile(_config, _config_file_path); }

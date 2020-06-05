@@ -32,8 +32,6 @@
 #include <sstream>
 #include <string>
 
-const char* const Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE = "/dev/fb0";
-
 Framebuffer* Framebuffer::Open(const std::string& device) {
   std::unique_ptr<Framebuffer> fb(new Framebuffer(device));
 

@@ -1,4 +1,19 @@
 {
-  // Comment test
-  "foo": "bar"
+  // Framebuffer device to render on. Override on the command line with --fb=X.
+  "fb": "/dev/fb0",
+
+  // Cache at most N rendered pages. Set this to a smaller number if you have
+  // an older machine with limited RAM, or if you are loading huge documents.
+  // Override on the command line with --cache_size=N.
+  "cacheSize": 10,
+
+  // Default color mode. Valid values are "normal", "inverted", and "sepia".
+  // Override on the command line with --color_mode=X.
+  "colorMode": "normal",
+
+  // Default zoom mode. Valid values are "zoomToFit", "zoomToWidth", or
+  // "original" (i.e. 100%). Override on the command line with --zoom_to_fit or
+  // --zoom_to_width.
+  "zoomMode": "zoomToWidth",
 }
+
