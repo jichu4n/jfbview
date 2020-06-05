@@ -142,6 +142,7 @@ void ParseDefaultConfig() {
         rapidjson::GetParseError_En(parse_result.Code()));
     abort();
   }
+  assert(doc->IsObject());
   DefaultConfig = std::move(doc);
 }
 
@@ -164,7 +165,8 @@ T GetDefaultConfigValue(const std::string& key) {
 template <typename T>
 T GetConfigValueOrDefault(
     const rapidjson::Value& config, const std::string& key) {
-  if (config.HasMember(key.c_str()) && config[key.c_str()].Is<T>()) {
+  if (config.IsObject() && config.HasMember(key.c_str()) &&
+      config[key.c_str()].Is<T>()) {
     return config[key.c_str()].Get<T>();
   }
   return GetDefaultConfigValue<T>(key);
@@ -191,7 +193,9 @@ std::string Settings::GetString(const std::string& key) {
   return GetConfigValueOrDefault<const char*>(_config, key);
 }
 
-void Settings::Save() { WriteJsonToFile(_config, _config_file_path); }
+int Settings::GetInt(const std::string& key) {
+  return GetConfigValueOrDefault<int>(_config, key);
+}
 
 const rapidjson::Document& Settings::GetDefaultConfig() {
   ParseDefaultConfig();

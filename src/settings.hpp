@@ -36,17 +36,17 @@ class Settings {
         rapidjson::kParseEscapedApostropheFlag | rapidjson::kParseNanAndInfFlag
   };
 
-  // Factory method to create and initialize a Settings instance. Caller owns
-  // returned instance.
+  // Factory method to create and initialize a Settings instance.
+  // config_file_path and history_file_path will fall back to their respective
+  // defaults if empty. Caller owns returned instance.
   static Settings* Open(
-      const std::string& config_file_path = "",
-      const std::string& history_file_path = "");
+      const std::string& config_file_path,
+      const std::string& history_file_path);
 
   // Gets the value of a string setting, with default config as fallback.
   std::string GetString(const std::string& key);
-
-  // Write current settings to disk.
-  void Save();
+  // Gets the value of an integer setting, with default config as fallback.
+  int GetInt(const std::string& key);
 
   // Returns the default configuration.
   static const rapidjson::Document& GetDefaultConfig();

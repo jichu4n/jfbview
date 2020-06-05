@@ -30,9 +30,6 @@ class PixelBuffer;
 
 class Viewer {
  public:
-  // Default number of rendered pages to keep in cache.
-  enum { DEFAULT_RENDER_CACHE_SIZE = 8 };
-
   // Zoom modes.
   enum {
     // Automatically zoom to fit current page.
@@ -104,8 +101,8 @@ class Viewer {
   // Constructs a new Viewer object. Does not take ownership of the document or
   // the framebuffer object.
   Viewer(
-      Document* doc, Framebuffer* fb, const State& state = State(),
-      int render_cache_size = DEFAULT_RENDER_CACHE_SIZE);
+      Document* doc, Framebuffer* fb, const State& state,
+      int render_cache_size);
   virtual ~Viewer();
 
   // Renders the present view to the framebuffer.

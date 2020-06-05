@@ -114,7 +114,7 @@ struct State : public Viewer::State {
         Exit(false),
         Render(true),
         DocumentType(AUTO_DETECT),
-        RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE),
+        RenderCacheSize(0),
         FilePath(""),
         FilePassword(),
         Settings(nullptr),
@@ -516,11 +516,11 @@ static const char* HELP_STRING =
     "\n"
     "Options:\n"
     "\t--help, -h            Show this message.\n"
-    "\t--config=/path/to/config.json, -C /path/to/config.json\n"
+    "\t--config=.../config.json, -C .../config.json\n"
     "\t                      Specify the config file to use.\n"
-    "\t--history=/path/to/history.json, -H /path/to/history.json\n"
+    "\t--history=.../history.json, -H .../history.json\n"
     "\t                      Specify the history file to use.\n"
-    "\t--fb=/path/to/dev     Specify output framebuffer device.\n"
+    "\t--fb=/dev/fbX         Specify output framebuffer device.\n"
     "\t--password=xx, -P xx  Unlock PDF document with the given password.\n"
     "\t--page=N, -p N        Open page N on start up.\n"
     "\t--zoom=N, -z N        Set initial zoom to N. E.g., -z 150 sets \n"
@@ -692,6 +692,9 @@ void LoadSettings(State* state) {
       Settings::Open(state->ConfigFilePath, state->HistoryFilePath));
   if (state->FramebufferDevice.empty()) {
     state->FramebufferDevice = state->Settings->GetString("fb");
+  }
+  if (state->RenderCacheSize <= 0) {
+    state->RenderCacheSize = state->Settings->GetInt("cacheSize");
   }
 }
 
