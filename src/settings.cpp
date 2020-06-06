@@ -142,32 +142,6 @@ void ParseDefaultConfig() {
   DefaultConfig = std::move(doc);
 }
 
-// Returns a value from the default config. Fails if the key could not be found
-// or is of the wrong type.
-template <typename T>
-T GetDefaultConfigValue(const std::string& key) {
-  ParseDefaultConfig();
-  assert(DefaultConfig.get() != nullptr);
-  if (DefaultConfig->HasMember(key.c_str()) &&
-      (*DefaultConfig)[key.c_str()].Is<T>()) {
-    return (*DefaultConfig)[key.c_str()].Get<T>();
-  }
-  fprintf(
-      stderr, "Unable to locate default config value \'%s\'\n", key.c_str());
-  abort();
-}
-
-// Returns a value from the provided config or fall back to the default config.
-template <typename T>
-T GetConfigValueOrDefault(
-    const rapidjson::Value& config, const std::string& key) {
-  if (config.IsObject() && config.HasMember(key.c_str()) &&
-      config[key.c_str()].Is<T>()) {
-    return config[key.c_str()].Get<T>();
-  }
-  return GetDefaultConfigValue<T>(key);
-}
-
 }  // namespace
 
 Settings* Settings::Open(
@@ -186,11 +160,23 @@ Settings* Settings::Open(
 }
 
 std::string Settings::GetStringSetting(const std::string& key) const {
-  return GetConfigValueOrDefault<const char*>(_config, key);
+  return GetConfigValue<const char*>(key, nullptr, _config, GetDefaultConfig());
+}
+
+std::string Settings::GetStringSettingForFile(
+    const std::string& file_path, const std::string& key) const {
+  return GetConfigValue<const char*>(
+      key, nullptr, GetSettingsForFile(file_path), _config, GetDefaultConfig());
 }
 
 int Settings::GetIntSetting(const std::string& key) const {
-  return GetConfigValueOrDefault<int>(_config, key);
+  return GetConfigValue<int>(key, nullptr, _config, GetDefaultConfig());
+}
+
+int Settings::GetIntSettingForFile(
+    const std::string& file_path, const std::string& key) const {
+  return GetConfigValue<int>(
+      key, nullptr, GetSettingsForFile(file_path), _config, GetDefaultConfig());
 }
 
 const rapidjson::Document& Settings::GetDefaultConfig() {
@@ -199,3 +185,24 @@ const rapidjson::Document& Settings::GetDefaultConfig() {
   return *DefaultConfig;
 }
 
+const rapidjson::Value& Settings::GetSettingsForFile(
+    const std::string& file_path) const {
+  static rapidjson::Value null_value;
+  if (!_history.IsObject() || !_history.HasMember("history") ||
+      !_history["history"].IsArray()) {
+    return null_value;
+  }
+  const auto& history_array = _history["history"].GetArray();
+  char* real_file_path_buffer = realpath(file_path.c_str(), nullptr);
+  const std::string& real_file_path =
+      real_file_path_buffer == nullptr ? file_path : real_file_path_buffer;
+  free(real_file_path_buffer);
+  for (const auto& history_record : history_array) {
+    if (history_record.IsObject() && history_record.HasMember("path") &&
+        history_record["path"].IsString() &&
+        history_record["path"].GetString() == real_file_path) {
+      return history_record;
+    }
+  }
+  return null_value;
+}

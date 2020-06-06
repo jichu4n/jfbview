@@ -61,6 +61,8 @@ class SettingsTest : public ::testing::Test {
   std::unique_ptr<Settings> _settings;
 };
 
+const std::string INPUT_FILE_PATH = "/test.pdf";
+
 TEST_F(SettingsTest, CanLoadDefaultSettings) {
   fprintf(stderr, "Default settings:\n%s", DEFAULT_CONFIG_JSON);
   const rapidjson::Document& default_config = Settings::GetDefaultConfig();
@@ -99,10 +101,10 @@ TEST_F(SettingsTest, GetValuesWithCustomConfig) {
   fprintf(
       _config_file->FilePtr,
       "{"
-      "\"fb\": \"%s\","
-      "\"cacheSize\": %d,"
-      "\"zoomMode\": \"%s\","
-      "\"colorMode\": \"%s\","
+      "  \"fb\": \"%s\","
+      "  \"cacheSize\": %d,"
+      "  \"zoomMode\": \"%s\","
+      "  \"colorMode\": \"%s\","
       "}",
       custom_fb_value, custom_cache_size, custom_zoom_mode, custom_color_mode);
 
@@ -129,8 +131,8 @@ TEST_F(SettingsTest, GetEnumWithInvalidCustomConfig) {
   fprintf(
       _config_file->FilePtr,
       "{"
-      "\"zoomMode\": \"\","
-      "\"colorMode\": \"asdf\","
+      "  \"zoomMode\": \"\","
+      "  \"colorMode\": \"asdf\","
       "}");
 
   ReloadSettings();
@@ -147,5 +149,29 @@ TEST_F(SettingsTest, GetEnumWithInvalidCustomConfig) {
   EXPECT_EQ(
       color_mode, Viewer::COLOR_MODE_ENUM_OPTIONS.at(
                       default_config["colorMode"].GetString()));
+}
+
+TEST_F(SettingsTest, GetValuesWithHistory) {
+  const char* custom_color_mode = "sepia";
+  EXPECT_NE(
+      custom_color_mode, Settings::GetDefaultConfig()["colorMode"].GetString());
+  fprintf(
+      _history_file->FilePtr,
+      "{"
+      "  \"history\": ["
+      "    {"
+      "      \"path\": \"%s\","
+      "      \"colorMode\": \"%s\","
+      "    },"
+      "  ]"
+      "}",
+      INPUT_FILE_PATH.c_str(), custom_color_mode);
+
+  ReloadSettings();
+
+  int color_mode = -1;
+  color_mode = _settings->GetEnumSettingForFile<Viewer::ColorMode>(
+      INPUT_FILE_PATH, "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
+  EXPECT_EQ(color_mode, Viewer::COLOR_MODE_ENUM_OPTIONS.at(custom_color_mode));
 }
 

@@ -22,6 +22,7 @@
 #ifndef SETTINGS_HPP
 #define SETTINGS_HPP
 
+#include <functional>
 #include <string>
 #include <unordered_map>
 
@@ -57,12 +58,23 @@ class Settings {
       const std::string& file_path, const std::string& key) const;
   // Gets the value of an integer setting, with default config as fallback.
   int GetIntSetting(const std::string& key) const;
+  // Gets the value of an integer setting from 1) history, 2) user config, or 3)
+  // default config in that order.
+  int GetIntSettingForFile(
+      const std::string& file_path, const std::string& key) const;
   // Gets the value of an enum setting, with default config as fallback.
   // Possible enum options are specified as a STL map or unordered_map from
   // string to value.
   template <
       typename V = int, typename MapT = std::unordered_map<std::string, V> >
   V GetEnumSetting(const std::string& key, const MapT& enum_map) const;
+  // Gets the value of an enum setting from 1) history, 2) user config, or 3)
+  // default config in that order.
+  template <
+      typename V = int, typename MapT = std::unordered_map<std::string, V> >
+  V GetEnumSettingForFile(
+      const std::string& file_path, const std::string& key,
+      const MapT& enum_map) const;
 
   // Returns the default configuration.
   static const rapidjson::Document& GetDefaultConfig();
@@ -80,29 +92,80 @@ class Settings {
 
   // Use factory method Open() to create and initialize an instance.
   Settings(){};
+
+  // Type alias for a function that checks whether a setting value is valid.
+  template <typename T>
+  using ConfigValueValidationFn = std::function<bool(const T&)>;
+
+  // Looks up a setting from each of the provided configs in order, falling
+  // through to the next config if the setting could not be found in the config
+  // or if the setting fails validation (wrong type or validation function
+  // provided and returns false). Pass nullptr to validation_fn if no
+  // validation needed beyond type check.
+  template <
+      typename T, typename ConfigT = rapidjson::Value, typename... ConfigTs>
+  static T GetConfigValue(
+      const std::string& key, ConfigValueValidationFn<T> validation_fn,
+      const ConfigT& config, const ConfigTs&... rest);
+  // Base case of above variadic function that just crashes immediately.
+  template <typename T>
+  static T GetConfigValue(
+      const std::string& key, ConfigValueValidationFn<T> validation_fn);
+
+  // Locates per-file settings in a history JSON document, or null.
+  const rapidjson::Value& GetSettingsForFile(
+      const std::string& file_path) const;
 };
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                              Implementation                               *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-template <typename V, typename MapT>
-V Settings::GetEnumSetting(const std::string& key, const MapT& enum_map) const {
-  const std::string string_value = GetStringSetting(key);
-  typename MapT::const_iterator it = enum_map.find(string_value);
-  if (it != enum_map.end()) {
-    return it->second;
-  }
-  const rapidjson::Document& default_config = GetDefaultConfig();
-  if (default_config.HasMember(key.c_str()) &&
-      default_config[key.c_str()].IsString()) {
-    it = enum_map.find(default_config[key.c_str()].GetString());
-    if (it != enum_map.end()) {
-      return it->second;
+template <typename T>
+T Settings::GetConfigValue(
+    const std::string& key,
+    Settings::ConfigValueValidationFn<T> validation_fn) {
+  fprintf(stderr, "Unable to locate config value \'%s\'\n", key.c_str());
+  abort();
+}
+
+template <typename T, typename ConfigT, typename... ConfigTs>
+T Settings::GetConfigValue(
+    const std::string& key, ConfigValueValidationFn<T> validation_fn,
+    const ConfigT& config, const ConfigTs&... rest) {
+  if (config.IsObject() && config.HasMember(key.c_str())) {
+    const auto& value = config[key.c_str()];
+    if (value.template Is<T>() &&
+        (!validation_fn || validation_fn(value.template Get<T>()))) {
+      return value.template Get<T>();
     }
   }
-  fprintf(stderr, "Unable to get enum config value \'%s\'\n", key.c_str());
-  abort();
+  return GetConfigValue<T, ConfigTs...>(key, validation_fn, rest...);
+}
+
+template <typename V, typename MapT>
+V Settings::GetEnumSetting(const std::string& key, const MapT& enum_map) const {
+  const ConfigValueValidationFn<const char*> enum_value_validation_fn =
+      [&enum_map](const char* value) { return enum_map.count(value); };
+  const std::string string_value = GetConfigValue<const char*>(
+      key, enum_value_validation_fn, _config, GetDefaultConfig());
+  typename MapT::const_iterator it = enum_map.find(string_value);
+  assert(it != enum_map.end());
+  return it->second;
+}
+
+template <typename V, typename MapT>
+V Settings::GetEnumSettingForFile(
+    const std::string& file_path, const std::string& key,
+    const MapT& enum_map) const {
+  const ConfigValueValidationFn<const char*> enum_value_validation_fn =
+      [&enum_map](const char* value) { return enum_map.count(value); };
+  const std::string string_value = GetConfigValue<const char*>(
+      key, enum_value_validation_fn, GetSettingsForFile(file_path), _config,
+      GetDefaultConfig());
+  typename MapT::const_iterator it = enum_map.find(string_value);
+  assert(it != enum_map.end());
+  return it->second;
 }
 
 #endif
