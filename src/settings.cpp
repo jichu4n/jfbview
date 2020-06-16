@@ -119,34 +119,54 @@ void WriteJsonToFile(
 
 // Parsed default config.
 std::unique_ptr<rapidjson::Document> DefaultConfig;
-// Mutex guarding default config.
+// Parsed default per-file config.
+std::unique_ptr<rapidjson::Document> DefaultFileConfig;
+// Mutex guarding default configs.
 std::mutex DefaultConfigMutex;
-// Parse DEFAULT_CONFIG_JSON into DefaultConfig if not already parsed.
-void ParseDefaultConfig() {
+// Parse DEFAULT_CONFIG_JSON and DEFAULT_FILE_CONFIG_JSON if not already parsed.
+void ParseDefaultConfigs() {
   std::lock_guard<std::mutex> lock(DefaultConfigMutex);
-  if (DefaultConfig != nullptr) {
+  if (DefaultConfig != nullptr || DefaultFileConfig != nullptr) {
     return;
   }
-  std::unique_ptr<rapidjson::Document> doc =
-      std::make_unique<rapidjson::Document>();
-  const rapidjson::ParseResult parse_result =
-      doc->Parse<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(DEFAULT_CONFIG_JSON);
-  if (!parse_result) {
-    fprintf(
-        stderr, "Failed to parse default config at position %lu: %s\n",
-        parse_result.Offset(),
-        rapidjson::GetParseError_En(parse_result.Code()));
-    abort();
+  {
+    std::unique_ptr<rapidjson::Document> doc =
+        std::make_unique<rapidjson::Document>();
+    const rapidjson::ParseResult parse_result =
+        doc->Parse<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(DEFAULT_CONFIG_JSON);
+    if (!parse_result) {
+      fprintf(
+          stderr, "Failed to parse default config at position %lu: %s\n",
+          parse_result.Offset(),
+          rapidjson::GetParseError_En(parse_result.Code()));
+      abort();
+    }
+    assert(doc->IsObject());
+    DefaultConfig = std::move(doc);
   }
-  assert(doc->IsObject());
-  DefaultConfig = std::move(doc);
+  {
+    std::unique_ptr<rapidjson::Document> doc =
+        std::make_unique<rapidjson::Document>();
+    const rapidjson::ParseResult parse_result =
+        doc->Parse<Settings::PERMISSIVE_JSON_PARSE_FLAGS>(
+            DEFAULT_FILE_CONFIG_JSON);
+    if (!parse_result) {
+      fprintf(
+          stderr, "Failed to parse default file config at position %lu: %s\n",
+          parse_result.Offset(),
+          rapidjson::GetParseError_En(parse_result.Code()));
+      abort();
+    }
+    assert(doc->IsObject());
+    DefaultFileConfig = std::move(doc);
+  }
 }
 
 }  // namespace
 
 Settings* Settings::Open(
     const std::string& config_file_path, const std::string& history_file_path) {
-  ParseDefaultConfig();
+  ParseDefaultConfigs();
 
   Settings* settings = new Settings();
   settings->_config_file_path =
@@ -166,7 +186,8 @@ std::string Settings::GetStringSetting(const std::string& key) const {
 std::string Settings::GetStringSettingForFile(
     const std::string& file_path, const std::string& key) const {
   return GetConfigValue<const char*>(
-      key, nullptr, GetSettingsForFile(file_path), _config, GetDefaultConfig());
+      key, nullptr, GetSettingsForFile(file_path), GetDefaultFileConfig(),
+      _config, GetDefaultConfig());
 }
 
 int Settings::GetIntSetting(const std::string& key) const {
@@ -176,13 +197,20 @@ int Settings::GetIntSetting(const std::string& key) const {
 int Settings::GetIntSettingForFile(
     const std::string& file_path, const std::string& key) const {
   return GetConfigValue<int>(
-      key, nullptr, GetSettingsForFile(file_path), _config, GetDefaultConfig());
+      key, nullptr, GetSettingsForFile(file_path), GetDefaultFileConfig(),
+      _config, GetDefaultConfig());
 }
 
 const rapidjson::Document& Settings::GetDefaultConfig() {
-  ParseDefaultConfig();
+  ParseDefaultConfigs();
   assert(DefaultConfig.get() != nullptr);
   return *DefaultConfig;
+}
+
+const rapidjson::Document& Settings::GetDefaultFileConfig() {
+  ParseDefaultConfigs();
+  assert(DefaultFileConfig.get() != nullptr);
+  return *DefaultFileConfig;
 }
 
 const rapidjson::Value& Settings::GetSettingsForFile(

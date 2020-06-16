@@ -33,7 +33,13 @@
 #include "rapidjson/writer.h"
 #include "settings.hpp"
 
-int main() {
+int main(int argc, char* argv[]) {
+  if (argc != 2) {
+    fprintf(stderr, "Usage: %s <OUTPUT_CONSTANT_NAME>\n", argv[0]);
+    return EXIT_FAILURE;
+  }
+  const char* output_const_name = argv[1];
+
   // 1. Read stdin into a string.
   std::string stdin_contents;
   {
@@ -70,7 +76,7 @@ int main() {
 
   // 4. Print result to stdout.
   fprintf(
-      stdout, "const char* DEFAULT_CONFIG_JSON = %s;",
+      stdout, "const char* %s = %s;", output_const_name,
       quoted_serialized_doc.c_str());
 
   return EXIT_SUCCESS;

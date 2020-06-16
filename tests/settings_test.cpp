@@ -74,6 +74,18 @@ TEST_F(SettingsTest, CanLoadDefaultSettings) {
   fprintf(stderr, "Loaded default settings:\n%s\n", output.c_str());
 }
 
+TEST_F(SettingsTest, CanLoadDefaultFileSettings) {
+  fprintf(stderr, "Default file settings:\n%s", DEFAULT_FILE_CONFIG_JSON);
+  const rapidjson::Document& default_file_config =
+      Settings::GetDefaultFileConfig();
+  rapidjson::StringBuffer output_buffer;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(output_buffer);
+  default_file_config.Accept(writer);
+  const std::string output = output_buffer.GetString();
+  EXPECT_GT(output.length(), 2);
+  fprintf(stderr, "Loaded default file settings:\n%s\n", output.c_str());
+}
+
 TEST_F(SettingsTest, GetValuesWithEmptyConfig) {
   const std::string fb = _settings->GetStringSetting("fb");
   EXPECT_GT(fb.length(), 0);

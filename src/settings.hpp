@@ -32,6 +32,10 @@
 // "default_config.json" by "generate_default_config_cpp.cpp".
 extern const char* DEFAULT_CONFIG_JSON;
 
+// Default per-file config. This is generated during the build process from
+// "default_file_config.json" by "generate_default_config_cpp.cpp".
+extern const char* DEFAULT_FILE_CONFIG_JSON;
+
 class Settings {
  public:
   // Default JSON parsing flags. We want to be generally permissive with
@@ -78,6 +82,8 @@ class Settings {
 
   // Returns the default configuration.
   static const rapidjson::Document& GetDefaultConfig();
+  // Returns the default per-file configuration.
+  static const rapidjson::Document& GetDefaultFileConfig();
 
  private:
   // Path to config file.
@@ -161,8 +167,8 @@ V Settings::GetEnumSettingForFile(
   const ConfigValueValidationFn<const char*> enum_value_validation_fn =
       [&enum_map](const char* value) { return enum_map.count(value); };
   const std::string string_value = GetConfigValue<const char*>(
-      key, enum_value_validation_fn, GetSettingsForFile(file_path), _config,
-      GetDefaultConfig());
+      key, enum_value_validation_fn, GetSettingsForFile(file_path),
+      GetDefaultFileConfig(), _config, GetDefaultConfig());
   typename MapT::const_iterator it = enum_map.find(string_value);
   assert(it != enum_map.end());
   return it->second;

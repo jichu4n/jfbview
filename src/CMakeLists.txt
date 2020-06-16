@@ -78,18 +78,28 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 # Generate default config.
 # ------------------------
 add_executable(
-  generate_default_config_cpp
-  generate_default_config_cpp.cpp
+  generate_config_cpp
+  generate_config_cpp.cpp
 )
 add_custom_command(
   OUTPUT default_config.cpp
   DEPENDS
-    generate_default_config_cpp
+    generate_config_cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/default_config.json
   COMMAND
-    generate_default_config_cpp 
+    generate_config_cpp DEFAULT_CONFIG_JSON
       < ${CMAKE_CURRENT_SOURCE_DIR}/default_config.json 
       > default_config.cpp
+)
+add_custom_command(
+  OUTPUT default_file_config.cpp
+  DEPENDS
+    generate_config_cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/default_file_config.json
+  COMMAND
+  generate_config_cpp DEFAULT_FILE_CONFIG_JSON
+      < ${CMAKE_CURRENT_SOURCE_DIR}/default_file_config.json 
+      > default_file_config.cpp
 )
 
 # Base library for handling documents.
@@ -136,6 +146,7 @@ add_library(
   viewer.cpp
   settings.cpp
   default_config.cpp
+  default_file_config.cpp
 )
 target_link_libraries(
   jfbview_document_viewer
