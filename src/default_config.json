@@ -15,4 +15,7 @@
   // "original" (i.e. 100%). Override on the command line with --zoom_to_fit or
   // --zoom_to_width.
   "zoomMode": "zoomToWidth",
+
+  // Default rotation, in degrees clockwise.
+  "rotation": 0,
 }

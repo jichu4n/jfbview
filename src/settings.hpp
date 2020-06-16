@@ -66,6 +66,13 @@ class Settings {
   // default config in that order.
   int GetIntSettingForFile(
       const std::string& file_path, const std::string& key) const;
+  // Gets the value of a floating point number setting, with default config as
+  // fallback.
+  float GetFloatSetting(const std::string& key) const;
+  // Gets the value of a floating point number setting from 1) history, 2) user
+  // config, or 3) default config in that order.
+  float GetFloatSettingForFile(
+      const std::string& file_path, const std::string& key) const;
   // Gets the value of an enum setting, with default config as fallback.
   // Possible enum options are specified as a STL map or unordered_map from
   // string to value.

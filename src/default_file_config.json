@@ -1,5 +1,7 @@
 {
   // Current page number (0-based).
   "page": 0,
+  // Current zoom level. 0 indicates fallback to zoom mode.
+  "zoom": 0,
 }
 

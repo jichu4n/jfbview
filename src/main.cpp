@@ -124,6 +124,8 @@ struct State : public Viewer::State {
         FramebufferInst(nullptr),
         ViewerInst(nullptr) {
     // These will be initialized from settings.
+    Page = -1;
+    Rotation = -1;
     Zoom = 0;
     ColorMode = static_cast<Viewer::ColorMode>(-1);
   }
@@ -709,13 +711,23 @@ void LoadSettings(State* state) {
   if (state->RenderCacheSize <= 0) {
     state->RenderCacheSize = settings.GetIntSetting("cacheSize");
   }
+  if (state->Page < 0) {
+    state->Page = settings.GetIntSettingForFile(state->FilePath, "page");
+  }
   if (state->Zoom == 0) {
-    state->Zoom = settings.GetEnumSetting<float>(
-        "zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
+    state->Zoom = settings.GetFloatSettingForFile(state->FilePath, "zoom");
+    if (state->Zoom <= 0) {
+      state->Zoom = settings.GetEnumSettingForFile<float>(
+          state->FilePath, "zoomMode", Viewer::ZOOM_MODE_ENUM_OPTIONS);
+    }
+  }
+  if (state->Rotation < 0) {
+    state->Rotation =
+        settings.GetIntSettingForFile(state->FilePath, "rotation");
   }
   if (state->ColorMode < 0) {
-    state->ColorMode = settings.GetEnumSetting<Viewer::ColorMode>(
-        "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
+    state->ColorMode = settings.GetEnumSettingForFile<Viewer::ColorMode>(
+        state->FilePath, "colorMode", Viewer::COLOR_MODE_ENUM_OPTIONS);
   }
 }
 

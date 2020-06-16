@@ -201,6 +201,17 @@ int Settings::GetIntSettingForFile(
       _config, GetDefaultConfig());
 }
 
+float Settings::GetFloatSetting(const std::string& key) const {
+  return GetConfigValue<double>(key, nullptr, _config, GetDefaultConfig());
+}
+
+float Settings::GetFloatSettingForFile(
+    const std::string& file_path, const std::string& key) const {
+  return GetConfigValue<double>(
+      key, nullptr, GetSettingsForFile(file_path), GetDefaultFileConfig(),
+      _config, GetDefaultConfig());
+}
+
 const rapidjson::Document& Settings::GetDefaultConfig() {
   ParseDefaultConfigs();
   assert(DefaultConfig.get() != nullptr);
