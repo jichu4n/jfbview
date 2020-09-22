@@ -16,8 +16,8 @@ $sudo pacman -Sq --noconfirm which \
 
 cd "$(dirname "$0")/.."
 
-tar tvf upload/*.pkg.tar.xz
-$sudo pacman -U --noconfirm upload/*.pkg.tar.xz
+tar tvf upload/*.pkg.tar.*
+$sudo pacman -U --noconfirm upload/*.pkg.tar.*
 
 tests/smoke-test.sh
 

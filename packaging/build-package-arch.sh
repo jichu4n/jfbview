@@ -27,7 +27,7 @@ function build_package() {
   budo makepkg --syncdeps --noconfirm --noextract
 
   mkdir -p "${src_dir}"/upload
-  mv *.pkg.tar.xz "${src_dir}"/upload/
+  mv *.pkg.tar.* "${src_dir}"/upload/
 
   # For caching in Travis CI.
   rsync -a src/jfbview/vendor/mupdf/build/ "${src_dir}"/vendor/mupdf/build/
