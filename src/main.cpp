@@ -38,6 +38,7 @@
 #include <getopt.h>
 #include <linux/vt.h>
 #include <locale.h>
+#include <sys/inotify.h>
 #include <sys/ioctl.h>
 #include <sys/prctl.h>
 #include <unistd.h>
@@ -71,6 +72,18 @@ struct State : public Viewer::State {
   bool Exit;
   // If true (default), requires refresh after current command.
   bool Render;
+
+  // file descriptors that are listened to.
+  struct {
+    int nfds;
+    fd_set descriptors;
+  } Monitoring;
+
+  struct {
+    bool enabled;
+    int fd;
+    int wd;
+  } AutoReload;
 
   // The type of the displayed file.
   enum {
@@ -106,6 +119,7 @@ struct State : public Viewer::State {
         PrintFBDebugInfoAndExit(false),
         Exit(false),
         Render(true),
+        AutoReload({.enabled=false,.fd=0}),
         DocumentType(AUTO_DETECT),
         RenderCacheSize(Viewer::DEFAULT_RENDER_CACHE_SIZE),
         FilePath(""),
@@ -520,6 +534,7 @@ static const char* HELP_STRING =
     "\t                      Start in inverted color mode.\n"
     "\t--color_mode=sepia, -c sepia\n"
     "\t                      Start in sepia color mode.\n"
+    "\t--autoreload          Reload current file once it changes.\n"
 #if defined(JFBVIEW_ENABLE_LEGACY_IMAGE_IMPL) && \
     defined(JFBVIEW_ENABLE_LEGACY_PDF_IMPL) && !defined(JFBVIEW_NO_IMLIB2)
     "\t--format=image, -f image\n"
@@ -561,12 +576,13 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
       {"zoom_to_fit", false, nullptr, ZOOM_TO_FIT},
       {"rotation", true, nullptr, 'r'},
       {"color_mode", true, nullptr, 'c'},
+      {"autoreload",false, nullptr, 'a'},
       {"format", true, nullptr, 'f'},
       {"cache_size", true, nullptr, RENDER_CACHE_SIZE},
       {"fb_debug_info", false, nullptr, PRINT_FB_DEBUG_INFO_AND_EXIT},
       {0, 0, 0, 0},
   };
-  static const char* ShortFlags = "hP:p:z:r:c:f:";
+  static const char* ShortFlags = "hP:p:z:r:c:f:a";
 
   for (;;) {
     int opt_char = getopt_long(argc, argv, ShortFlags, LongFlags, nullptr);
@@ -642,6 +658,9 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
         }
         break;
       }
+      case 'a':
+        state->AutoReload.enabled = true;
+        break;
       case PRINT_FB_DEBUG_INFO_AND_EXIT:
         state->PrintFBDebugInfoAndExit = true;
         break;
@@ -815,6 +834,23 @@ int main(int argc, char* argv[]) {
     exit(EXIT_FAILURE);
   }
 
+
+  // Set up Monitoring
+  state.Monitoring.nfds = STDIN_FILENO;
+
+  // Set up AutoReload
+  if (state.AutoReload.enabled) {
+    state.AutoReload.fd = inotify_init1(IN_NONBLOCK);
+    if(state.AutoReload.fd < 0){
+      exit(EXIT_FAILURE);
+    }
+    state.Monitoring.nfds = state.AutoReload.fd;
+    state.AutoReload.wd = inotify_add_watch(state.AutoReload.fd, state.FilePath.c_str(), IN_MODIFY);
+    if (state.AutoReload.wd < 0) {
+      exit(EXIT_FAILURE);
+    }
+  }
+
   setlocale(LC_ALL, "");
   initscr();
   start_color();
@@ -822,6 +858,7 @@ int main(int argc, char* argv[]) {
   nonl();
   cbreak();
   noecho();
+  halfdelay(1);
   curs_set(false);
   // This is necessary to prevent curses erasing the framebuffer on first call
   // to getch().
@@ -864,22 +901,41 @@ int main(int argc, char* argv[]) {
     }
     state.Render = true;
 
-    // 2.2. Grab input.
-    int c;
-    while (isdigit(c = getch())) {
-      if (repeat == Command::NO_REPEAT) {
-        repeat = c - '0';
-      } else {
-        repeat = repeat * 10 + c - '0';
+    // 2.2. Wait for either stdin or filechange
+    FD_ZERO ( &state.Monitoring.descriptors );
+    FD_SET ( STDIN_FILENO, &state.Monitoring.descriptors );
+    if (state.AutoReload.enabled){
+      FD_SET ( state.AutoReload.fd, &state.Monitoring.descriptors );
+    }
+    int select_status = select(state.Monitoring.nfds+1, &state.Monitoring.descriptors, NULL, NULL, NULL);
+    if (FD_ISSET(STDIN_FILENO,&state.Monitoring.descriptors)){
+      // 2.2.1 Read from stdin.
+      int c;
+      while (isdigit(c = getch())) {
+        if (repeat == Command::NO_REPEAT) {
+          repeat = c - '0';
+        } else {
+          repeat = repeat * 10 + c - '0';
+        }
+      }
+      if (c == KEY_RESIZE) {
+        continue;
+      }else if (c != -1){
+        // Run command.
+        registry->Dispatch(c, repeat, &state);
+        repeat = Command::NO_REPEAT;
+      }
+    }else if(state.AutoReload.enabled && FD_ISSET(state.AutoReload.fd,&state.Monitoring.descriptors)){
+      // 2.2.2 Filechange -> Reload.
+      #define EVENT_SIZE    (sizeof (struct inotify_event))
+      #define BUF_LEN       (256 * (EVENT_SIZE + 16))
+      char buf[BUF_LEN];
+      int len = read(state.AutoReload.fd, buf, BUF_LEN);
+      if(len > 0){
+        usleep(100 * 1000);
+        registry->Dispatch('e', Command::NO_REPEAT, &state);
       }
     }
-    if (c == KEY_RESIZE) {
-      continue;
-    }
-
-    // 2.3. Run command.
-    registry->Dispatch(c, repeat, &state);
-    repeat = Command::NO_REPEAT;
   } while (!state.Exit);
 
   // 3. Clean up.
@@ -891,6 +947,13 @@ int main(int argc, char* argv[]) {
   state.FramebufferInst.reset();
   usleep(100 * 1000);
   endwin();
+
+  if (state.AutoReload.enabled){
+    int ret = inotify_rm_watch (state.AutoReload.fd, state.AutoReload.wd);
+    if(ret < 0) {
+       return EXIT_FAILURE;
+    }
+  }
 
   return EXIT_SUCCESS;
 }
