@@ -14,6 +14,8 @@ jobs:
       arch: arm64
       if: branch = master
     # Ubuntu amd64
+    - env: package_format=deb docker_image=ubuntu:jammy dist=jammy arch=amd64
+      arch: amd64
     - env: package_format=deb docker_image=ubuntu:focal dist=focal arch=amd64
       arch: amd64
     - env: package_format=deb docker_image=ubuntu:bionic dist=bionic arch=amd64
@@ -31,11 +33,21 @@ jobs:
       arch: amd64
       if: branch = master
     # Debian amd64
+    - env: package_format=deb docker_image=debian:bookworm dist=bookworm arch=amd64
+      arch: amd64
+    - env: package_format=deb docker_image=debian:bullseye dist=bullseye arch=amd64
+      arch: amd64
     - env: package_format=deb docker_image=debian:buster dist=buster arch=amd64
       arch: amd64
     - env: package_format=deb docker_image=debian:stretch dist=stretch arch=amd64
       arch: amd64
     # Debian i386
+    - env: package_format=deb docker_image=i386/debian:bookworm dist=bookworm arch=i386
+      arch: amd64
+      if: branch = master
+    - env: package_format=deb docker_image=i386/debian:bullseye dist=bullseye arch=i386
+      arch: amd64
+      if: branch = master
     - env: package_format=deb docker_image=i386/debian:buster dist=buster arch=i386
       arch: amd64
       if: branch = master
@@ -43,6 +55,12 @@ jobs:
       arch: amd64
       if: branch = master
     # Debian armv8
+    - env: package_format=deb docker_image=arm64v8/debian:bookworm dist=bookworm arch=arm64
+      arch: arm64
+      if: branch = master
+    - env: package_format=deb docker_image=arm64v8/debian:bullseye dist=bullseye arch=arm64
+      arch: arm64
+      if: branch = master
     - env: package_format=deb docker_image=arm64v8/debian:buster dist=buster arch=arm64
       arch: arm64
       if: branch = master
@@ -50,6 +68,12 @@ jobs:
       arch: arm64
       if: branch = master
     # Debian armv7
+    - env: package_format=deb docker_image=arm32v7/debian:bookworm dist=bookworm arch=armhf
+      arch: arm64
+      if: branch = master
+    - env: package_format=deb docker_image=arm32v7/debian:bullseye dist=bullseye arch=armhf
+      arch: arm64
+      if: branch = master
     - env: package_format=deb docker_image=arm32v7/debian:buster dist=buster arch=armhf
       arch: arm64
       if: branch = master
@@ -57,6 +81,12 @@ jobs:
       arch: arm64
       if: branch = master
     # Debian armv6 (Raspberry Pi)
+    - env: package_format=deb docker_image=balenalib/rpi-raspbian:bookworm dist=bookworm arch=rpi
+      arch: arm64
+      if: branch = master
+    - env: package_format=deb docker_image=balenalib/rpi-raspbian:bullseye dist=bullseye arch=rpi
+      arch: arm64
+      if: branch = master
     - env: package_format=deb docker_image=balenalib/rpi-raspbian:buster dist=buster arch=rpi
       arch: arm64
       if: branch = master

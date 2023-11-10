@@ -1,8 +1,8 @@
-name: build
+name: Build
 on: [push]
 jobs:
   build-and-check-package:
-    name: build and check package
+    name: Build and check package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
@@ -20,7 +20,7 @@ jobs:
       - name: Check package
         run: packaging/check-package-deb.sh
   build-full-source-package:
-    name: build full source package
+    name: Build full source package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
