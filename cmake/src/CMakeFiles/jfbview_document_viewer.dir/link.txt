@@ -1,0 +1,2 @@
+/usr/bin/ar qc libjfbview_document_viewer.a CMakeFiles/jfbview_document_viewer.dir/command.cpp.o CMakeFiles/jfbview_document_viewer.dir/framebuffer.cpp.o CMakeFiles/jfbview_document_viewer.dir/outline_view.cpp.o CMakeFiles/jfbview_document_viewer.dir/pixel_buffer.cpp.o CMakeFiles/jfbview_document_viewer.dir/search_view.cpp.o CMakeFiles/jfbview_document_viewer.dir/ui_view.cpp.o CMakeFiles/jfbview_document_viewer.dir/viewer.cpp.o
+/usr/bin/ranlib libjfbview_document_viewer.a

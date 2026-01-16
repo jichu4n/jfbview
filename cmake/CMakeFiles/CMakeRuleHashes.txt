@@ -1,0 +1,7 @@
+# Hashes of file build rules.
+b2dc683080e650af562fc275bc9499f1 /home/bat/src/jfbview/vendor/mupdf/build/release
+f22372d45b97444f86095a5ef2a84949 doc/CMakeFiles/jfbview.1.gz
+41b1af38cff2f9380684eefb0ca62bee src/CMakeFiles/detected_mupdf_version.hpp
+88a4d77fdd405ae8f0e0c656c7a4c56f src/CMakeFiles/jpdfcat
+c22fed97ada70babd20deeee9ec5d24b src/CMakeFiles/jpdfgrep
+2800040f963804c65babf823b2e7a874 vendor/CMakeFiles/vendor_mupdf

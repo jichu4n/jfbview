@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/bat/src/jfbview/cmake/cmake_install.cmake",
+		"/home/bat/src/jfbview/cmake/vendor/cmake_install.cmake",
+		"/home/bat/src/jfbview/cmake/src/cmake_install.cmake",
+		"/home/bat/src/jfbview/cmake/doc/cmake_install.cmake",
+		"/home/bat/src/jfbview/cmake/packaging/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

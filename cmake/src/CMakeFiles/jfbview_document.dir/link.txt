@@ -1,0 +1,2 @@
+/usr/bin/ar qc libjfbview_document.a CMakeFiles/jfbview_document.dir/document.cpp.o CMakeFiles/jfbview_document.dir/fitz_document.cpp.o CMakeFiles/jfbview_document.dir/fitz_utils.cpp.o CMakeFiles/jfbview_document.dir/image_document.cpp.o CMakeFiles/jfbview_document.dir/pdf_document.cpp.o CMakeFiles/jfbview_document.dir/string_utils.cpp.o CMakeFiles/jfbview_document.dir/multithreading.cpp.o
+/usr/bin/ranlib libjfbview_document.a
