@@ -1,19 +1,19 @@
-name: Build
-on: [push]
+name: build
+on: [push, pull_request]
 jobs:
   build-and-check-package:
     name: Build and check package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Build package
         run: |
           packaging/build-package-deb.sh ${{github.sha}} ubuntu amd64
       - name: Upload package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v6
         with:
           name: jfbview_${{github.sha}}_amd64.deb
           path: upload/*.deb
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
         with:
           submodules: recursive
       - name: Build full source package
@@ -32,7 +32,7 @@ jobs:
           sudo -H pip3 install git-archive-all && \
           packaging/build-package-full-source.sh ${{github.sha}}
       - name: Upload full source package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v6
         with:
           name: jfbview-${{github.sha}}-full-source.zip
           path: upload/*.zip
