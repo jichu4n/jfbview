@@ -16,7 +16,7 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Chuan Ji <chuan@jichu4n.com>")
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/jichu4n/jfbview")
 set(
   CPACK_DEBIAN_PACKAGE_DEPENDS
-  "libncurses5, libncursesw5, ${LIBJPEG_PACKAGE_NAME}, libharfbuzz0b, libfreetype6, zlib1g, libopenjp2-7"
+  "libncurses6, libncursesw6, ${LIBJPEG_PACKAGE_NAME}, libharfbuzz0b, libfreetype6, zlib1g, libopenjp2-7"
 )
 set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
 
