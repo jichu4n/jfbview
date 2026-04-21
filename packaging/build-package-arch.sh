@@ -18,7 +18,7 @@ function install_build_deps() {
   budo git clone https://aur.archlinux.org/jfbview-git.git /home/builduser/jfbview-git
   cd /home/builduser/jfbview-git
   budo mkdir -p src
-  budo rsync -a "${src_dir}"/ src/jfbview/
+  budo rsync -a --exclude='/build*' --exclude='/upload' "${src_dir}"/ src/jfbview/
 }
 
 function build_package() {

@@ -2,6 +2,7 @@
 *.o
 *.d
 /build/
+/build_tests/
 /upload/
 /.ccls-cache/
 /compile_commands.json

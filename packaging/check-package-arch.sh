@@ -16,7 +16,9 @@ $sudo pacman -Sq --noconfirm which \
 
 cd "$(dirname "$0")/.."
 
-tar tvf upload/*.pkg.tar.*
+for f in upload/*.pkg.tar.*; do
+  tar tvf "$f"
+done
 $sudo pacman -U --noconfirm upload/*.pkg.tar.*
 
 tests/smoke-test.sh
