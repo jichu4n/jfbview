@@ -2,38 +2,189 @@ name: build
 on: [push, pull_request]
 jobs:
   build-and-check-package:
-    name: Build and check package
+    name: ${{ matrix.name }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Arch Linux x86_64
+          - package_format: arch
+            docker_image: archlinux:latest
+            dist: ""
+            arch: ""
+            name: Arch Linux x86_64
+            always_build: true
+          # Fedora x86_64
+          - package_format: rpm
+            docker_image: fedora:43
+            dist: 1.fc43
+            arch: x86_64
+            name: Fedora 43 x86_64
+            always_build: true
+          - package_format: rpm
+            docker_image: fedora:42
+            dist: 1.fc42
+            arch: x86_64
+            name: Fedora 42 x86_64
+          # Fedora aarch64
+          - package_format: rpm
+            docker_image: arm64v8/fedora:43
+            dist: 1.fc43
+            arch: aarch64
+            name: Fedora 43 aarch64
+          - package_format: rpm
+            docker_image: arm64v8/fedora:42
+            dist: 1.fc42
+            arch: aarch64
+            name: Fedora 42 aarch64
+          # Ubuntu amd64
+          - package_format: deb
+            docker_image: ubuntu:noble
+            dist: noble
+            arch: amd64
+            name: Ubuntu Noble amd64
+            always_build: true
+          - package_format: deb
+            docker_image: ubuntu:jammy
+            dist: jammy
+            arch: amd64
+            name: Ubuntu Jammy amd64
+          # Debian amd64
+          - package_format: deb
+            docker_image: debian:trixie
+            dist: trixie
+            arch: amd64
+            name: Debian Trixie amd64
+            always_build: true
+          - package_format: deb
+            docker_image: debian:bookworm
+            dist: bookworm
+            arch: amd64
+            name: Debian Bookworm amd64
+          - package_format: deb
+            docker_image: debian:bullseye
+            dist: bullseye
+            arch: amd64
+            name: Debian Bullseye amd64
+          # Debian i386 (default branch only)
+          - package_format: deb
+            docker_image: i386/debian:trixie
+            dist: trixie
+            arch: i386
+            name: Debian Trixie i386
+
+          - package_format: deb
+            docker_image: i386/debian:bookworm
+            dist: bookworm
+            arch: i386
+            name: Debian Bookworm i386
+
+          - package_format: deb
+            docker_image: i386/debian:bullseye
+            dist: bullseye
+            arch: i386
+            name: Debian Bullseye i386
+
+          # Debian arm64 (default branch only)
+          - package_format: deb
+            docker_image: arm64v8/debian:trixie
+            dist: trixie
+            arch: arm64
+            name: Debian Trixie arm64
+
+          - package_format: deb
+            docker_image: arm64v8/debian:bookworm
+            dist: bookworm
+            arch: arm64
+            name: Debian Bookworm arm64
+
+          - package_format: deb
+            docker_image: arm64v8/debian:bullseye
+            dist: bullseye
+            arch: arm64
+            name: Debian Bullseye arm64
+
+          # Debian armhf (default branch only)
+          - package_format: deb
+            docker_image: arm32v7/debian:trixie
+            dist: trixie
+            arch: armhf
+            name: Debian Trixie armhf
+
+          - package_format: deb
+            docker_image: arm32v7/debian:bookworm
+            dist: bookworm
+            arch: armhf
+            name: Debian Bookworm armhf
+
+          - package_format: deb
+            docker_image: arm32v7/debian:bullseye
+            dist: bullseye
+            arch: armhf
+            name: Debian Bullseye armhf
+
     steps:
+      - name: Check if should build
+        id: check
+        if: >-
+          matrix.always_build
+          || github.event_name == 'pull_request'
+          || github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+        run: echo "should_build=true" >> "$GITHUB_OUTPUT"
       - name: Checkout source code
-        uses: actions/checkout@v5
+        if: steps.check.outputs.should_build == 'true'
+        uses: actions/checkout@v6
         with:
           submodules: recursive
-      - name: Build package
-        run: |
-          packaging/build-package-deb.sh ${{github.sha}} ubuntu amd64
+      - name: Set up QEMU
+        if: >-
+          steps.check.outputs.should_build == 'true'
+          && (matrix.arch == 'arm64' || matrix.arch == 'aarch64' || matrix.arch == 'armhf')
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64,arm
+      - name: Get project version
+        if: steps.check.outputs.should_build == 'true'
+        id: version
+        run: echo "version=$(sed -n 's/^project(jfbview VERSION \(.*\))/\1/p' CMakeLists.txt)" >> "$GITHUB_OUTPUT"
+      - name: Build and check package
+        if: steps.check.outputs.should_build == 'true'
+        run: >-
+          packaging/build-and-check-package-with-docker.sh
+          "${{ matrix.package_format }}"
+          "${{ matrix.docker_image }}"
+          "${{ steps.version.outputs.version }}"
+          "${{ matrix.dist }}"
+          "${{ matrix.arch }}"
+      - name: Get package filename
+        if: steps.check.outputs.should_build == 'true'
+        id: package
+        run: echo "filename=$(ls upload/ | head -1)" >> "$GITHUB_OUTPUT"
       - name: Upload package
-        uses: actions/upload-artifact@v6
+        if: steps.check.outputs.should_build == 'true'
+        uses: actions/upload-artifact@v7
         with:
-          name: jfbview_${{github.sha}}_amd64.deb
-          path: upload/*.deb
-      - name: Check package
-        run: packaging/check-package-deb.sh
+          name: ${{ steps.package.outputs.filename }}
+          path: upload/*
+
   build-full-source-package:
-    name: Build full source package
+    name: Full source package
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           submodules: recursive
+      - name: Get project version
+        id: version
+        run: echo "version=$(sed -n 's/^project(jfbview VERSION \(.*\))/\1/p' CMakeLists.txt)" >> "$GITHUB_OUTPUT"
       - name: Build full source package
         run: |
-          sudo -H pip3 install git-archive-all && \
-          packaging/build-package-full-source.sh ${{github.sha}}
+          sudo pip3 install git-archive-all && \
+          packaging/build-package-full-source.sh ${{ steps.version.outputs.version }}
       - name: Upload full source package
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
-          name: jfbview-${{github.sha}}-full-source.zip
+          name: jfbview-full-source
           path: upload/*.zip
-

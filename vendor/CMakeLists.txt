@@ -1,5 +1,11 @@
 # Dependencies.
 # -------------
+include(ProcessorCount)
+ProcessorCount(NPROC)
+if(NOT NPROC OR NPROC EQUAL 0)
+  set(NPROC 1)
+endif()
+
 find_package(JPEG REQUIRED)
 find_package(HarfBuzz REQUIRED)
 find_package(Freetype REQUIRED)
@@ -14,7 +20,7 @@ find_package(OpenJPEG REQUIRED)
 add_custom_command(
   OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/mupdf/build/release"
   COMMAND
-    make
+    make -j${NPROC}
       "USE_SYSTEM_LIBS=no"
       "USE_SYSTEM_LIBJPEG=yes"
       "USE_SYSTEM_HARFBUZZ=yes"

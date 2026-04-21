@@ -38,7 +38,7 @@ function build_package() {
     -DPACKAGE_FILE_PREFIX="$package_file_prefix" \
     -DBUILD_TESTING=OFF \
     -DCMAKE_BUILD_TYPE=Release
-  cmake --build build --target package
+  cmake --build build --target package -- -j$(nproc)
   mv build/*.deb upload/
 }
 
@@ -60,7 +60,7 @@ function install_test_deps() {
     ( \
       cd vendor/gtest && \
       cmake /usr/src/gtest && \
-      cmake --build . \
+      cmake --build . -- -j$(nproc) \
     )
     gtest_root_flag=("-DGTEST_ROOT=${PWD}/vendor/gtest")
   fi
@@ -73,7 +73,7 @@ function run_tests() {
     "${gtest_root_flag[@]}" \
     -DBUILD_TESTING=ON \
     -DCMAKE_BUILD_TYPE=Debug
-  cmake --build build_tests
+  cmake --build build_tests -- -j$(nproc)
   env CTEST_OUTPUT_ON_FAILURE=1 \
     cmake --build build_tests --target test
 }

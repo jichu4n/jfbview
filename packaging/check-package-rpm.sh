@@ -8,13 +8,12 @@ fi
 
 set -ex
 
-$sudo yum install -y -q epel-release
-$sudo yum install -y -q which  # Needed by smoke-test.sh
+$sudo dnf install -y -q which  # Needed by smoke-test.sh
 
 cd "$(dirname "$0")/.."
 
 rpm -qpil upload/*.rpm
-$sudo yum install -y ./upload/*.rpm
+$sudo dnf install -y ./upload/*.rpm
 
 tests/smoke-test.sh
 

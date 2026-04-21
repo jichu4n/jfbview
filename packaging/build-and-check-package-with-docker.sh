@@ -8,7 +8,6 @@ arch="$5"
 
 set -ex
 
-# The version of Docker in Travis CI doesn't yet support the --quiet flag.
 docker pull "$docker_image" > /dev/null
 
 docker run \
