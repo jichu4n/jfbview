@@ -32,11 +32,13 @@ jobs:
             docker_image: arm64v8/fedora:43
             dist: 1.fc43
             arch: aarch64
+            platform: linux/arm64
             name: Fedora 43 aarch64
           - package_format: rpm
             docker_image: arm64v8/fedora:42
             dist: 1.fc42
             arch: aarch64
+            platform: linux/arm64
             name: Fedora 42 aarch64
           # Ubuntu amd64
           - package_format: deb
@@ -67,61 +69,62 @@ jobs:
             dist: bullseye
             arch: amd64
             name: Debian Bullseye amd64
-          # Debian i386 (default branch only)
+          # Debian i386
           - package_format: deb
             docker_image: i386/debian:trixie
             dist: trixie
             arch: i386
+            platform: linux/386
             name: Debian Trixie i386
-
           - package_format: deb
             docker_image: i386/debian:bookworm
             dist: bookworm
             arch: i386
+            platform: linux/386
             name: Debian Bookworm i386
-
           - package_format: deb
             docker_image: i386/debian:bullseye
             dist: bullseye
             arch: i386
+            platform: linux/386
             name: Debian Bullseye i386
-
-          # Debian arm64 (default branch only)
+          # Debian arm64
           - package_format: deb
             docker_image: arm64v8/debian:trixie
             dist: trixie
             arch: arm64
+            platform: linux/arm64
             name: Debian Trixie arm64
-
           - package_format: deb
             docker_image: arm64v8/debian:bookworm
             dist: bookworm
             arch: arm64
+            platform: linux/arm64
             name: Debian Bookworm arm64
-
           - package_format: deb
             docker_image: arm64v8/debian:bullseye
             dist: bullseye
             arch: arm64
+            platform: linux/arm64
             name: Debian Bullseye arm64
-
-          # Debian armhf (default branch only)
+          # Debian armhf
           - package_format: deb
             docker_image: arm32v7/debian:trixie
             dist: trixie
             arch: armhf
+            platform: linux/arm/v7
             name: Debian Trixie armhf
-
           - package_format: deb
             docker_image: arm32v7/debian:bookworm
             dist: bookworm
             arch: armhf
+            platform: linux/arm/v7
             name: Debian Bookworm armhf
-
           - package_format: deb
             docker_image: arm32v7/debian:bullseye
             dist: bullseye
             arch: armhf
+            platform: linux/arm/v7
             name: Debian Bullseye armhf
 
     steps:
@@ -157,6 +160,7 @@ jobs:
           "${{ steps.version.outputs.version }}"
           "${{ matrix.dist }}"
           "${{ matrix.arch }}"
+          "${{ matrix.platform }}"
       - name: Get package filename
         if: steps.check.outputs.should_build == 'true'
         id: package

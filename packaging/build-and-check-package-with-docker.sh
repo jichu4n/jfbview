@@ -5,13 +5,20 @@ docker_image="$2"
 version="$3"
 dist="$4"
 arch="$5"
+platform="$6"
 
 set -ex
 
-docker pull "$docker_image" > /dev/null
+platform_flag=()
+if [ -n "$platform" ]; then
+  platform_flag=(--platform "$platform")
+fi
+
+docker pull "${platform_flag[@]}" "$docker_image" > /dev/null
 
 docker run \
   --rm \
+  "${platform_flag[@]}" \
   -v "$PWD":/work \
   "$docker_image" \
   "/work/packaging/build-package-${package_format}.sh" \
@@ -19,6 +26,7 @@ docker run \
 
 docker run \
   --rm \
+  "${platform_flag[@]}" \
   -v "$PWD":/work \
   "$docker_image" \
   "/work/packaging/check-package-${package_format}.sh"
