@@ -144,7 +144,7 @@ jobs:
         if: >-
           steps.check.outputs.should_build == 'true'
           && (matrix.arch == 'arm64' || matrix.arch == 'aarch64' || matrix.arch == 'armhf')
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64,arm
       - name: Get project version
@@ -169,8 +169,8 @@ jobs:
         if: steps.check.outputs.should_build == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.package.outputs.filename }}
-          path: upload/*
+          path: upload/${{ steps.package.outputs.filename }}
+          archive: false
 
   build-full-source-package:
     name: Full source package
@@ -187,8 +187,11 @@ jobs:
         run: |
           sudo pip3 install git-archive-all && \
           packaging/build-package-full-source.sh ${{ steps.version.outputs.version }}
+      - name: Get source package filename
+        id: package
+        run: echo "filename=$(ls upload/ | head -1)" >> "$GITHUB_OUTPUT"
       - name: Upload full source package
         uses: actions/upload-artifact@v7
         with:
-          name: jfbview-full-source
-          path: upload/*.zip
+          path: upload/${{ steps.package.outputs.filename }}
+          archive: false
