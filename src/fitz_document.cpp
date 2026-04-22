@@ -147,7 +147,7 @@ const Document::OutlineItem* FitzDocument::GetOutline() {
   if (outline_ptr.get() == nullptr) {
     return nullptr;
   }
-  FitzOutlineItem* root = FitzOutlineItem::Build(_fz_ctx, outline_ptr.get());
+  FitzOutlineItem* root = FitzOutlineItem::Build(_fz_ctx, _fz_doc, outline_ptr.get());
   return root;
 }
 

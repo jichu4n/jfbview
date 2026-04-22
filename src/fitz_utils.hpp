@@ -46,16 +46,17 @@ class FitzOutlineItem : public Document::OutlineItem {
   int GetDestPage() const;
   // Factory method to create outline items from a fz_outline. This constructs
   // the entire outline hierarchy. Does NOT take ownership. NOT thread-safe.
-  static FitzOutlineItem* Build(fz_context* ctx, fz_outline* src);
+  static FitzOutlineItem* Build(fz_context* ctx, fz_document* doc, fz_outline* src);
 
  private:
   // Destination page number.
   int _dest_page;
   // We disallow constructors; use the factory method Build() instead.
-  explicit FitzOutlineItem(fz_outline* src);
+  explicit FitzOutlineItem(fz_context* ctx, fz_document* doc, fz_outline* src);
   // Recursive construction, called by Build().
   static void BuildRecursive(
-      fz_outline* src, std::vector<std::unique_ptr<OutlineItem>>* output);
+      fz_context* ctx, fz_document* doc, fz_outline* src,
+      std::vector<std::unique_ptr<OutlineItem>>* output);
 };
 
 // Returns the text content of a page, using line_sep to separate lines. NOT

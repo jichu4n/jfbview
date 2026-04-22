@@ -234,7 +234,7 @@ void PDFDocument::Render(
 
 const Document::OutlineItem* PDFDocument::GetOutline() {
   fz_outline* src = pdf_load_outline(_fz_context, _pdf_document);
-  return (src == nullptr) ? nullptr : PDFOutlineItem::Build(_fz_context, src);
+  return (src == nullptr) ? nullptr : PDFOutlineItem::Build(_fz_context, &_pdf_document->super, src);
 }
 
 int PDFDocument::Lookup(const OutlineItem* item) {
@@ -267,41 +267,17 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
   // 1. Init MuPDF structures.
   pdf_page* page_struct = GetPage(page);
 
-#if MUPDF_VERSION < 10012
-  fz_stext_sheet* text_sheet = fz_new_stext_sheet(_fz_context);
-#endif
-
-  // 2. Render page.
-#if MUPDF_VERSION >= 10012
+  // 2. Render page into stext.
   fz_stext_options stext_options = {0};
-  // See #elif MUPDF_VERSION >= 10009 block below.
-  fz_stext_page* text_page = fz_new_stext_page_from_page(
-      _fz_context, &(page_struct->super), &stext_options);
-#elif MUPDF_VERSION >= 10010
-  fz_stext_options stext_options = {0};
-  // See #elif MUPDF_VERSION >= 10009 block below.
-  fz_stext_page* text_page = fz_new_stext_page_from_page(
-      _fz_context, &(page_struct->super), text_sheet, &stext_options);
-#elif MUPDF_VERSION >= 10009
-  // The function below is a wrapper around fz_run_page that uses a fresh
-  // device. We can't use pdf_run_page to gather the text for us.
-  // These notes are also left in here in case MuPDF's API changes again.
-  fz_stext_page* text_page = fz_new_stext_page_from_page(
-      _fz_context, &(page_struct->super), text_sheet);
-#else
-  fz_stext_page* text_page = fz_new_text_page(_fz_context);
-  fz_device* dev = fz_new_stext_device(_fz_context, text_sheet, text_page);
-  // I've no idea what fz_{begin,end}_page do, but without them pdf_run_page
-  // segfaults :-/
-  fz_begin_page(_fz_context, dev, &fz_infinite_rect, &fz_identity);
-  pdf_run_page(
-      _fz_context, _pdf_document, page_struct, dev, &fz_identity, nullptr);
-  fz_end_page(_fz_context, dev);
-#endif
+  fz_stext_page* text_page = fz_new_stext_page(
+      _fz_context, fz_bound_page(_fz_context, &(page_struct->super)));
+  fz_device* dev = fz_new_stext_device(_fz_context, text_page, &stext_options);
+  fz_run_page(_fz_context, &(page_struct->super), dev, fz_identity, nullptr);
+  fz_close_device(_fz_context, dev);
+  fz_drop_device(_fz_context, dev);
 
   // 3. Build text.
   std::string r;
-#if MUPDF_VERSION >= 10012
   for (fz_stext_block* text_block = text_page->first_block;
        text_block != nullptr; text_block = text_block->next) {
     if (text_block->type != FZ_STEXT_BLOCK_TEXT) {
@@ -311,33 +287,14 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
          text_line != nullptr; text_line = text_line->next) {
       for (fz_stext_char* text_char = text_line->first_char;
            text_char != nullptr; text_char = text_char->next) {
-        {
-          const int c = text_char->c;
-#else
-  for (fz_page_block* page_block = text_page->blocks;
-       page_block < text_page->blocks + text_page->len; ++page_block) {
-    assert(page_block != nullptr);
-    if (page_block->type != FZ_PAGE_BLOCK_TEXT) {
-      continue;
-    }
-    fz_stext_block* const text_block = page_block->u.text;
-    assert(text_block != nullptr);
-    for (fz_stext_line* text_line = text_block->lines;
-         text_line < text_block->lines + text_block->len; ++text_line) {
-      assert(text_line != nullptr);
-      for (fz_stext_span* text_span = text_line->first_span;
-           text_span != nullptr; text_span = text_span->next) {
-        for (int i = 0; i < text_span->len; ++i) {
-          const int c = text_span->text[i].c;
-#endif
-          // A single UTF-8 character cannot take more than 4 bytes, but let's
-          // go for 8.
-          char buffer[8];
-          const int num_bytes = fz_runetochar(buffer, c);
-          assert(num_bytes <= static_cast<int>(sizeof(buffer)));
-          buffer[num_bytes] = '\0';
-          r += buffer;
-        }
+        const int c = text_char->c;
+        // A single UTF-8 character cannot take more than 4 bytes, but let's
+        // go for 8.
+        char buffer[8];
+        const int num_bytes = fz_runetochar(buffer, c);
+        assert(num_bytes <= static_cast<int>(sizeof(buffer)));
+        buffer[num_bytes] = '\0';
+        r += buffer;
       }
       if (!isspace(r.back())) {
         r += line_sep;
@@ -347,42 +304,35 @@ std::string PDFDocument::GetPageText(int page, int line_sep) {
 
   // 4. Clean up.
   fz_drop_stext_page(_fz_context, text_page);
-#if MUPDF_VERSION < 10012
-  fz_drop_stext_sheet(_fz_context, text_sheet);
-#endif
 
   return r;
 }
 
 PDFDocument::PDFOutlineItem::~PDFOutlineItem() {}
 
-PDFDocument::PDFOutlineItem::PDFOutlineItem(fz_outline* src) {
+PDFDocument::PDFOutlineItem::PDFOutlineItem(fz_context* ctx, fz_document* doc, fz_outline* src) {
   if (src == nullptr) {
     _dest_page = -1;
   } else {
     _title = src->title;
-#if MUPDF_VERSION >= 10010
-    _dest_page = src->page;
-#else
-    _dest_page = src->dest.ld.gotor.page;
-#endif
+    _dest_page = fz_page_number_from_location(ctx, doc, src->page);
   }
 }
 
 int PDFDocument::PDFOutlineItem::GetDestPage() const { return _dest_page; }
 
 PDFDocument::PDFOutlineItem* PDFDocument::PDFOutlineItem::Build(
-    fz_context* ctx, fz_outline* src) {
+    fz_context* ctx, fz_document* doc, fz_outline* src) {
   PDFOutlineItem* root = nullptr;
   std::vector<std::unique_ptr<OutlineItem>> items;
-  BuildRecursive(src, &items);
+  BuildRecursive(ctx, doc, src, &items);
   fz_drop_outline(ctx, src);
   if (items.empty()) {
     return nullptr;
   } else if (items.size() == 1) {
     root = dynamic_cast<PDFOutlineItem*>(items[0].release());
   } else {
-    root = new PDFOutlineItem(nullptr);
+    root = new PDFOutlineItem(ctx, doc, nullptr);
     root->_title = DEFAULT_ROOT_OUTLINE_ITEM_TITLE;
     root->_children.swap(items);
   }
@@ -390,13 +340,13 @@ PDFDocument::PDFOutlineItem* PDFDocument::PDFOutlineItem::Build(
 }
 
 void PDFDocument::PDFOutlineItem::BuildRecursive(
-    fz_outline* src,
+    fz_context* ctx, fz_document* doc, fz_outline* src,
     std::vector<std::unique_ptr<Document::OutlineItem>>* output) {
   assert(output != nullptr);
   for (fz_outline* i = src; i != nullptr; i = i->next) {
-    PDFOutlineItem* item = new PDFOutlineItem(i);
+    PDFOutlineItem* item = new PDFOutlineItem(ctx, doc, i);
     if (i->down != nullptr) {
-      BuildRecursive(i->down, &(item->_children));
+      BuildRecursive(ctx, doc, i->down, &(item->_children));
     }
     output->push_back(std::unique_ptr<Document::OutlineItem>(item));
   }
@@ -441,17 +391,8 @@ fz_matrix PDFDocument::Transform(float zoom, int rotation) {
 fz_irect PDFDocument::GetBoundingBox(
     pdf_page* page_struct, const fz_matrix& m) {
   assert(page_struct != nullptr);
-#if MUPDF_VERSION >= 10014
   return fz_round_rect(
-      fz_transform_rect(pdf_bound_page(_fz_context, page_struct), m));
-#else
-  fz_rect bbox;
-  fz_irect ibbox;
-  return *fz_round_rect(
-      &ibbox,
-      fz_transform_rect(
-          pdf_bound_page(_fz_context, _pdf_document, page_struct, &bbox), &m));
-#endif
+      fz_transform_rect(pdf_bound_page(_fz_context, page_struct, FZ_CROP_BOX), m));
 }
 
 #endif

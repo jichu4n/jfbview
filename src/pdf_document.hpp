@@ -94,16 +94,17 @@ class PDFDocument : public Document {
     int GetDestPage() const;
     // Factory method to create outline items from a fz_outline. This constructs
     // the entire outline hierarchy. Takes ownership of src.
-    static PDFOutlineItem* Build(fz_context* ctx, fz_outline* src);
+    static PDFOutlineItem* Build(fz_context* ctx, fz_document* doc, fz_outline* src);
 
    private:
     // Destination page number.
     int _dest_page;
     // We disallow constructors; use the factory method Build() instead.
-    explicit PDFOutlineItem(fz_outline* src);
+    explicit PDFOutlineItem(fz_context* ctx, fz_document* doc, fz_outline* src);
     // Recursive construction, called by Build().
     static void BuildRecursive(
-        fz_outline* src, std::vector<std::unique_ptr<OutlineItem>>* output);
+        fz_context* ctx, fz_document* doc, fz_outline* src,
+        std::vector<std::unique_ptr<OutlineItem>>* output);
   };
 
   // Cache for pdf_page.

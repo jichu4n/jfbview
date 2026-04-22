@@ -27,6 +27,7 @@ add_custom_command(
       "USE_SYSTEM_FREETYPE=yes"
       "USE_SYSTEM_ZLIB=yes"
       "USE_SYSTEM_OPENJPEG=yes"
+      "extract=no"
       "prefix=${CMAKE_CURRENT_BINARY_DIR}/mupdf"
       libs
   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/mupdf"
