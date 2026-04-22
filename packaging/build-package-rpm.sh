@@ -12,16 +12,11 @@ else
 fi
 
 function install_build_deps() {
-  $sudo yum install -y -q epel-release
-  $sudo yum install -y -q \
+  $sudo dnf install -y -q \
     cmake make gcc-c++ rpm-build \
     ncurses-devel libjpeg-turbo-devel \
-    harfbuzz-devel freetype-devel zlib-devel
-  if [ -e /etc/centos-release ]; then
-    $sudo dnf --enablerepo=PowerTools install -y -q openjpeg2-devel
-  else
-    $sudo yum install -y -q openjpeg2-devel
-  fi
+    harfbuzz-devel freetype-devel zlib-devel \
+    openjpeg2-devel
 }
 
 function build_package() {
@@ -33,18 +28,12 @@ function build_package() {
     -DPACKAGE_FILE_PREFIX="$package_file_prefix" \
     -DBUILD_TESTING=OFF \
     -DCMAKE_BUILD_TYPE=Release
-  cmake --build build --target package
+  cmake --build build --target package -- -j$(nproc)
   mv build/*.rpm upload/
 }
 
 function install_test_deps() {
-  if [ -e /etc/centos-release ]; then
-    $sudo dnf --enablerepo=PowerTools install -y -q gtest-devel
-    $sudo yum install -y -q which
-  else
-    $sudo yum install -y -q epel-release
-    $sudo yum install -y -q gtest-devel which
-  fi
+  $sudo dnf install -y -q gtest-devel which
 }
 
 function run_tests() {
@@ -53,7 +42,7 @@ function run_tests() {
   cmake -H. -Bbuild_tests \
     -DBUILD_TESTING=ON \
     -DCMAKE_BUILD_TYPE=Debug
-  cmake --build build_tests
+  cmake --build build_tests -- -j$(nproc)
   env CTEST_OUTPUT_ON_FAILURE=1 \
     cmake --build build_tests --target test
 }
