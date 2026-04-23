@@ -9,3 +9,9 @@
 /.vscode/
 /.claude/
 
+# QEMU test artifacts
+/tests/qemu/*.qcow2
+/tests/qemu/seed.iso
+/tests/qemu/user-data
+/tests/qemu/meta-data
+
