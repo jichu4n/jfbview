@@ -142,6 +142,7 @@ def main():
             # Wait for initial render
             wait_for_status(status_f, timeout=120)  # VM boot takes time
             print("Initial render complete.")
+            time.sleep(1) # Give QEMU VGA time to flush dirty rects
             
             # Take screenshot
             screenshot1_path = os.path.join(OUT_DIR, "screenshot1.ppm")
@@ -160,6 +161,7 @@ def main():
             # Wait for second render
             wait_for_status(status_f, timeout=10)
             print("Second render complete.")
+            time.sleep(1) # Give QEMU VGA time to flush dirty rects
             
             # Take second screenshot
             screenshot2_path = os.path.join(OUT_DIR, "screenshot2.ppm")
