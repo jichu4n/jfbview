@@ -43,6 +43,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cctype>
 #include <climits>
 #include <cmath>
@@ -89,6 +90,8 @@ struct State : public Viewer::State {
   std::unique_ptr<std::string> FilePassword;
   // Framebuffer device.
   std::string FramebufferDevice;
+  // Output file to append to when rendering is complete.
+  std::string StatusFile;
   // Document instance.
   std::unique_ptr<Document> DocumentInst;
   // Outline view instance.
@@ -111,6 +114,7 @@ struct State : public Viewer::State {
         FilePath(""),
         FilePassword(),
         FramebufferDevice(Framebuffer::DEFAULT_FRAMEBUFFER_DEVICE),
+        StatusFile(""),
         OutlineViewInst(nullptr),
         SearchViewInst(nullptr),
         FramebufferInst(nullptr),
@@ -326,7 +330,7 @@ class ZoomInCommand : public ZoomCommand {
  public:
   void Execute(int repeat, State* state) override {
     SetZoom(
-        state->ActualZoom * RepeatOrDefault(repeat, 1) * ZOOM_COEFFICIENT,
+        state->ActualZoom * pow(ZOOM_COEFFICIENT, RepeatOrDefault(repeat, 1)),
         state);
   }
 };
@@ -335,7 +339,7 @@ class ZoomOutCommand : public ZoomCommand {
  public:
   void Execute(int repeat, State* state) override {
     SetZoom(
-        state->ActualZoom * RepeatOrDefault(repeat, 1) / ZOOM_COEFFICIENT,
+        state->ActualZoom / pow(ZOOM_COEFFICIENT, RepeatOrDefault(repeat, 1)),
         state);
   }
 };
@@ -548,12 +552,14 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
     ZOOM_TO_WIDTH,
     ZOOM_TO_FIT,
     FB,
+    STATUS_FILE,
     PRINT_FB_DEBUG_INFO_AND_EXIT,
   };
   // Command line options.
   static const option LongFlags[] = {
       {"help", false, nullptr, 'h'},
       {"fb", true, nullptr, FB},
+      {"status-file", true, nullptr, STATUS_FILE},
       {"password", true, nullptr, 'P'},
       {"page", true, nullptr, 'p'},
       {"zoom", true, nullptr, 'z'},
@@ -579,6 +585,9 @@ static void ParseCommandLine(int argc, char* argv[], State* state) {
         exit(EXIT_FAILURE);
       case FB:
         state->FramebufferDevice = optarg;
+        break;
+      case STATUS_FILE:
+        state->StatusFile = optarg;
         break;
       case 'f':
         if (ToLower(optarg) == "pdf") {
@@ -832,9 +841,10 @@ int main(int argc, char* argv[]) {
       state.RenderCacheSize);
   std::unique_ptr<Registry> registry(BuildRegistry());
 
-  state.OutlineViewInst =
-      std::make_unique<OutlineView>(state.DocumentInst->GetOutline());
-  state.SearchViewInst = std::make_unique<SearchView>(state.DocumentInst.get());
+  state.OutlineViewInst = std::make_unique<OutlineView>(
+      state.DocumentInst->GetOutline(), state.StatusFile);
+  state.SearchViewInst =
+      std::make_unique<SearchView>(state.DocumentInst.get(), state.StatusFile);
 
   pid_t parent = getpid();
   if (!fork()) {
@@ -861,6 +871,14 @@ int main(int argc, char* argv[]) {
       state.ViewerInst->SetState(state);
       state.ViewerInst->Render();
       state.ViewerInst->GetState(&state);
+
+      if (!state.StatusFile.empty()) {
+        FILE* status_file = fopen(state.StatusFile.c_str(), "a");
+        if (status_file) {
+          fprintf(status_file, "render_complete\n");
+          fclose(status_file);
+        }
+      }
     }
     state.Render = true;
 

@@ -25,15 +25,18 @@
 
 using std::placeholders::_1;
 
-OutlineView::OutlineView(const Document::OutlineItem* outline)
-    : UIView({{
-                  REGULAR_MODE,
-                  std::bind(&OutlineView::ProcessKeyRegularMode, this, _1),
-              },
-              {
-                  FOLD_MODE,
-                  std::bind(&OutlineView::ProcessKeyFoldMode, this, _1),
-              }}),
+OutlineView::OutlineView(
+    const Document::OutlineItem* outline, const std::string& status_file)
+    : UIView(
+          {{
+               REGULAR_MODE,
+               std::bind(&OutlineView::ProcessKeyRegularMode, this, _1),
+           },
+           {
+               FOLD_MODE,
+               std::bind(&OutlineView::ProcessKeyFoldMode, this, _1),
+           }},
+          status_file),
       _outline(outline),
       _selected_index(0),
       _first_index(0) {

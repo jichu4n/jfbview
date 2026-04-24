@@ -34,7 +34,9 @@ class OutlineView : public UIView {
  public:
   // Constructs an instance of OutlineView that displays the given Outline.
   // Takes ownership of the outline object.
-  explicit OutlineView(const Document::OutlineItem* outline);
+  explicit OutlineView(
+      const Document::OutlineItem* outline,
+      const std::string& status_file = "");
   virtual ~OutlineView();
   // Displays the outline view and enters the event loop. If the user selected a
   // page to jump to, returns the selected outline item. Otherwise returns

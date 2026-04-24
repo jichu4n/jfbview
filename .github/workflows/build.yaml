@@ -172,6 +172,32 @@ jobs:
           path: upload/${{ steps.package.outputs.filename }}
           archive: false
 
+  run-e2e-tests:
+    name: E2E tests (Debian Trixie amd64)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+      - name: Install host dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qemu-system-x86 imagemagick wget
+      - name: Set up KVM permissions
+        run: |
+          # The GitHub runner user needs explicit permissions to access /dev/kvm
+          sudo chmod 666 /dev/kvm
+      - name: Run E2E tests
+        run: python3 tests/run_e2e_tests.py
+      - name: Upload artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: e2e-test-artifacts
+          path: tests/qemu/out/
+          archive: true
+
   build-full-source-package:
     name: Full source package
     runs-on: ubuntu-latest
