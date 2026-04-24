@@ -43,6 +43,7 @@
 #include <unistd.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cctype>
 #include <climits>
 #include <cmath>
@@ -329,7 +330,7 @@ class ZoomInCommand : public ZoomCommand {
  public:
   void Execute(int repeat, State* state) override {
     SetZoom(
-        state->ActualZoom * RepeatOrDefault(repeat, 1) * ZOOM_COEFFICIENT,
+        state->ActualZoom * pow(ZOOM_COEFFICIENT, RepeatOrDefault(repeat, 1)),
         state);
   }
 };
@@ -338,7 +339,7 @@ class ZoomOutCommand : public ZoomCommand {
  public:
   void Execute(int repeat, State* state) override {
     SetZoom(
-        state->ActualZoom * RepeatOrDefault(repeat, 1) / ZOOM_COEFFICIENT,
+        state->ActualZoom / pow(ZOOM_COEFFICIENT, RepeatOrDefault(repeat, 1)),
         state);
   }
 };
@@ -840,9 +841,10 @@ int main(int argc, char* argv[]) {
       state.RenderCacheSize);
   std::unique_ptr<Registry> registry(BuildRegistry());
 
-  state.OutlineViewInst =
-      std::make_unique<OutlineView>(state.DocumentInst->GetOutline());
-  state.SearchViewInst = std::make_unique<SearchView>(state.DocumentInst.get());
+  state.OutlineViewInst = std::make_unique<OutlineView>(
+      state.DocumentInst->GetOutline(), state.StatusFile);
+  state.SearchViewInst =
+      std::make_unique<SearchView>(state.DocumentInst.get(), state.StatusFile);
 
   pid_t parent = getpid();
   if (!fork()) {

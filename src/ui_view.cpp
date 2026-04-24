@@ -19,13 +19,17 @@
 #include "ui_view.hpp"
 
 #include <cassert>
+#include <cstdio>
 
 std::mutex UIView::_mutex;
 WINDOW* UIView::_window = nullptr;
 int UIView::_num_instances = 0;
 
-UIView::UIView(const UIView::KeyProcessingModeMap& key_processing_mode_map)
-    : _key_processing_mode_map(key_processing_mode_map) {
+UIView::UIView(
+    const UIView::KeyProcessingModeMap& key_processing_mode_map,
+    const std::string& status_file)
+    : _key_processing_mode_map(key_processing_mode_map),
+      _status_file(status_file) {
   std::unique_lock<std::mutex> lock(_mutex);
 
   // Initialize NCURSES if this is the first instance of UIView.
@@ -55,6 +59,14 @@ void UIView::EventLoop(int initial_key_processing_mode) {
   _exit_event_loop = false;
   do {
     Render();
+
+    if (!_status_file.empty()) {
+      FILE* status_file = fopen(_status_file.c_str(), "a");
+      if (status_file) {
+        fprintf(status_file, "render_complete\n");
+        fclose(status_file);
+      }
+    }
 
     const KeyProcessor& key_processor =
         _key_processing_mode_map.at(_key_processing_mode);

@@ -46,7 +46,7 @@ const char* const SearchView::_SEARCH_PROGRESS_PREFIX = "Searching";
 const char* const SearchView::_NO_RESULTS_PROMPT = "No results found.";
 const char* const SearchView::_PAGE_NUMBER_PREFIX = "p";
 
-SearchView::SearchView(Document* document)
+SearchView::SearchView(Document* document, const std::string& status_file)
     : UIView(
           {{
                REGULAR_MODE,
@@ -56,7 +56,8 @@ SearchView::SearchView(Document* document)
                SEARCH_STRING_FIELD_MODE,
                std::bind(
                    &SearchView::ProcessKeySearchStringFieldMode, this, _1),
-           }}),
+           }},
+          status_file),
       _document(document),
       _search_string_field_cursor_position(0) {
   assert(_document != nullptr);

@@ -34,7 +34,7 @@ class SearchView : public UIView {
   // Constructs an instance of SearchView that searches through the given
   // document. Does not take ownership. The document must be valid throughout
   // the lifetime of this object.
-  explicit SearchView(Document* document);
+  explicit SearchView(Document* document, const std::string& status_file = "");
   virtual ~SearchView();
 
   // Displays the search view and enters the event loop. If the user selected a

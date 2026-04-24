@@ -25,6 +25,7 @@
 #include <curses.h>
 #include <functional>
 #include <mutex>
+#include <string>
 #include <unordered_map>
 
 // Base class for NCURSES-based interactive full-screen UIs. Implements
@@ -42,7 +43,9 @@ class UIView {
 
   // Statically initializes an NCURSES window on first construction of any
   // derived instances.
-  explicit UIView(const KeyProcessingModeMap& key_processing_mode_map);
+  explicit UIView(
+      const KeyProcessingModeMap& key_processing_mode_map,
+      const std::string& status_file = "");
 
   // Statically cleans up an NCURSES window upon last destruction of any derived
   // instances.
@@ -81,6 +84,8 @@ class UIView {
   int _key_processing_mode;
   // Whether to exit the event loop.
   bool _exit_event_loop;
+  // Path to the status file.
+  const std::string _status_file;
 };
 
 #endif
