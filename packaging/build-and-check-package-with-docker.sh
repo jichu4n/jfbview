@@ -9,6 +9,8 @@ platform="$6"
 
 set -ex
 
+trap 'docker run --rm "${platform_flag[@]}" -v "$PWD":/work "$docker_image" sh -c "chown -R $(id -u):$(id -g) /work/build /work/build_tests /work/vendor/mupdf/build /work/upload 2>/dev/null || true"' EXIT
+
 platform_flag=()
 if [ -n "$platform" ]; then
   platform_flag=(--platform "$platform")
