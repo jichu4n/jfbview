@@ -45,27 +45,27 @@ const char* const DEFAULT_ROOT_OUTLINE_ITEM_TITLE = "TABLE OF CONTENTS";
 
 FitzOutlineItem::~FitzOutlineItem() {}
 
-FitzOutlineItem::FitzOutlineItem(fz_outline* src) {
+FitzOutlineItem::FitzOutlineItem(fz_context* ctx, fz_document* doc, fz_outline* src) {
   if (src == nullptr) {
     _dest_page = -1;
   } else {
     _title = src->title;
-    _dest_page = src->page;
+    _dest_page = fz_page_number_from_location(ctx, doc, src->page);
   }
 }
 
 int FitzOutlineItem::GetDestPage() const { return _dest_page; }
 
-FitzOutlineItem* FitzOutlineItem::Build(fz_context* ctx, fz_outline* src) {
+FitzOutlineItem* FitzOutlineItem::Build(fz_context* ctx, fz_document* doc, fz_outline* src) {
   FitzOutlineItem* root = nullptr;
   std::vector<std::unique_ptr<OutlineItem>> items;
-  BuildRecursive(src, &items);
+  BuildRecursive(ctx, doc, src, &items);
   if (items.empty()) {
     return nullptr;
   } else if (items.size() == 1) {
     root = dynamic_cast<FitzOutlineItem*>(items[0].release());
   } else {
-    root = new FitzOutlineItem(nullptr);
+    root = new FitzOutlineItem(ctx, doc, nullptr);
     root->_title = DEFAULT_ROOT_OUTLINE_ITEM_TITLE;
     root->_children.swap(items);
   }
@@ -73,13 +73,13 @@ FitzOutlineItem* FitzOutlineItem::Build(fz_context* ctx, fz_outline* src) {
 }
 
 void FitzOutlineItem::BuildRecursive(
-    fz_outline* src,
+    fz_context* ctx, fz_document* doc, fz_outline* src,
     std::vector<std::unique_ptr<Document::OutlineItem>>* output) {
   assert(output != nullptr);
   for (fz_outline* i = src; i != nullptr; i = i->next) {
-    FitzOutlineItem* item = new FitzOutlineItem(i);
+    FitzOutlineItem* item = new FitzOutlineItem(ctx, doc, i);
     if (i->down != nullptr) {
-      BuildRecursive(i->down, &(item->_children));
+      BuildRecursive(ctx, doc, i->down, &(item->_children));
     }
     output->push_back(std::unique_ptr<Document::OutlineItem>(item));
   }
@@ -89,7 +89,11 @@ std::string GetPageText(fz_context* ctx, fz_page* page_struct, int line_sep) {
   // 1. Render page.
   fz_stext_options stext_options = {0};
   FitzStextPageScopedPtr text_page(
-      ctx, fz_new_stext_page_from_page(ctx, page_struct, &stext_options));
+      ctx, fz_new_stext_page(ctx, fz_bound_page(ctx, page_struct)));
+  FitzDeviceScopedPtr dev(
+      ctx, fz_new_stext_device(ctx, text_page.get(), &stext_options));
+  fz_run_page(ctx, page_struct, dev.get(), fz_identity, nullptr);
+  fz_close_device(ctx, dev.get());
 
   // 2. Build text.
   std::string r;

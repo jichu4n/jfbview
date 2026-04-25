@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import os
 import subprocess
 import socket
@@ -19,6 +20,7 @@ class JfbviewE2ETester:
         self.sock = sock
         self.status_file = status_file
         self.update_goldens = update_goldens
+        self.failures = []
         self.status_f = open(status_file, "r")
         # Seek to end to ignore boot-time renders
         self.status_f.seek(0, os.SEEK_END)
@@ -78,14 +80,14 @@ class JfbviewE2ETester:
                 time.sleep(0.1)
 
     def take_screenshot_and_compare(self, golden_name):
-        screenshot_path = os.path.join(OUT_DIR, f"temp_{golden_name}")
+        screenshot_path = os.path.join(OUT_DIR, golden_name)
         if os.path.exists(screenshot_path):
             os.remove(screenshot_path)
-            
+
         print(f"Taking screenshot for {golden_name}...")
         # Give QEMU VGA buffer a moment to sync
         time.sleep(1)
-        self.send_qmp_cmd({"execute": "screendump", "arguments": {"filename": f"temp_{golden_name}"}})
+        self.send_qmp_cmd({"execute": "screendump", "arguments": {"filename": golden_name}})
         
         # Wait for file to exist and stop growing
         start_time = time.time()
@@ -108,8 +110,10 @@ class JfbviewE2ETester:
 
         print(f"Comparing against {golden_path}...")
         if not os.path.exists(golden_path):
-            print(f"Error: Golden {golden_path} not found. Run with --update-goldens.")
-            sys.exit(1)
+            msg = f"Golden {golden_path} not found. Run with --update-goldens."
+            print(f"Error: {msg}")
+            self.failures.append((golden_name, msg))
+            return
 
         diff_path = os.path.join(OUT_DIR, f"diff_{golden_name}.png")
         ret = subprocess.run(["compare", "-metric", "RMSE", screenshot_path, golden_path, diff_path], capture_output=True)
@@ -120,15 +124,17 @@ class JfbviewE2ETester:
             norm_error_str = output.split("(")[1].split(")")[0]
             norm_error = float(norm_error_str)
             if norm_error > 0.05:
-                print(f"Error: Screenshot differs from golden significantly ({norm_error * 100:.2f}%). Diff saved to {diff_path}")
-                sys.exit(1)
+                msg = f"Screenshot differs from golden significantly ({norm_error * 100:.2f}%). Diff saved to {diff_path}"
+                print(f"Error: {msg}")
+                self.failures.append((golden_name, msg))
             else:
                 print(f"Screenshot matches golden (error: {norm_error * 100:.2f}%).")
         except (IndexError, ValueError):
             print(f"Failed to parse compare output: {output}")
             if ret.returncode != 0:
-                print("Error: Screenshots differ.")
-                sys.exit(1)
+                msg = f"Screenshots differ (unparseable compare output: {output})"
+                print(f"Error: {msg}")
+                self.failures.append((golden_name, msg))
 
 def run_test_scenario(tester):
     # 1. Initial boot
@@ -160,42 +166,47 @@ def run_test_scenario(tester):
     tester.drain_renders()
     tester.take_screenshot_and_compare("zoom_fit.ppm")
 
-    # 6. Zoom in 5 times
+    # 6. Zoom to width
+    tester.send_key("s")
+    tester.drain_renders()
+    tester.take_screenshot_and_compare("zoom_width.ppm")
+
+    # 7. Zoom in 5 times
     tester.send_keys(["5", "equal"]) # '5='
     tester.drain_renders()
     tester.take_screenshot_and_compare("zoom_in.ppm")
 
-    # 7. Zoom out 5 times
+    # 8. Zoom out 5 times
     tester.send_keys(["5", "minus"]) # '5-'
     tester.drain_renders()
     tester.take_screenshot_and_compare("zoom_out.ppm")
 
-    # 8. Rotate right
+    # 9. Rotate right
     tester.send_key("dot") # '.'
     tester.drain_renders()
     tester.take_screenshot_and_compare("rotate_right.ppm")
 
-    # 9. Rotate left
+    # 10. Rotate left
     tester.send_key("comma") # ','
     tester.drain_renders()
     tester.take_screenshot_and_compare("rotate_left.ppm")
 
-    # 10. Outline view
+    # 11. Outline view
     tester.send_key("tab")
     tester.drain_renders()
     tester.take_screenshot_and_compare("outline_view.ppm")
 
-    # 11. Unfold all
+    # 12. Unfold all
     tester.send_keys(["z", "shift-r"]) # 'zR'
     tester.drain_renders()
     tester.take_screenshot_and_compare("outline_unfold.ppm")
 
-    # 12. Exit outline
+    # 13. Exit outline
     tester.send_key("esc")
     tester.drain_renders()
     tester.take_screenshot_and_compare("outline_exit.ppm")
 
-    # 13. Outline navigate and jump
+    # 14. Outline navigate and jump
     tester.send_key("tab")
     tester.drain_renders()
     for _ in range(10):
@@ -206,23 +217,23 @@ def run_test_scenario(tester):
     tester.drain_renders()
     tester.take_screenshot_and_compare("outline_jump.ppm")
 
-    # 14. Search view
+    # 15. Search view
     tester.send_key("slash") # '/'
     tester.drain_renders()
     tester.take_screenshot_and_compare("search_view.ppm")
 
-    # 15. Search for "kernel"
+    # 16. Search for "kernel"
     tester.send_keys(["k", "e", "r", "n", "e", "l", "ret"])
     # Background search might take time, so drain renders carefully
     tester.drain_renders(timeout=20, silence_duration=2.0)
     tester.take_screenshot_and_compare("search_kernel.ppm")
 
-    # 16. Go to second result
+    # 17. Go to second result
     tester.send_key("down")
     tester.drain_renders()
     tester.take_screenshot_and_compare("search_second.ppm")
 
-    # 17. Jump to page from search
+    # 18. Jump to page from search
     tester.send_key("ret")
     tester.drain_renders()
     tester.take_screenshot_and_compare("search_jump.ppm")
@@ -276,6 +287,12 @@ def main():
         print("Terminating QEMU...")
         process.terminate()
         process.wait()
+
+    if tester.failures:
+        print(f"\n{len(tester.failures)} screenshot mismatch(es):")
+        for name, msg in tester.failures:
+            print(f"  - {name}: {msg}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
