@@ -189,7 +189,7 @@ jobs:
           # The GitHub runner user needs explicit permissions to access /dev/kvm
           sudo chmod 666 /dev/kvm
       - name: Run E2E tests
-        run: python3 tests/run_e2e_tests.py
+        run: ./tests/run_e2e_tests.py
       - name: Upload artifacts on failure
         if: failure()
         uses: actions/upload-artifact@v7
