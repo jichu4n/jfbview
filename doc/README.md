@@ -1,22 +1,31 @@
 JFBVIEW
 =======
+![GitHub Workflow Build Status](https://github.com/jichu4n/jfbview/workflows/build/badge.svg)
 
-**jfbview** is a PDF and image viewer for the Linux framebuffer. It's fast and has
-some advanced features including:
+**jfbview** is a PDF and image viewer for the Linux framebuffer. Features include:
 
-  * Arbitrary zoom (10% - 1000%) and rotation;
-  * Table of Contents (TOC) viewer for PDF documents;
-  * Interactive text search for PDF documents;
-  * Multi-threaded rendering;
-  * Asynchronous background pre-caching;
-  * Customizable multi-threaded caching.
+  * Zoom and rotation
+  * Table of Contents (TOC) viewer
+  * Interactive text search
 
 The home page of jfbview is at https://github.com/jichu4n/jfbview.
 
-![GitHub Workflow Build Status](https://github.com/jichu4n/jfbview/workflows/build/badge.svg)
+## Screenshots
 
-INSTALLATION
-------------
+### Scroll & zoom
+
+<p align="center"><img src="/doc/zoom-rotate.gif"/></p>
+
+### Table of contents
+
+<p align="center"><img src="/doc/toc.gif"/></p>
+
+### Search
+
+<p align="center"><img src="/doc/search.gif"/></p>
+
+
+## Installation
 
 ### Arch Linux / Manjaro
 
@@ -97,18 +106,15 @@ make
 make install
 ```
 
-DOCUMENTATION
--------------
+## Documentation
 
 See [jfbview man page](https://htmlpreview.github.io/?https://github.com/jichu4n/jfbview/blob/master/doc/jfbview.1.html).
 
-ABOUT
------
+## About
 
 jfbview is written by Chuan Ji, and is distributed under the Apache License v2.
 
-HISTORY
--------
+## History
 
 jfbview started as a fork of FBPDF by Ali Gholami Rudi with improvements and bug
 fixes, and was named JFBPDF. The JFBPDF code (in C) grew steadily more
