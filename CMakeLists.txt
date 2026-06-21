@@ -6,7 +6,7 @@ cmake_policy(SET CMP0048 NEW)
 
 # Project settings.
 # -----------------
-project(jfbview VERSION 0.6.1)
+project(jfbview VERSION 0.7.0)
 
 # Build options.
 # --------------
